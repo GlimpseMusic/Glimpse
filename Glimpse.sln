@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse.Player", "Glimpse.Player\Glimpse.Player.csproj", "{0DD03076-52AC-4C16-A861-71F11DB6339F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MixrSharp", "MixrSharp\MixrSharp\MixrSharp.csproj", "{BD560E05-95EB-40A3-874C-82D7DA0C3015}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{0DD03076-52AC-4C16-A861-71F11DB6339F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DD03076-52AC-4C16-A861-71F11DB6339F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DD03076-52AC-4C16-A861-71F11DB6339F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD560E05-95EB-40A3-874C-82D7DA0C3015}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD560E05-95EB-40A3-874C-82D7DA0C3015}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD560E05-95EB-40A3-874C-82D7DA0C3015}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD560E05-95EB-40A3-874C-82D7DA0C3015}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

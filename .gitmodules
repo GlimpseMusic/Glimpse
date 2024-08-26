@@ -1,0 +1,3 @@
+[submodule "MixrSharp"]
+	path = MixrSharp
+	url = https://github.com/Aquatic-Games/MixrSharp
