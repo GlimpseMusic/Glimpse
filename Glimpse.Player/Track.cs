@@ -8,26 +8,59 @@ namespace Glimpse.Player;
 public class Track : IDisposable
 {
     private AudioStream _stream;
+    private AudioFormat _format;
     private AudioSource _source;
 
     private byte[] _audioBuffer;
     private AudioBuffer[] _buffers;
     private int _currentBuffer;
+
+    private ulong _totalBytes;
+
+    public readonly int LengthInSeconds;
+
+    public int ElapsedSeconds
+    {
+        get
+        {
+            ulong totalSamples = _totalBytes / (ulong) _format.DataType.BytesPerSample() /
+                                 (ulong) _format.Channels.AsInt();
+
+            return (int) (totalSamples / _format.SampleRate);
+        }
+    }
+    
+    public TrackState State
+    {
+        get
+        {
+            return _source.State switch
+            {
+                SourceState.Stopped => TrackState.Stopped,
+                SourceState.Paused => TrackState.Paused,
+                SourceState.Playing => TrackState.Playing,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+    }
     
     internal Track(Context context, AudioStream stream)
     {
         _stream = stream;
 
-        AudioFormat format = stream.Format;
+        _format = stream.Format;
 
-        _source = context.CreateSource(new SourceDescription(SourceType.Pcm, format));
+        LengthInSeconds = (int) (_stream.PcmLengthInBytes / (ulong) _format.DataType.BytesPerSample() /
+                                 (ulong) _format.Channels.AsInt() / _format.SampleRate);
+
+        _source = context.CreateSource(new SourceDescription(SourceType.Pcm, _format));
         
-        _audioBuffer = new byte[format.SampleRate * format.DataType.BytesPerSample()];
+        _audioBuffer = new byte[_format.SampleRate * _format.DataType.BytesPerSample()];
 
         _buffers = new AudioBuffer[2];
         for (int i = 0; i < _buffers.Length; i++)
         {
-            _stream.GetBuffer(_audioBuffer);
+            _totalBytes += _stream.GetBuffer(_audioBuffer);
             _buffers[i] = context.CreateBuffer(_audioBuffer);
             _source.SubmitBuffer(_buffers[i]);
         }
@@ -54,6 +87,7 @@ public class Track : IDisposable
         Task.Run(() =>
         {
             ulong bytesProcessed = _stream.GetBuffer(_audioBuffer);
+            _totalBytes += bytesProcessed;
 
             if (bytesProcessed == 0)
             {

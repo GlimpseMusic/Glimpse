@@ -10,4 +10,8 @@
       <ProjectReference Include="..\MixrSharp\MixrSharp\MixrSharp.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="TagLibSharp" Version="2.3.0" />
+    </ItemGroup>
+
 </Project>
