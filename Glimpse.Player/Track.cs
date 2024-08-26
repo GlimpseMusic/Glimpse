@@ -17,6 +17,8 @@ public class Track : IDisposable
 
     private ulong _totalBytes;
 
+    public readonly TrackInfo Info;
+    
     public readonly int LengthInSeconds;
 
     public int ElapsedSeconds
@@ -44,12 +46,14 @@ public class Track : IDisposable
         }
     }
     
-    internal Track(Context context, AudioStream stream)
+    internal Track(Context context, AudioStream stream, TrackInfo info)
     {
         _stream = stream;
 
         _format = stream.Format;
 
+        Info = info;
+        
         LengthInSeconds = (int) (_stream.PcmLengthInBytes / (ulong) _format.DataType.BytesPerSample() /
                                  (ulong) _format.Channels.AsInt() / _format.SampleRate);
 
