@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Glimpse.Player;
-using TagLib;
 
 public static class GlimpseCli
 {
     public static void Main(string[] args)
     {
-        string file = null;
+        List<string> files = new List<string>();
         float volume = 1.0f;
         double speed = 1.0;
 
@@ -32,17 +33,30 @@ public static class GlimpseCli
 
                 default:
                 {
-                    file ??= arg;
+                    files.Add(arg);
                     continue;
                 }
             }
         }
 
-        AudioPlayer player = new AudioPlayer(new PlayerSettings(48000) { Volume = volume, SpeedAdjust = speed});
-        player.ChangeTrack(file);
+        if (files.Count == 1 && Path.GetFileNameWithoutExtension(files[0]) == "*")
+        {
+            string fileName = files[0];
+            files.Clear();
+            
+            foreach (string file in Directory.GetFiles(Path.GetDirectoryName(fileName), Path.GetFileName(fileName), SearchOption.AllDirectories))
+            {
+                files.Add(file);
+            }
+        }
+
+        int currentFile = 0;
+
+        using AudioPlayer player = new AudioPlayer(new PlayerSettings(48000) { Volume = volume, SpeedAdjust = speed});
+        player.ChangeTrack(files[currentFile]);
         player.Play();
         
-        PrintConsoleText(player.TrackInfo, 0, player.TrackLength, player.TrackState);
+        PrintConsoleText(player.TrackInfo, 0, player.TrackLength, player.TrackState, currentFile, files.Count);
 
         Console.CancelKeyPress += (sender, eventArgs) =>
         {
@@ -51,26 +65,77 @@ public static class GlimpseCli
         
         Console.CursorVisible = false;
 
-        while (player.TrackState != TrackState.Stopped)
+        bool alive = true;
+
+        while (alive)
         {
             int elapsed = player.ElapsedSeconds;
             int total = player.TrackLength;
 
             (int left, int top) = Console.GetCursorPosition();
-            Console.SetCursorPosition(left, top - 6);
-            PrintConsoleText(player.TrackInfo, elapsed, total, player.TrackState);
+            Console.SetCursorPosition(left, top - 7);
+            PrintConsoleText(player.TrackInfo, elapsed, total, player.TrackState, currentFile, files.Count);
 
             if (Console.KeyAvailable)
             {
                 ConsoleKeyInfo key = Console.ReadKey(true);
 
-                if (key.Key == ConsoleKey.P)
+                switch (key.Key)
                 {
-                    if (player.TrackState == TrackState.Playing)
-                        player.Pause();
-                    else
+                    case ConsoleKey.P:
+                    {
+                        if (player.TrackState == TrackState.Playing)
+                            player.Pause();
+                        else
+                            player.Play();
+
+                        break;
+                    }
+                    
+                    case ConsoleKey.Q:
+                        player.Stop();
+                        alive = false;
+                        break;
+
+                    case ConsoleKey.Oem6: // ] Key?? Maybe??
+                    {
+                        // TODO: This needs to be in a method.
+                        currentFile++;
+                        if (currentFile >= files.Count)
+                        {
+                            player.Stop();
+                            alive = false;
+                            break;
+                        }
+
+                        player.ChangeTrack(files[currentFile]);
                         player.Play();
+
+                        break;
+                    }
+
+                    case ConsoleKey.Oem4: // [ Key?? Maybe too??
+                    {
+                        currentFile--;
+                        if (currentFile < 0)
+                            currentFile = 0;
+                
+                        player.ChangeTrack(files[currentFile]);
+                        player.Play();
+
+                        break;
+                    }
                 }
+            }
+
+            if (player.TrackState == TrackState.Stopped)
+            {
+                currentFile++;
+                if (currentFile >= files.Count)
+                    break;
+                
+                player.ChangeTrack(files[currentFile]);
+                player.Play();
             }
             
             Thread.Sleep(125);
@@ -79,8 +144,9 @@ public static class GlimpseCli
         ResetConsole();
     }
 
-    private static void PrintConsoleText(TrackInfo info, int elapsed, int total, TrackState state)
+    private static void PrintConsoleText(TrackInfo info, int elapsed, int total, TrackState state, int track, int totalTracks)
     {
+        Console.WriteLine($"Track:  {track + 1} / {totalTracks}");
         Console.WriteLine($"Title:  {info.Title}");
         Console.WriteLine($"Artist: {info.Artist}");
         Console.WriteLine($"Album:  {info.Album}");
