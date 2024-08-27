@@ -46,7 +46,7 @@ public class Track : IDisposable
         }
     }
     
-    internal Track(Context context, AudioStream stream, TrackInfo info)
+    internal Track(Context context, AudioStream stream, TrackInfo info, PlayerSettings playerSettings)
     {
         _stream = stream;
 
@@ -72,6 +72,8 @@ public class Track : IDisposable
         // The source will loop the last buffer if it runs out of buffers. It won't sound nice but at least it will
         // continue to play.
         _source.Looping = true;
+        
+        _source.Speed = playerSettings.SpeedAdjust;
         
         _source.BufferFinished += BufferFinished;
     }

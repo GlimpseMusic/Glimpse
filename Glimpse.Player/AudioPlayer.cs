@@ -7,6 +7,8 @@ namespace Glimpse.Player;
 
 public class AudioPlayer : IDisposable
 {
+    public PlayerSettings Settings;
+    
     private Device _device;
 
     private readonly TrackInfo _defaultTrackInfo;
@@ -23,7 +25,12 @@ public class AudioPlayer : IDisposable
 
     public AudioPlayer(PlayerSettings settings)
     {
+        Settings = settings;
+        
         _device = new SdlDevice(settings.SampleRate);
+
+        _device.Context.MasterVolume = settings.Volume;
+        
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album");
     }
 
@@ -35,7 +42,7 @@ public class AudioPlayer : IDisposable
         
         AudioStream stream = new Flac(path);
 
-        _activeTrack = new Track(_device.Context, stream, info);
+        _activeTrack = new Track(_device.Context, stream, info, Settings);
     }
 
     public void Play()
