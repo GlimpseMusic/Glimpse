@@ -15,38 +15,47 @@ public static class GlimpseCli
         int argIndex = 0;
         while (ReadArg(args, ref argIndex, out string arg))
         {
-            switch (arg)
+            if (arg.StartsWith('-'))
             {
-                case "--volume" or "-v":
+                switch (arg)
                 {
-                    if (ReadArg(args, ref argIndex, out arg) && float.TryParse(arg, out volume)) continue;
-                    Console.WriteLine("Error while parsing volume.");
-                    return;
-                }
+                    case "--volume" or "-v":
+                    {
+                        if (ReadArg(args, ref argIndex, out arg) && float.TryParse(arg, out volume)) continue;
+                        Console.WriteLine("Error while parsing volume.");
+                        return;
+                    }
                 
-                case "--speed" or "-s":
-                {
-                    if (ReadArg(args, ref argIndex, out arg) && double.TryParse(arg, out speed)) continue;
-                    Console.WriteLine("Error while parsing speed.");
-                    return;
-                }
-
-                default:
-                {
-                    files.Add(arg.Trim('"'));
-                    continue;
+                    case "--speed" or "-s":
+                    {
+                        if (ReadArg(args, ref argIndex, out arg) && double.TryParse(arg, out speed)) continue;
+                        Console.WriteLine("Error while parsing speed.");
+                        return;
+                    }
+                    
+                    default:
+                        Console.WriteLine($"Invalid argument \"{arg}\".");
+                        return;
                 }
             }
-        }
-
-        if (files.Count == 1 && Directory.Exists(files[0]))
-        {
-            string dirName = files[0];
-            files.Clear();
-            
-            foreach (string file in Directory.GetFiles(dirName, "*.flac", SearchOption.AllDirectories))
+            else
             {
-                files.Add(file);
+                string fileName = arg.Trim('"');
+
+                if (File.Exists(fileName))
+                {
+                    files.Add(fileName);
+                }
+                else if (Directory.Exists(fileName))
+                {
+                    foreach (string file in Directory.GetFiles(fileName, "*.flac", SearchOption.AllDirectories))
+                        files.Add(file);
+                }
+                else
+                {
+                    Console.WriteLine($"Argument {argIndex}: An invalid file was provided.");
+                    return;
+                }
             }
         }
 
@@ -94,7 +103,7 @@ public static class GlimpseCli
                         player.Stop();
                         goto EXIT;
 
-                    case ConsoleKey.Oem6: // ] Key?? Maybe??
+                    case ConsoleKey.RightArrow: // ] Key?? Maybe??
                     {
                         // TODO: This needs to be in a method.
                         currentFile++;
@@ -110,7 +119,7 @@ public static class GlimpseCli
                         break;
                     }
 
-                    case ConsoleKey.Oem4: // [ Key?? Maybe too??
+                    case ConsoleKey.LeftArrow: // [ Key?? Maybe too??
                     {
                         currentFile--;
                         if (currentFile < 0)
