@@ -64,7 +64,7 @@ public class Track : IDisposable
         _buffers = new AudioBuffer[2];
         for (int i = 0; i < _buffers.Length; i++)
         {
-            _totalBytes += _stream.GetBuffer(_audioBuffer);
+            _stream.GetBuffer(_audioBuffer);
             _buffers[i] = context.CreateBuffer(_audioBuffer);
             _source.SubmitBuffer(_buffers[i]);
         }
@@ -102,7 +102,10 @@ public class Track : IDisposable
                 return;
             }
 
-            _buffers[_currentBuffer].Update(_audioBuffer);
+            if ((int) bytesProcessed < _audioBuffer.Length)
+                _buffers[_currentBuffer].Update(_audioBuffer[..(int) bytesProcessed]);
+            else
+                _buffers[_currentBuffer].Update(_audioBuffer);
             _source.SubmitBuffer(_buffers[_currentBuffer]);
 
             _currentBuffer++;

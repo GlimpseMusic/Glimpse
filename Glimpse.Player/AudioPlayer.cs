@@ -58,6 +58,7 @@ public class AudioPlayer : IDisposable
     public void Stop()
     {
         _activeTrack.Dispose();
+        _activeTrack = null;
     }
 
     public void Dispose()

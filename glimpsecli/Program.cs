@@ -33,18 +33,18 @@ public static class GlimpseCli
 
                 default:
                 {
-                    files.Add(arg);
+                    files.Add(arg.Trim('"'));
                     continue;
                 }
             }
         }
 
-        if (files.Count == 1 && Path.GetFileNameWithoutExtension(files[0]) == "*")
+        if (files.Count == 1 && Directory.Exists(files[0]))
         {
-            string fileName = files[0];
+            string dirName = files[0];
             files.Clear();
             
-            foreach (string file in Directory.GetFiles(Path.GetDirectoryName(fileName), Path.GetFileName(fileName), SearchOption.AllDirectories))
+            foreach (string file in Directory.GetFiles(dirName, "*.flac", SearchOption.AllDirectories))
             {
                 files.Add(file);
             }
@@ -65,9 +65,7 @@ public static class GlimpseCli
         
         Console.CursorVisible = false;
 
-        bool alive = true;
-
-        while (alive)
+        while (true)
         {
             int elapsed = player.ElapsedSeconds;
             int total = player.TrackLength;
@@ -94,8 +92,7 @@ public static class GlimpseCli
                     
                     case ConsoleKey.Q:
                         player.Stop();
-                        alive = false;
-                        break;
+                        goto EXIT;
 
                     case ConsoleKey.Oem6: // ] Key?? Maybe??
                     {
@@ -104,8 +101,7 @@ public static class GlimpseCli
                         if (currentFile >= files.Count)
                         {
                             player.Stop();
-                            alive = false;
-                            break;
+                            goto EXIT;
                         }
 
                         player.ChangeTrack(files[currentFile]);
@@ -141,19 +137,23 @@ public static class GlimpseCli
             Thread.Sleep(125);
         }
         
+        EXIT: ;
+        
         ResetConsole();
     }
 
     private static void PrintConsoleText(TrackInfo info, int elapsed, int total, TrackState state, int track, int totalTracks)
     {
-        Console.WriteLine($"Track:  {track + 1} / {totalTracks}");
-        Console.WriteLine($"Title:  {info.Title}");
-        Console.WriteLine($"Artist: {info.Artist}");
-        Console.WriteLine($"Album:  {info.Album}");
+        int padAmount = Console.BufferWidth;
+        
+        Console.WriteLine($"Track:  {track + 1} / {totalTracks}".PadRight(padAmount));
+        Console.WriteLine($"Title:  {info.Title}".PadRight(padAmount));
+        Console.WriteLine($"Artist: {info.Artist}".PadRight(padAmount));
+        Console.WriteLine($"Album:  {info.Album}".PadRight(padAmount));
         
         Console.WriteLine();
         
-        Console.WriteLine(state);
+        Console.WriteLine(state.ToString().PadRight(60));
         Console.Write($"{elapsed / 60}:{elapsed % 60:00} [");
 
         int progress = (int) (((double) elapsed / total) * 51) - 1;
@@ -172,6 +172,7 @@ public static class GlimpseCli
     private static void ResetConsole()
     {
         Console.CursorVisible = true;
+        Console.ResetColor();
     }
 
     private static bool ReadArg(string[] args, ref int index, out string arg)
