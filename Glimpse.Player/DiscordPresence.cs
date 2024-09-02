@@ -23,7 +23,7 @@ public static class DiscordPresence
             .WithDetails(info.Title)
             .WithState(info.Artist)
             .WithTimestamps(Timestamps.FromTimeSpan(songLengthInSeconds))
-            .WithAssets(new Assets() { LargeImageText = info.Album, LargeImageKey = "https://coverartarchive.org/release/16a0757f-f02e-4dc9-a837-762776f3b565/38240718472.jpg" });
+            .WithAssets(new Assets() { LargeImageText = info.Album/*, LargeImageKey = "https://coverartarchive.org/release/16a0757f-f02e-4dc9-a837-762776f3b565/38240718472.jpg"*/ });
         
         Client.SetPresence(presence);
     }
