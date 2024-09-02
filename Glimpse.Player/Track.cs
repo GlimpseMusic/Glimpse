@@ -25,8 +25,7 @@ public class Track : IDisposable
     {
         get
         {
-            ulong totalSamples = _totalBytes / (ulong) _format.DataType.BytesPerSample() /
-                                 (ulong) _format.Channels.AsInt();
+            ulong totalSamples = _totalBytes / (ulong) _format.DataType.BytesPerSample() / _format.Channels;
 
             return (int) (totalSamples / _format.SampleRate);
         }
@@ -53,9 +52,9 @@ public class Track : IDisposable
         _format = stream.Format;
 
         Info = info;
-        
+
         LengthInSeconds = (int) (_stream.PcmLengthInBytes / (ulong) _format.DataType.BytesPerSample() /
-                                 (ulong) _format.Channels.AsInt() / _format.SampleRate);
+                                 _format.Channels / _format.SampleRate);
 
         _source = context.CreateSource(new SourceDescription(SourceType.Pcm, _format));
         

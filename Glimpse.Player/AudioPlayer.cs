@@ -32,6 +32,8 @@ public class AudioPlayer : IDisposable
         _device.Context.MasterVolume = settings.Volume;
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album");
+        
+        DiscordPresence.Initialize();
     }
 
     public void ChangeTrack(string path)
@@ -47,6 +49,7 @@ public class AudioPlayer : IDisposable
 
     public void Play()
     {
+        DiscordPresence.SetPresence(_activeTrack.Info, _activeTrack.LengthInSeconds);
         _activeTrack.Play();
     }
     
@@ -63,6 +66,8 @@ public class AudioPlayer : IDisposable
 
     public void Dispose()
     {
+        DiscordPresence.Deinitialize();
+        
         _activeTrack?.Dispose();
         _device.Dispose();
     }

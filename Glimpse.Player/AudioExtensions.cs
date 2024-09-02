@@ -20,14 +20,4 @@ public static class AudioExtensions
 
     public static int BytesPerSample(this DataType type)
         => type.BitsPerSample() / 8;
-
-    public static int AsInt(this Channels channels)
-    {
-        return channels switch
-        {
-            Channels.Mono => 1,
-            Channels.Stereo => 2,
-            _ => throw new ArgumentOutOfRangeException(nameof(channels), channels, null)
-        };
-    }
 }
