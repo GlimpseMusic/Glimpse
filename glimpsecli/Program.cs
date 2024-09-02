@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Glimpse.Player;
 
@@ -48,7 +49,7 @@ public static class GlimpseCli
                 }
                 else if (Directory.Exists(fileName))
                 {
-                    foreach (string file in Directory.GetFiles(fileName, "*.flac", SearchOption.AllDirectories))
+                    foreach (string file in Directory.EnumerateFiles(fileName, "*.*", SearchOption.AllDirectories).Where(s => Path.GetExtension(s) is ".mp3" or ".ogg" or ".wav" or ".flac"))
                         files.Add(file);
                 }
                 else

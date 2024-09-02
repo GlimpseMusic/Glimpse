@@ -21,9 +21,9 @@ public class TrackInfo
     {
         using File file = File.Create(path);
 
-        string title = file.Tag.Title;
-        string artist = file.Tag.Performers[0];
-        string album = file.Tag.Album;
+        string title = file.Tag.Title ?? "Unknown Title";
+        string artist = file.Tag.Performers is { Length: > 0 } ? file.Tag.Performers[0] : "Unknown Artist";
+        string album = file.Tag.Album ?? "Unknown Album";
 
         return new TrackInfo(title, artist, album);
     }
