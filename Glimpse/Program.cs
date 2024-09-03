@@ -6,6 +6,7 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        Glimpse.Run(new MiniPlayer());
+        if (args.Length > 0)
+            Glimpse.Run(new MiniPlayer(args));
     }
 }

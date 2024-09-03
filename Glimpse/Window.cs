@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using Silk.NET.OpenGL;
 using Silk.NET.SDL;
 using Renderer = Glimpse.Graphics.Renderer;
@@ -7,15 +8,59 @@ namespace Glimpse;
 
 public abstract unsafe class Window : IDisposable
 {
+    private bool _isCreated;
+    private string _title;
+    private Size _size;
+    
     private Sdl _sdl;
     private Silk.NET.SDL.Window* _window;
     private void* _glContext;
 
     public Renderer Renderer;
 
-    protected Window(string title)
+    public string Title
     {
-        
+        get
+        {
+            if (!_isCreated)
+                return _title;
+
+            return _sdl.GetWindowTitleS(_window);
+        }
+        set
+        {
+            if (!_isCreated)
+                _title = value;
+            else
+                _sdl.SetWindowTitle(_window, value);
+        }
+    }
+
+    public Size Size
+    {
+        get
+        {
+            if (!_isCreated)
+                return _size;
+
+            int w, h;
+            _sdl.GetWindowSize(_window, &w, &h);
+
+            return new Size(w, h);
+        }
+        set
+        {
+            if (!_isCreated)
+                _size = value;
+            else
+                _sdl.SetWindowSize(_window, value.Width, value.Height);
+        }
+    }
+
+    protected Window()
+    {
+        Title = "Window";
+        Size = new Size(800, 450);
     }
 
     protected virtual void Initialize() { }
@@ -32,7 +77,8 @@ public abstract unsafe class Window : IDisposable
         
         const WindowFlags flags = WindowFlags.Opengl | WindowFlags.Resizable | WindowFlags.AllowHighdpi;
 
-        _window = sdl.CreateWindow("Window", Sdl.WindowposCentered, Sdl.WindowposCentered, 1280, 720, (uint) flags);
+        _window = sdl.CreateWindow(_title, Sdl.WindowposCentered, Sdl.WindowposCentered, _size.Width, _size.Height,
+            (uint) flags);
 
         if (_window == null)
             throw new Exception($"Failed to open window: {_sdl.GetErrorS()}");
@@ -41,6 +87,8 @@ public abstract unsafe class Window : IDisposable
 
         sdl.GLMakeCurrent(_window, _glContext);
         Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)));
+
+        _isCreated = true;
         
         Initialize();
 
