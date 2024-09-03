@@ -1,6 +1,8 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DiscordRPC;
+using Glimpse.Player.Configs;
 using MetaBrainz.MusicBrainz;
 using MetaBrainz.MusicBrainz.CoverArt;
 using MetaBrainz.MusicBrainz.CoverArt.Interfaces;
@@ -10,16 +12,25 @@ namespace Glimpse.Player;
 
 public static class DiscordPresence
 {
-    private static string _currentAlbum;
     private static string _currentUrl;
+
+    public static DiscordConfig Config;
     
     public static DiscordRpcClient Client;
     
     public static void Initialize()
     {
         Client = new DiscordRpcClient("1280266653950804111");
-        if (!Client.Initialize())
-            return;
+
+        if (!IConfig.TryGetConfig("Discord", out Config))
+        {
+            Config = new DiscordConfig();
+            IConfig.WriteConfig("Discord", Config);
+        }
+
+#if !DEBUG
+        Client.Initialize();
+#endif
     }
 
     public static void SetPresence(TrackInfo info, double songLengthInSeconds)
@@ -34,13 +45,40 @@ public static class DiscordPresence
             .WithAssets(new Assets() { LargeImageText = info.Album, LargeImageKey = _currentUrl });
         
         Client.SetPresence(presence);
+        
+        string albumName = info.Album;
+
+        int startIndex = albumName.IndexOf("disc", StringComparison.OrdinalIgnoreCase);
+
+        if (startIndex != -1)
+        {
+            int endIndex;
+            bool foundNumber = false;
+
+            for (endIndex = startIndex + "disc".Length; endIndex < albumName.Length; endIndex++)
+            {
+                char c = albumName[endIndex];
+
+                if (c is not ' ' && c is < '0' or > '9')
+                    break;
+
+                foundNumber = true;
+            }
+
+            if (foundNumber)
+                albumName = albumName.Remove(startIndex, endIndex - startIndex).Replace("()", "").Replace("[]", "").Trim();
+        }
+
+        if (Config.AlbumArt.TryGetValue(albumName, out _currentUrl))
+        {
+            Client.UpdateLargeAsset(_currentUrl);
+            return;
+        }
 
         // Only search for new album art if the album changes or the URL is null.
         // This saves queries to musicbrainz.
-        if ((info.Album != _currentAlbum || _currentUrl == null) && info.Album != TrackInfo.UnknownAlbum)
+        if (info.Album != TrackInfo.UnknownAlbum)
         {
-            _currentAlbum = info.Album;
-            
             Task.Run(() =>
             {
                 const string app = "GlimpseAudioPlayer";
@@ -48,7 +86,7 @@ public static class DiscordPresence
                 const string version = "0.0.0-dev";
 
                 using Query query = new Query(app, version, contact);
-                var releases = query.FindReleases(info.Album, 5);
+                var releases = query.FindReleases(albumName, 5);
                 using CoverArt art = new CoverArt(app, version, contact);
 
                 foreach (ISearchResult<MetaBrainz.MusicBrainz.Interfaces.Entities.IRelease> release in releases.Results)
@@ -71,6 +109,8 @@ public static class DiscordPresence
                     if (image is not null)
                     {
                         _currentUrl = image.Location?.ToString();
+                        Config.AlbumArt[albumName] = _currentUrl;
+                        IConfig.WriteConfig("Discord", Config);
                         break;
                     }
                 }
