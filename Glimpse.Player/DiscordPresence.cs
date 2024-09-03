@@ -22,13 +22,13 @@ public static class DiscordPresence
     {
         Client = new DiscordRpcClient("1280266653950804111");
 
+#if !DEBUG
         if (!IConfig.TryGetConfig("Discord", out Config))
         {
             Config = new DiscordConfig();
             IConfig.WriteConfig("Discord", Config);
         }
-
-#if !DEBUG
+        
         Client.Initialize();
 #endif
     }

@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MixrSharp", "MixrSharp\Mixr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "glimpsecli", "glimpsecli\glimpsecli.csproj", "{F1E0BA99-FDF8-4297-A44B-B011AD865696}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse", "Glimpse\Glimpse.csproj", "{1C241E46-55CB-4D11-A895-CC449F90AE5B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{F1E0BA99-FDF8-4297-A44B-B011AD865696}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1E0BA99-FDF8-4297-A44B-B011AD865696}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1E0BA99-FDF8-4297-A44B-B011AD865696}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C241E46-55CB-4D11-A895-CC449F90AE5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C241E46-55CB-4D11-A895-CC449F90AE5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C241E46-55CB-4D11-A895-CC449F90AE5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C241E46-55CB-4D11-A895-CC449F90AE5B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
