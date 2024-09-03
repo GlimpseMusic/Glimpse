@@ -13,6 +13,7 @@ public static class GlimpseCli
         List<string> files = new List<string>();
         float? volume = null;
         double? speed = null;
+        int currentFile = 0;
 
         int argIndex = 0;
         while (ReadArg(args, ref argIndex, out string arg))
@@ -44,6 +45,18 @@ public static class GlimpseCli
                         Console.WriteLine("Error while parsing speed.");
                         return;
                     }
+
+                    case "--track" or "-t":
+                    {
+                        if (ReadArg(args, ref argIndex, out arg) && int.TryParse(arg, out int trackNumber))
+                        {
+                            currentFile = trackNumber - 1;
+                            continue;
+                        }
+
+                        Console.WriteLine("Error while parsing track number.");
+                        return;
+                    }
                     
                     default:
                         Console.WriteLine($"Invalid argument \"{arg}\".");
@@ -71,16 +84,14 @@ public static class GlimpseCli
             }
         }
 
-        int currentFile = 0;
-
-        using AudioPlayer player = new AudioPlayer();
-        player.Config.Volume = volume ?? player.Config.Volume;
-        player.Config.SpeedAdjust = speed ?? player.Config.SpeedAdjust;
+        AudioPlayer.Initialize();
+        AudioPlayer.Config.Volume = volume ?? AudioPlayer.Config.Volume;
+        AudioPlayer.Config.SpeedAdjust = speed ?? AudioPlayer.Config.SpeedAdjust;
         
-        player.ChangeTrack(files[currentFile]);
-        player.Play();
+        AudioPlayer.ChangeTrack(files[currentFile]);
+        AudioPlayer.Play();
         
-        PrintConsoleText(player.TrackInfo, 0, player.TrackLength, player.TrackState, currentFile, files.Count);
+        PrintConsoleText(AudioPlayer.TrackInfo, 0, AudioPlayer.TrackLength, AudioPlayer.TrackState, currentFile, files.Count);
 
         Console.CancelKeyPress += (sender, eventArgs) =>
         {
@@ -91,12 +102,12 @@ public static class GlimpseCli
 
         while (true)
         {
-            int elapsed = player.ElapsedSeconds;
-            int total = player.TrackLength;
+            int elapsed = AudioPlayer.ElapsedSeconds;
+            int total = AudioPlayer.TrackLength;
 
             (int left, int top) = Console.GetCursorPosition();
             Console.SetCursorPosition(left, top - 7);
-            PrintConsoleText(player.TrackInfo, elapsed, total, player.TrackState, currentFile, files.Count);
+            PrintConsoleText(AudioPlayer.TrackInfo, elapsed, total, AudioPlayer.TrackState, currentFile, files.Count);
 
             if (Console.KeyAvailable)
             {
@@ -106,16 +117,16 @@ public static class GlimpseCli
                 {
                     case ConsoleKey.P:
                     {
-                        if (player.TrackState == TrackState.Playing)
-                            player.Pause();
+                        if (AudioPlayer.TrackState == TrackState.Playing)
+                            AudioPlayer.Pause();
                         else
-                            player.Play();
+                            AudioPlayer.Play();
 
                         break;
                     }
                     
                     case ConsoleKey.Q:
-                        player.Stop();
+                        AudioPlayer.Stop();
                         goto EXIT;
 
                     case ConsoleKey.RightArrow: // ] Key?? Maybe??
@@ -124,12 +135,12 @@ public static class GlimpseCli
                         currentFile++;
                         if (currentFile >= files.Count)
                         {
-                            player.Stop();
+                            AudioPlayer.Stop();
                             goto EXIT;
                         }
 
-                        player.ChangeTrack(files[currentFile]);
-                        player.Play();
+                        AudioPlayer.ChangeTrack(files[currentFile]);
+                        AudioPlayer.Play();
 
                         break;
                     }
@@ -140,28 +151,30 @@ public static class GlimpseCli
                         if (currentFile < 0)
                             currentFile = 0;
                 
-                        player.ChangeTrack(files[currentFile]);
-                        player.Play();
+                        AudioPlayer.ChangeTrack(files[currentFile]);
+                        AudioPlayer.Play();
 
                         break;
                     }
                 }
             }
 
-            if (player.TrackState == TrackState.Stopped)
+            if (AudioPlayer.TrackState == TrackState.Stopped)
             {
                 currentFile++;
                 if (currentFile >= files.Count)
                     break;
                 
-                player.ChangeTrack(files[currentFile]);
-                player.Play();
+                AudioPlayer.ChangeTrack(files[currentFile]);
+                AudioPlayer.Play();
             }
             
             Thread.Sleep(125);
         }
         
         EXIT: ;
+        
+        AudioPlayer.Dispose();
         
         ResetConsole();
     }
