@@ -37,7 +37,7 @@ public class AudioPlayer : IDisposable
 
         _device.Context.MasterVolume = Config.Volume;
         
-        _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album");
+        _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
         
         DiscordPresence.Initialize();
     }

@@ -8,10 +8,17 @@ public class Image : IDisposable
     private readonly GL _gl;
 
     internal readonly uint Texture;
+
+    public readonly uint Width;
+
+    public readonly uint Height;
     
     internal unsafe Image(GL gl, byte[] data, uint width, uint height)
     {
         _gl = gl;
+
+        Width = width;
+        Height = height;
 
         Texture = _gl.GenTexture();
         _gl.BindTexture(TextureTarget.Texture2D, Texture);

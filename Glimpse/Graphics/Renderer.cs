@@ -1,21 +1,27 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
 using System.Numerics;
 using System.Reflection;
 using Glimpse.Graphics.GLUtils;
 using Silk.NET.OpenGL;
+using StbImageSharp;
 
 namespace Glimpse.Graphics;
 
 public unsafe class Renderer : IDisposable
 {
     private readonly BufferShaderSet _imageRenderSet;
+
+    private Matrix4x4 _projection;
     
     public readonly GL GL;
     
-    public Renderer(GL gl)
+    public Renderer(GL gl, uint width, uint height)
     {
         GL = gl;
+
+        _projection = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
 
         ReadOnlySpan<Vertex2D> vertices = stackalloc Vertex2D[]
         {
@@ -51,17 +57,35 @@ public unsafe class Renderer : IDisposable
         return new Image(GL, data, width, height);
     }
 
+    public Image CreateImage(string path)
+    {
+        using FileStream stream = File.OpenRead(path);
+        ImageResult result = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+
+        return new Image(GL, result.Data, (uint) result.Width, (uint) result.Height);
+    }
+
+    public Image CreateImage(byte[] data)
+    {
+        ImageResult result = ImageResult.FromMemory(data, ColorComponents.RedGreenBlueAlpha);
+        return new Image(GL, result.Data, (uint) result.Width, (uint) result.Height);
+    }
+
     public void Clear(Color color)
     {
         GL.ClearColor(color);
         GL.Clear(ClearBufferMask.ColorBufferBit);
     }
 
-    public void DrawImage(Image image, Vector2 position)
+    public void DrawImage(Image image, Vector2 position, Size size)
     {
         _imageRenderSet.Bind();
+
+        Matrix4x4 world = Matrix4x4.CreateScale(size.Width, size.Height, 1) *
+                          Matrix4x4.CreateTranslation(position.X, position.Y, 0);
+
+        _imageRenderSet.SetMatrix4x4("uTransform", world * _projection);
         
-        _imageRenderSet.SetMatrix4x4("uTransform", Matrix4x4.Identity);
         _imageRenderSet.SetVector4("uTint", Vector4.One);
         
         GL.ActiveTexture(TextureUnit.Texture0);

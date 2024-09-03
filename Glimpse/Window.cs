@@ -86,7 +86,8 @@ public abstract unsafe class Window : IDisposable
         _glContext = sdl.GLCreateContext(_window);
 
         sdl.GLMakeCurrent(_window, _glContext);
-        Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)));
+        Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)), (uint) _size.Width,
+            (uint) _size.Height);
 
         _isCreated = true;
         
