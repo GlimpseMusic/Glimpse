@@ -37,7 +37,7 @@ public static class DiscordPresence
 
         // Only search for new album art if the album changes or the URL is null.
         // This saves queries to musicbrainz.
-        if (info.Album != _currentAlbum || _currentUrl == null)
+        if ((info.Album != _currentAlbum || _currentUrl == null) && info.Album != TrackInfo.UnknownAlbum)
         {
             _currentAlbum = info.Album;
             

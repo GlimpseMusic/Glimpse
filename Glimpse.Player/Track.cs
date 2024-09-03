@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Glimpse.Player.Configs;
 using MixrSharp;
 using MixrSharp.Stream;
 
@@ -45,7 +46,7 @@ public class Track : IDisposable
         }
     }
     
-    internal Track(Context context, AudioStream stream, TrackInfo info, PlayerSettings playerSettings)
+    internal Track(Context context, AudioStream stream, TrackInfo info, PlayerConfig config)
     {
         _stream = stream;
 
@@ -72,7 +73,7 @@ public class Track : IDisposable
         // continue to play.
         _source.Looping = true;
         
-        _source.Speed = playerSettings.SpeedAdjust;
+        _source.Speed = config.SpeedAdjust;
         
         _source.BufferFinished += BufferFinished;
     }

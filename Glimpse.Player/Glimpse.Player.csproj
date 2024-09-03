@@ -14,6 +14,7 @@
       <PackageReference Include="DiscordRichPresence" Version="1.2.1.24" />
       <PackageReference Include="MetaBrainz.MusicBrainz" Version="6.1.0" />
       <PackageReference Include="MetaBrainz.MusicBrainz.CoverArt" Version="6.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="TagLibSharp" Version="2.3.0" />
     </ItemGroup>
 

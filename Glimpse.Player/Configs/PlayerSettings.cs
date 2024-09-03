@@ -1,6 +1,6 @@
-﻿namespace Glimpse.Player;
+﻿namespace Glimpse.Player.Configs;
 
-public struct PlayerSettings
+public class PlayerConfig : IConfig
 {
     public uint SampleRate;
 
@@ -8,9 +8,9 @@ public struct PlayerSettings
     
     public double SpeedAdjust;
 
-    public PlayerSettings(uint sampleRate)
+    public PlayerConfig()
     {
-        SampleRate = sampleRate;
+        SampleRate = 48000;
         Volume = 1.0f;
         SpeedAdjust = 1.0;
     }

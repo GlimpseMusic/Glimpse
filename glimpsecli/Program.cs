@@ -4,14 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Glimpse.Player;
+using Glimpse.Player.Configs;
 
 public static class GlimpseCli
 {
     public static void Main(string[] args)
     {
         List<string> files = new List<string>();
-        float volume = 1.0f;
-        double speed = 1.0;
+        float? volume = null;
+        double? speed = null;
 
         int argIndex = 0;
         while (ReadArg(args, ref argIndex, out string arg))
@@ -22,14 +23,24 @@ public static class GlimpseCli
                 {
                     case "--volume" or "-v":
                     {
-                        if (ReadArg(args, ref argIndex, out arg) && float.TryParse(arg, out volume)) continue;
+                        if (ReadArg(args, ref argIndex, out arg) && float.TryParse(arg, out float vol))
+                        {
+                            volume = vol;
+                            continue;
+                        }
+                        
                         Console.WriteLine("Error while parsing volume.");
                         return;
                     }
                 
                     case "--speed" or "-s":
                     {
-                        if (ReadArg(args, ref argIndex, out arg) && double.TryParse(arg, out speed)) continue;
+                        if (ReadArg(args, ref argIndex, out arg) && double.TryParse(arg, out double spd))
+                        {
+                            speed = spd;
+                            continue;
+                        }
+                        
                         Console.WriteLine("Error while parsing speed.");
                         return;
                     }
@@ -62,7 +73,10 @@ public static class GlimpseCli
 
         int currentFile = 0;
 
-        using AudioPlayer player = new AudioPlayer(new PlayerSettings(48000) { Volume = volume, SpeedAdjust = speed});
+        using AudioPlayer player = new AudioPlayer();
+        player.Config.Volume = volume ?? player.Config.Volume;
+        player.Config.SpeedAdjust = speed ?? player.Config.SpeedAdjust;
+        
         player.ChangeTrack(files[currentFile]);
         player.Play();
         

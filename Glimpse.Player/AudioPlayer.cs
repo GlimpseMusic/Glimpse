@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Glimpse.Player.Configs;
 using MixrSharp;
 using MixrSharp.Devices;
 using MixrSharp.Stream;
@@ -8,7 +9,7 @@ namespace Glimpse.Player;
 
 public class AudioPlayer : IDisposable
 {
-    public PlayerSettings Settings;
+    public PlayerConfig Config;
     
     private Device _device;
 
@@ -24,13 +25,17 @@ public class AudioPlayer : IDisposable
 
     public TrackState TrackState => _activeTrack?.State ?? TrackState.Stopped;
 
-    public AudioPlayer(PlayerSettings settings)
+    public AudioPlayer()
     {
-        Settings = settings;
-        
-        _device = new SdlDevice(settings.SampleRate);
+        if (!IConfig.TryGetConfig("Player", out Config))
+        {
+            Config = new PlayerConfig();
+            IConfig.WriteConfig("Player", Config);
+        }
 
-        _device.Context.MasterVolume = settings.Volume;
+        _device = new SdlDevice(Config.SampleRate);
+
+        _device.Context.MasterVolume = Config.Volume;
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album");
         
@@ -45,7 +50,7 @@ public class AudioPlayer : IDisposable
 
         AudioStream stream = CreateStreamFromFile(path);
 
-        _activeTrack = new Track(_device.Context, stream, info, Settings);
+        _activeTrack = new Track(_device.Context, stream, info, Config);
     }
 
     public void Play()
