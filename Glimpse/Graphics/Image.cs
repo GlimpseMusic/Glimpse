@@ -18,7 +18,7 @@ public class Image : IDisposable
 
         fixed (byte* pData = data)
         {
-            _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, width, height, 0, PixelFormat.Rgba,
+            _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba,
                 PixelType.UnsignedByte, pData);
         }
         

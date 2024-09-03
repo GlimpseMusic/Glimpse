@@ -16,5 +16,9 @@
       <PackageReference Include="Silk.NET.OpenGL" Version="2.21.0" />
       <PackageReference Include="Silk.NET.SDL" Version="2.21.0" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <EmbeddedResource Include="Graphics/Shaders/**/*" />
+    </ItemGroup>
 
 </Project>
