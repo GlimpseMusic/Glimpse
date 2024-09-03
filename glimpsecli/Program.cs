@@ -84,14 +84,14 @@ public static class GlimpseCli
             }
         }
 
-        AudioPlayer.Initialize();
-        AudioPlayer.Config.Volume = volume ?? AudioPlayer.Config.Volume;
-        AudioPlayer.Config.SpeedAdjust = speed ?? AudioPlayer.Config.SpeedAdjust;
+        using AudioPlayer player = new AudioPlayer();
+        player.Config.Volume = volume ?? player.Config.Volume;
+        player.Config.SpeedAdjust = speed ?? player.Config.SpeedAdjust;
         
-        AudioPlayer.ChangeTrack(files[currentFile]);
-        AudioPlayer.Play();
+        player.ChangeTrack(files[currentFile]);
+        player.Play();
         
-        PrintConsoleText(AudioPlayer.TrackInfo, 0, AudioPlayer.TrackLength, AudioPlayer.TrackState, currentFile, files.Count);
+        PrintConsoleText(player.TrackInfo, 0, player.TrackLength, player.TrackState, currentFile, files.Count);
 
         Console.CancelKeyPress += (sender, eventArgs) =>
         {
@@ -102,12 +102,12 @@ public static class GlimpseCli
 
         while (true)
         {
-            int elapsed = AudioPlayer.ElapsedSeconds;
-            int total = AudioPlayer.TrackLength;
+            int elapsed = player.ElapsedSeconds;
+            int total = player.TrackLength;
 
             (int left, int top) = Console.GetCursorPosition();
             Console.SetCursorPosition(left, top - 7);
-            PrintConsoleText(AudioPlayer.TrackInfo, elapsed, total, AudioPlayer.TrackState, currentFile, files.Count);
+            PrintConsoleText(player.TrackInfo, elapsed, total, player.TrackState, currentFile, files.Count);
 
             if (Console.KeyAvailable)
             {
@@ -117,16 +117,16 @@ public static class GlimpseCli
                 {
                     case ConsoleKey.P:
                     {
-                        if (AudioPlayer.TrackState == TrackState.Playing)
-                            AudioPlayer.Pause();
+                        if (player.TrackState == TrackState.Playing)
+                            player.Pause();
                         else
-                            AudioPlayer.Play();
+                            player.Play();
 
                         break;
                     }
                     
                     case ConsoleKey.Q:
-                        AudioPlayer.Stop();
+                        player.Stop();
                         goto EXIT;
 
                     case ConsoleKey.RightArrow: // ] Key?? Maybe??
@@ -135,12 +135,12 @@ public static class GlimpseCli
                         currentFile++;
                         if (currentFile >= files.Count)
                         {
-                            AudioPlayer.Stop();
+                            player.Stop();
                             goto EXIT;
                         }
 
-                        AudioPlayer.ChangeTrack(files[currentFile]);
-                        AudioPlayer.Play();
+                        player.ChangeTrack(files[currentFile]);
+                        player.Play();
 
                         break;
                     }
@@ -151,30 +151,28 @@ public static class GlimpseCli
                         if (currentFile < 0)
                             currentFile = 0;
                 
-                        AudioPlayer.ChangeTrack(files[currentFile]);
-                        AudioPlayer.Play();
+                        player.ChangeTrack(files[currentFile]);
+                        player.Play();
 
                         break;
                     }
                 }
             }
 
-            if (AudioPlayer.TrackState == TrackState.Stopped)
+            if (player.TrackState == TrackState.Stopped)
             {
                 currentFile++;
                 if (currentFile >= files.Count)
                     break;
                 
-                AudioPlayer.ChangeTrack(files[currentFile]);
-                AudioPlayer.Play();
+                player.ChangeTrack(files[currentFile]);
+                player.Play();
             }
             
             Thread.Sleep(125);
         }
         
         EXIT: ;
-        
-        AudioPlayer.Dispose();
         
         ResetConsole();
     }

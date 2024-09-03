@@ -1,31 +1,41 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Glimpse.Player.Configs;
+using Glimpse.Player.Plugins;
 using MixrSharp;
 using MixrSharp.Devices;
 using MixrSharp.Stream;
 
 namespace Glimpse.Player;
 
-public static class AudioPlayer
+public class AudioPlayer : IDisposable
 {
-    public static PlayerConfig Config;
+    public event OnTrackChanged TrackChanged = delegate { };
+
+    public event OnStateChanged StateChanged = delegate { };
+
+    public readonly PlayerConfig Config;
+
+    public readonly List<Plugin> Plugins;
     
-    private static Device _device;
+    private Device _device;
 
-    private static TrackInfo _defaultTrackInfo;
+    private readonly TrackInfo _defaultTrackInfo;
     
-    private static Track _activeTrack;
+    private Track _activeTrack;
 
-    public static int ElapsedSeconds => _activeTrack?.ElapsedSeconds ?? 0;
+    public int ElapsedSeconds => _activeTrack?.ElapsedSeconds ?? 0;
 
-    public static int TrackLength => _activeTrack?.LengthInSeconds ?? 0;
+    public int TrackLength => _activeTrack?.LengthInSeconds ?? 0;
 
-    public static TrackInfo TrackInfo => _activeTrack?.Info ?? _defaultTrackInfo;
+    public TrackInfo TrackInfo => _activeTrack?.Info ?? _defaultTrackInfo;
 
-    public static TrackState TrackState => _activeTrack?.State ?? TrackState.Stopped;
+    public TrackState TrackState => _activeTrack?.State ?? TrackState.Stopped;
 
-    public static void Initialize()
+    public AudioPlayer()
     {
         if (!IConfig.TryGetConfig("Player", out Config))
         {
@@ -37,11 +47,23 @@ public static class AudioPlayer
         _device.Context.MasterVolume = Config.Volume;
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
+
+        Plugins = new List<Plugin>();
         
-        DiscordPresence.Initialize();
+        foreach (Type type in Assembly.GetExecutingAssembly().GetTypes()
+                     .Where(type => type.IsAssignableTo(typeof(Plugin)) && type != typeof(Plugin)))
+        {
+            Plugin plugin = (Plugin) Activator.CreateInstance(type);
+            if (plugin == null)
+                continue;
+            
+            plugin.Initialize(this);
+            
+            Plugins.Add(plugin);
+        }
     }
 
-    public static void ChangeTrack(string path)
+    public void ChangeTrack(string path)
     {
         _activeTrack?.Dispose();
 
@@ -50,23 +72,27 @@ public static class AudioPlayer
         AudioStream stream = CreateStreamFromFile(path);
 
         _activeTrack = new Track(_device.Context, stream, info, Config);
+
+        TrackChanged(info);
     }
 
-    public static void Play()
+    public void Play()
     {
-        DiscordPresence.SetPresence(_activeTrack.Info, _activeTrack.LengthInSeconds);
         _activeTrack.Play();
+        StateChanged(TrackState.Playing);
     }
     
-    public static void Pause()
+    public void Pause()
     {
         _activeTrack.Pause();
+        StateChanged(TrackState.Paused);
     }
 
-    public static void Stop()
+    public void Stop()
     {
         _activeTrack.Dispose();
         _activeTrack = null;
+        StateChanged(TrackState.Stopped);
     }
 
     private static AudioStream CreateStreamFromFile(string path)
@@ -90,11 +116,16 @@ public static class AudioPlayer
         }
     }
 
-    public static void Dispose()
+    public void Dispose()
     {
-        DiscordPresence.Deinitialize();
+        foreach (Plugin plugin in Plugins)
+            plugin.Dispose();
         
         _activeTrack?.Dispose();
         _device.Dispose();
     }
+
+    public delegate void OnTrackChanged(TrackInfo info);
+
+    public delegate void OnStateChanged(TrackState state);
 }

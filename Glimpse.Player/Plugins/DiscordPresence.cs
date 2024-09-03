@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DiscordRPC;
 using Glimpse.Player.Configs;
@@ -8,21 +7,28 @@ using MetaBrainz.MusicBrainz.CoverArt;
 using MetaBrainz.MusicBrainz.CoverArt.Interfaces;
 using MetaBrainz.MusicBrainz.Interfaces.Searches;
 
-namespace Glimpse.Player;
+namespace Glimpse.Player.Plugins;
 
-public static class DiscordPresence
+public class DiscordPresence : Plugin
 {
+    private AudioPlayer _player;
+    
     private static string _currentUrl;
 
     public static DiscordConfig Config;
     
     public static DiscordRpcClient Client;
     
-    public static void Initialize()
+    public override void Initialize(AudioPlayer player)
     {
-        Client = new DiscordRpcClient("1280266653950804111");
+//#if DEBUG
+//        return;
+//#endif
 
-#if !DEBUG
+        _player = player;
+        
+        Client = new DiscordRpcClient("1280266653950804111");
+        
         if (!IConfig.TryGetConfig("Discord", out Config))
         {
             Config = new DiscordConfig();
@@ -30,18 +36,39 @@ public static class DiscordPresence
         }
         
         Client.Initialize();
-#endif
+        
+        player.TrackChanged += PlayerOnTrackChanged;
+        player.StateChanged += PlayerOnStateChanged;
     }
 
-    public static void SetPresence(TrackInfo info, double songLengthInSeconds)
+    private void PlayerOnTrackChanged(TrackInfo info)
     {
-        if (!Client.IsInitialized)
-            return;
+        SetPresence(info, _player.ElapsedSeconds, _player.TrackLength);
+    }
 
+    void PlayerOnStateChanged(TrackState state)
+    {
+        switch (state)
+        {
+            case TrackState.Playing:
+                SetPresence(_player.TrackInfo, _player.ElapsedSeconds, _player.TrackLength);
+                break;
+            
+            case TrackState.Paused:
+            case TrackState.Stopped:
+                Client.ClearPresence();
+                break;
+        }
+    }
+
+    public void SetPresence(TrackInfo info, int currentSecond, int totalSeconds)
+    {
+        DateTime now = DateTime.UtcNow;
+        
         RichPresence presence = new RichPresence()
             .WithDetails(info.Title)
             .WithState(info.Artist)
-            .WithTimestamps(Timestamps.FromTimeSpan(songLengthInSeconds))
+            .WithTimestamps(new Timestamps(now - TimeSpan.FromSeconds(currentSecond), now + TimeSpan.FromSeconds(totalSeconds)))
             .WithAssets(new Assets() { LargeImageText = info.Album, LargeImageKey = _currentUrl });
         
         Client.SetPresence(presence);
@@ -120,11 +147,8 @@ public static class DiscordPresence
         }
     }
 
-    public static void Deinitialize()
+    public override void Dispose()
     {
-        if (!Client.IsInitialized)
-            return;
-        
         Client.Dispose();
     }
 }
