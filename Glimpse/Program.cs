@@ -1,5 +1,4 @@
-﻿using Pie;
-using Pie.Windowing;
+﻿using Glimpse.Forms;
 
 namespace Glimpse;
 
@@ -7,6 +6,6 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        Glimpse.Run();
+        Glimpse.Run(new MiniPlayer());
     }
 }

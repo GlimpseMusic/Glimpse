@@ -1,41 +1,69 @@
-﻿using Pie;
-using Pie.Windowing;
-using Pie.Windowing.Events;
+﻿using System;
+using System.Collections.Generic;
+using Silk.NET.SDL;
+using Renderer = Glimpse.Graphics.Renderer;
 
 namespace Glimpse;
 
 public static class Glimpse
 {
-    private static bool _isOpen;
-    
-    public static Window Window;
+    private static Sdl _sdl;
+    private static List<Window> _windows;
+    private static Dictionary<uint, Window> _windowIds;
 
-    public static void Run()
+    public static void AddWindow(Window window)
     {
-        Window = new WindowBuilder()
-            .Size(1280, 720)
-            .Title("Glimpse")
-            .Resizable()
-            .Build(out GraphicsDevice device);
+        uint id = window.Create(_sdl);
+        _windows.Add(window);
+        _windowIds.Add(id, window);
+    }
 
-        _isOpen = true;
+    public static unsafe void Run(Window window)
+    {
+        _sdl = Sdl.GetApi();
+        
+        if (_sdl.Init(Sdl.InitVideo | Sdl.InitEvents) < 0)
+            throw new Exception("Failed to initialize SDL.");
 
-        while (_isOpen)
+        _windows = new List<Window>();
+        _windowIds = new Dictionary<uint, Window>();
+        
+        AddWindow(window);
+
+        while (_windows.Count > 0)
         {
-            while (Window.PollEvent(out IWindowEvent winEvent))
+            Event winEvent;
+            while (_sdl.PollEvent(&winEvent) != 0)
             {
-                switch (winEvent)
+                switch ((EventType) winEvent.Type)
                 {
-                    case QuitEvent:
-                        _isOpen = false;
+                    case EventType.Windowevent:
+                    {
+                        switch ((WindowEventID) winEvent.Window.Event)
+                        {
+                            case WindowEventID.Close:
+                            {
+                                Window wnd = _windowIds[winEvent.Window.WindowID];
+                                wnd.Dispose();
+                                _windowIds.Remove(winEvent.Window.WindowID);
+                                _windows.Remove(wnd);
+                                break;
+                            }
+                        }
+
                         break;
+                    }
                 }
             }
-            
-            device.Present(1);
+
+            foreach (Window wnd in _windows)
+            {
+                wnd.SetActive();
+                wnd.Present();
+            }
         }
         
-        device.Dispose();
-        Window.Dispose();
+        _sdl.Quit();
+        _sdl.Dispose();
     }
 }
