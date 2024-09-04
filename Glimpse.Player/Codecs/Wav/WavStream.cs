@@ -7,6 +7,8 @@ public class WavStream : CodecStream
 {
     private readonly MixrSharp.Stream.Wav _wav;
 
+    public override TrackInfo TrackInfo { get; }
+    
     public override AudioFormat Format => _wav.Format;
 
     public override ulong LengthInSamples => _wav.LengthInSamples;
@@ -14,6 +16,7 @@ public class WavStream : CodecStream
     public WavStream(string path)
     {
         _wav = new MixrSharp.Stream.Wav(path);
+        TrackInfo = TrackInfo.FromFile(path);
     }
 
     public override ulong GetBuffer(Span<byte> buffer)

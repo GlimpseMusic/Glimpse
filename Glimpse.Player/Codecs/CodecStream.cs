@@ -5,6 +5,8 @@ namespace Glimpse.Player.Codecs;
 
 public abstract class CodecStream : IDisposable
 {
+    public abstract TrackInfo TrackInfo { get; }
+    
     public abstract AudioFormat Format { get; }
     
     public abstract ulong LengthInSamples { get; }

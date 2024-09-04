@@ -7,6 +7,8 @@ public class VorbisStream : CodecStream
 {
     private readonly MixrSharp.Stream.Vorbis _vorbis;
 
+    public override TrackInfo TrackInfo { get; }
+    
     public override AudioFormat Format => _vorbis.Format;
 
     public override ulong LengthInSamples => _vorbis.LengthInSamples;
@@ -14,6 +16,7 @@ public class VorbisStream : CodecStream
     public VorbisStream(string path)
     {
         _vorbis = new MixrSharp.Stream.Vorbis(path);
+        TrackInfo = TrackInfo.FromFile(path);
     }
     
     public override ulong GetBuffer(Span<byte> buffer)

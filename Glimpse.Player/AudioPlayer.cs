@@ -70,7 +70,14 @@ public class AudioPlayer : IDisposable
             
             foreach (string file in Directory.GetFiles(pluginsLocation, "*.dll", SearchOption.AllDirectories))
             {
-                _pluginsContext.LoadFromAssemblyPath(file);
+                try
+                {
+                    _pluginsContext.LoadFromAssemblyPath(file);
+                }
+                catch (BadImageFormatException)
+                {
+                    // If this is thrown then it's likely a native DLL.
+                }
             }
 
             AssemblyName currentName = Assembly.GetAssembly(typeof(AudioPlayer))?.GetName();
@@ -92,10 +99,9 @@ public class AudioPlayer : IDisposable
                 
                 ASSEMBLY_GOOD: ;
                 
-                Console.WriteLine(assembly);
+                Console.WriteLine($"Plugin {assembly} loaded.");
                 
-                foreach (Type type in assembly.GetTypes()
-                             .Where(type => type.IsAssignableTo(typeof(Plugin)) && type != typeof(Plugin)))
+                foreach (Type type in assembly.GetTypes().Where(type => type.IsAssignableTo(typeof(Plugin))))
                 {
                     Plugin plugin = (Plugin) Activator.CreateInstance(type);
                     if (plugin == null)
@@ -112,10 +118,9 @@ public class AudioPlayer : IDisposable
     public void ChangeTrack(string path)
     {
         _activeTrack?.Dispose();
-
-        TrackInfo info = TrackInfo.FromFile(path);
-
+        
         CodecStream stream = CreateStreamFromFile(path);
+        TrackInfo info = stream.TrackInfo;
 
         _activeTrack = new Track(_device.Context, stream, info, Config);
 
