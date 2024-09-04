@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Glimpse.Player.Codecs;
 using Glimpse.Player.Configs;
 using MixrSharp;
 using MixrSharp.Stream;
@@ -8,7 +9,7 @@ namespace Glimpse.Player;
 
 public class Track : IDisposable
 {
-    private AudioStream _stream;
+    private CodecStream _stream;
     private AudioFormat _format;
     private AudioSource _source;
 
@@ -46,7 +47,7 @@ public class Track : IDisposable
         }
     }
     
-    internal Track(Context context, AudioStream stream, TrackInfo info, PlayerConfig config)
+    internal Track(Context context, CodecStream stream, TrackInfo info, PlayerConfig config)
     {
         _stream = stream;
 

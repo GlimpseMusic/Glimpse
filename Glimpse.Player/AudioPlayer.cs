@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using Glimpse.Player.Codecs;
+using Glimpse.Player.Codecs.Mp3;
 using Glimpse.Player.Configs;
 using Glimpse.Player.Plugins;
 using MixrSharp;
@@ -19,6 +21,8 @@ public class AudioPlayer : IDisposable
     public event OnStateChanged StateChanged = delegate { };
 
     public readonly PlayerConfig Config;
+
+    public readonly List<Codec> Codecs;
 
     public readonly List<Plugin> Plugins;
 
@@ -50,6 +54,8 @@ public class AudioPlayer : IDisposable
         _device.Context.MasterVolume = Config.Volume;
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
+
+        Codecs = [new Mp3Codec()];
 
         if (Directory.Exists("Plugins"))
         {
@@ -89,7 +95,7 @@ public class AudioPlayer : IDisposable
 
         TrackInfo info = TrackInfo.FromFile(path);
 
-        AudioStream stream = CreateStreamFromFile(path);
+        CodecStream stream = CreateStreamFromFile(path);
 
         _activeTrack = new Track(_device.Context, stream, info, Config);
 
@@ -115,25 +121,15 @@ public class AudioPlayer : IDisposable
         StateChanged(TrackState.Stopped);
     }
 
-    private static AudioStream CreateStreamFromFile(string path)
+    private CodecStream CreateStreamFromFile(string path)
     {
-        string extension = Path.GetExtension(path);
-        
-        // TODO: This isn't very robust. But it works for now.
-        switch (extension)
+        foreach (Codec codec in Codecs)
         {
-            case ".mp3":
-                return new Mp3(path);
-            case ".ogg":
-                return new Vorbis(path);
-            case ".wav":
-                return new Wav(path);
-            case ".flac":
-                return new Flac(path);
-            
-            default:
-                throw new NotSupportedException($"Files with type '{extension}' are not supported.");
+            if (codec.FileIsSupported(path))
+                return codec.CreateStream(path);
         }
+
+        throw new NotSupportedException($"File type '{Path.GetExtension(path)}' not supported.");
     }
 
     public void Dispose()
