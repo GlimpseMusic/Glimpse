@@ -1,14 +1,14 @@
-﻿namespace Glimpse.Player.Codecs.Vorbis;
+﻿namespace Glimpse.Player.Codecs.Wav;
 
-public class VorbisCodec : Codec
+public class WavCodec : Codec
 {
     public override bool FileIsSupported(string path, string extension)
     {
-        return extension == ".ogg";
+        return extension == ".wav";
     }
 
     public override CodecStream CreateStream(string path)
     {
-        return new VorbisStream(path);
+        return new WavStream(path);
     }
 }

@@ -8,6 +8,7 @@ using Glimpse.Player.Codecs;
 using Glimpse.Player.Codecs.Flac;
 using Glimpse.Player.Codecs.Mp3;
 using Glimpse.Player.Codecs.Vorbis;
+using Glimpse.Player.Codecs.Wav;
 using Glimpse.Player.Configs;
 using Glimpse.Player.Plugins;
 using MixrSharp;
@@ -57,7 +58,7 @@ public class AudioPlayer : IDisposable
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
 
-        Codecs = [new Mp3Codec(), new FlacCodec(), new VorbisCodec()];
+        Codecs = [new Mp3Codec(), new FlacCodec(), new VorbisCodec(), new WavCodec()];
 
         if (Directory.Exists("Plugins"))
         {
