@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using Glimpse.Player.Codecs;
+using Glimpse.Player.Codecs.Flac;
 using Glimpse.Player.Codecs.Mp3;
 using Glimpse.Player.Configs;
 using Glimpse.Player.Plugins;
@@ -55,7 +56,7 @@ public class AudioPlayer : IDisposable
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
 
-        Codecs = [new Mp3Codec()];
+        Codecs = [new Mp3Codec(), new FlacCodec()];
 
         if (Directory.Exists("Plugins"))
         {
@@ -123,13 +124,15 @@ public class AudioPlayer : IDisposable
 
     private CodecStream CreateStreamFromFile(string path)
     {
+        string extension = Path.GetExtension(path);
+        
         foreach (Codec codec in Codecs)
         {
-            if (codec.FileIsSupported(path))
+            if (codec.FileIsSupported(path, extension))
                 return codec.CreateStream(path);
         }
 
-        throw new NotSupportedException($"File type '{Path.GetExtension(path)}' not supported.");
+        throw new NotSupportedException($"File type '{extension}' not supported.");
     }
 
     public void Dispose()
