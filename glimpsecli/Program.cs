@@ -10,6 +10,12 @@ public static class GlimpseCli
 {
     public static void Main(string[] args)
     {
+        if (args.Length == 0)
+        {
+            PrintHelp();
+            return;
+        }
+        
         List<string> files = new List<string>();
         float? volume = null;
         double? speed = null;
@@ -22,6 +28,10 @@ public static class GlimpseCli
             {
                 switch (arg)
                 {
+                    case "--help" or "-h":
+                        PrintHelp();
+                        return;
+                    
                     case "--volume" or "-v":
                     {
                         if (ReadArg(args, ref argIndex, out arg) && float.TryParse(arg, out float vol))
@@ -30,7 +40,9 @@ public static class GlimpseCli
                             continue;
                         }
                         
-                        Console.WriteLine("Error while parsing volume.");
+                        PrintHelp();
+                        Console.WriteLine();
+                        Console.WriteLine("ERROR: Volume was not parsable.");
                         return;
                     }
                 
@@ -42,7 +54,9 @@ public static class GlimpseCli
                             continue;
                         }
                         
-                        Console.WriteLine("Error while parsing speed.");
+                        PrintHelp();
+                        Console.WriteLine();
+                        Console.WriteLine("ERROR: Speed was not parsable.");
                         return;
                     }
 
@@ -54,12 +68,16 @@ public static class GlimpseCli
                             continue;
                         }
 
-                        Console.WriteLine("Error while parsing track number.");
+                        PrintHelp();
+                        Console.WriteLine();
+                        Console.WriteLine("ERROR: Track number was not parsable.");
                         return;
                     }
                     
                     default:
-                        Console.WriteLine($"Invalid argument \"{arg}\".");
+                        PrintHelp();
+                        Console.WriteLine();
+                        Console.WriteLine($"ERROR: Invalid argument \"{arg}\".");
                         return;
                 }
             }
@@ -78,10 +96,20 @@ public static class GlimpseCli
                 }
                 else
                 {
-                    Console.WriteLine($"Argument {argIndex}: An invalid file was provided.");
+                    PrintHelp();
+                    Console.WriteLine();
+                    Console.WriteLine($"ERROR: Argument {argIndex}: An invalid file was provided.");
                     return;
                 }
             }
+        }
+
+        if (files.Count == 0)
+        {
+            PrintHelp();
+            Console.WriteLine();
+            Console.WriteLine("ERROR: No file was provided.");
+            return;
         }
 
         using AudioPlayer player = new AudioPlayer();
@@ -106,7 +134,7 @@ public static class GlimpseCli
             int total = player.TrackLength;
 
             (int left, int top) = Console.GetCursorPosition();
-            Console.SetCursorPosition(left, top - 7);
+            Console.SetCursorPosition(left, top - 8);
             PrintConsoleText(player.TrackInfo, elapsed, total, player.TrackState, currentFile, files.Count);
 
             if (Console.KeyAvailable)
@@ -129,7 +157,7 @@ public static class GlimpseCli
                         player.Stop();
                         goto EXIT;
 
-                    case ConsoleKey.RightArrow: // ] Key?? Maybe??
+                    case ConsoleKey.OemPeriod:
                     {
                         // TODO: This needs to be in a method.
                         currentFile++;
@@ -145,7 +173,7 @@ public static class GlimpseCli
                         break;
                     }
 
-                    case ConsoleKey.LeftArrow: // [ Key?? Maybe too??
+                    case ConsoleKey.OemComma:
                     {
                         currentFile--;
                         if (currentFile < 0)
@@ -201,7 +229,7 @@ public static class GlimpseCli
                 Console.Write('-');
         }
     
-        Console.WriteLine($"] {total / 60}:{total % 60:00}");
+        Console.WriteLine($"] {total / 60}:{total % 60:00}".PadRight(padAmount));
     }
 
     private static void ResetConsole()
@@ -219,6 +247,23 @@ public static class GlimpseCli
 
         arg = args[index++];
         return true;
+    }
+
+    private static void PrintHelp()
+    {
+        Console.WriteLine("""
+                          glimpsecli
+
+                          Usage: glimpsecli [options] <files/directories>
+
+                          Options:
+                              --track <n>, -t <n>
+                                  Start at track n.
+                              --volume <v>, -v <v>
+                                  Change the playback volume, where a value of 1.0 is 100% volume.
+                              --speed <s>, -s <s>
+                                  Change the playback speed, where a value of 1.0 is 100% speed;
+                          """);
     }
 }
 
