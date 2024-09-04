@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "glimpsecli", "glimpsecli\gl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse", "Glimpse\Glimpse.csproj", "{1C241E46-55CB-4D11-A895-CC449F90AE5B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{2D9BD12C-4E03-4DD8-8B8C-5A28494F46A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse.DiscordPresence", "Plugins\Glimpse.DiscordPresence\Glimpse.DiscordPresence.csproj", "{07363D9A-CDDA-4856-9E1D-20123DCA1C7B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,12 @@ Global
 		{1C241E46-55CB-4D11-A895-CC449F90AE5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C241E46-55CB-4D11-A895-CC449F90AE5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C241E46-55CB-4D11-A895-CC449F90AE5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07363D9A-CDDA-4856-9E1D-20123DCA1C7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07363D9A-CDDA-4856-9E1D-20123DCA1C7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07363D9A-CDDA-4856-9E1D-20123DCA1C7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07363D9A-CDDA-4856-9E1D-20123DCA1C7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{07363D9A-CDDA-4856-9E1D-20123DCA1C7B} = {2D9BD12C-4E03-4DD8-8B8C-5A28494F46A9}
 	EndGlobalSection
 EndGlobal

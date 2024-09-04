@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using Glimpse.Player.Configs;
 using Glimpse.Player.Plugins;
 using MixrSharp;
@@ -20,6 +21,8 @@ public class AudioPlayer : IDisposable
     public readonly PlayerConfig Config;
 
     public readonly List<Plugin> Plugins;
+
+    private AssemblyLoadContext _pluginsContext;
     
     private Device _device;
 
@@ -48,18 +51,35 @@ public class AudioPlayer : IDisposable
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
 
-        Plugins = new List<Plugin>();
-        
-        foreach (Type type in Assembly.GetExecutingAssembly().GetTypes()
-                     .Where(type => type.IsAssignableTo(typeof(Plugin)) && type != typeof(Plugin)))
+        if (Directory.Exists("Plugins"))
         {
-            Plugin plugin = (Plugin) Activator.CreateInstance(type);
-            if (plugin == null)
-                continue;
+            _pluginsContext = new AssemblyLoadContext("Plugins");
             
-            plugin.Initialize(this);
+            Plugins = new List<Plugin>();
+
+            string pluginsLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Plugins");
             
-            Plugins.Add(plugin);
+            foreach (string file in Directory.GetFiles(pluginsLocation, "*.dll", SearchOption.AllDirectories))
+            {
+                _pluginsContext.LoadFromAssemblyPath(file);
+            }
+        
+            foreach (Assembly assembly in _pluginsContext.Assemblies)
+            {
+                Console.WriteLine(assembly);
+                
+                foreach (Type type in assembly.GetTypes()
+                             .Where(type => type.IsAssignableTo(typeof(Plugin)) && type != typeof(Plugin)))
+                {
+                    Plugin plugin = (Plugin) Activator.CreateInstance(type);
+                    if (plugin == null)
+                        continue;
+
+                    plugin.Initialize(this);
+
+                    Plugins.Add(plugin);
+                }
+            }
         }
     }
 
@@ -118,9 +138,12 @@ public class AudioPlayer : IDisposable
 
     public void Dispose()
     {
-        foreach (Plugin plugin in Plugins)
-            plugin.Dispose();
-        
+        if (Plugins != null)
+        {
+            foreach (Plugin plugin in Plugins)
+                plugin.Dispose();
+        }
+
         _activeTrack?.Dispose();
         _device.Dispose();
     }

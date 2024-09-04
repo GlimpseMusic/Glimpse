@@ -1,13 +1,13 @@
-using System;
-using System.Threading.Tasks;
 using DiscordRPC;
+using Glimpse.Player;
 using Glimpse.Player.Configs;
+using Glimpse.Player.Plugins;
 using MetaBrainz.MusicBrainz;
 using MetaBrainz.MusicBrainz.CoverArt;
 using MetaBrainz.MusicBrainz.CoverArt.Interfaces;
 using MetaBrainz.MusicBrainz.Interfaces.Searches;
 
-namespace Glimpse.Player.Plugins;
+namespace Glimpse.DiscordPresence;
 
 public class DiscordPresence : Plugin
 {
@@ -21,10 +21,6 @@ public class DiscordPresence : Plugin
     
     public override void Initialize(AudioPlayer player)
     {
-#if DEBUG
-        return;
-#endif
-
         _player = player;
         
         Client = new DiscordRpcClient("1280266653950804111");
@@ -149,6 +145,6 @@ public class DiscordPresence : Plugin
 
     public override void Dispose()
     {
-        Client?.Dispose();
+        Client.Dispose();
     }
 }
