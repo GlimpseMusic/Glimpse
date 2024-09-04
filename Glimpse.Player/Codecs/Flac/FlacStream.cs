@@ -5,7 +5,7 @@ namespace Glimpse.Player.Codecs.Flac;
 
 public class FlacStream : CodecStream
 {
-    private MixrSharp.Stream.Flac _flac;
+    private readonly MixrSharp.Stream.Flac _flac;
 
     public override AudioFormat Format => _flac.Format;
 
