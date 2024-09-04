@@ -11,6 +11,6 @@ public class Mp3Codec : Codec
 
     public override CodecStream CreateStream(string path)
     {
-        throw new System.NotImplementedException();
+        return new Mp3Stream(path);
     }
 }

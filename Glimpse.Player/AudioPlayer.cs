@@ -72,9 +72,26 @@ public class AudioPlayer : IDisposable
             {
                 _pluginsContext.LoadFromAssemblyPath(file);
             }
-        
+
+            AssemblyName currentName = Assembly.GetAssembly(typeof(AudioPlayer))?.GetName();
+            
             foreach (Assembly assembly in _pluginsContext.Assemblies)
             {
+                foreach (AssemblyName name in assembly.GetReferencedAssemblies())
+                {
+                    if (name.Name == currentName.Name)
+                    {
+                        if (name.Version != currentName.Version)
+                            Console.WriteLine("WARNING: Plugin requires different version of Glimpse. It may cause errors.");
+                        
+                        goto ASSEMBLY_GOOD;
+                    }
+                }
+                
+                continue;
+                
+                ASSEMBLY_GOOD: ;
+                
                 Console.WriteLine(assembly);
                 
                 foreach (Type type in assembly.GetTypes()

@@ -1,3 +1,6 @@
 [submodule "MixrSharp"]
 	path = MixrSharp
 	url = https://github.com/Aquatic-Games/MixrSharp
+[submodule "Plugins/OpenMPT.NET"]
+	path = Plugins/OpenMPT.NET
+	url = https://github.com/aquagoose/OpenMPT.NET
