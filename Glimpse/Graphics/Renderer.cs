@@ -11,6 +11,8 @@ namespace Glimpse.Graphics;
 
 public unsafe class Renderer : IDisposable
 {
+    private readonly Image _white;
+    
     private readonly BufferShaderSet _imageRenderSet;
 
     private Matrix4x4 _projection;
@@ -20,6 +22,10 @@ public unsafe class Renderer : IDisposable
     public Renderer(GL gl, uint width, uint height)
     {
         GL = gl;
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        _white = CreateImage([255, 255, 255, 255], 1, 1);
 
         _projection = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
 
@@ -77,7 +83,7 @@ public unsafe class Renderer : IDisposable
         GL.Clear(ClearBufferMask.ColorBufferBit);
     }
 
-    public void DrawImage(Image image, Vector2 position, Size size)
+    public void DrawImage(Image image, Vector2 position, Size size, Color tint)
     {
         _imageRenderSet.Bind();
 
@@ -86,16 +92,21 @@ public unsafe class Renderer : IDisposable
 
         _imageRenderSet.SetMatrix4x4("uTransform", world * _projection);
         
-        _imageRenderSet.SetVector4("uTint", Vector4.One);
+        _imageRenderSet.SetVector4("uTint", tint.Normalize());
         
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, image.Texture);
         
         GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedShort, null);
     }
+
+    public void DrawRectangle(Color color, Vector2 postion, Size size)
+        => DrawImage(_white, postion, size, color);
     
     public void Dispose()
     {
+        _imageRenderSet.Dispose();
+        _white.Dispose();
         GL.Dispose();
     }
 

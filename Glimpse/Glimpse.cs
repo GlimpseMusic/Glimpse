@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Glimpse.Player;
 using Silk.NET.SDL;
 using Renderer = Glimpse.Graphics.Renderer;
 
@@ -11,6 +12,8 @@ public static class Glimpse
     private static List<Window> _windows;
     private static Dictionary<uint, Window> _windowIds;
 
+    public static AudioPlayer Player;
+
     public static void AddWindow(Window window)
     {
         uint id = window.Create(_sdl);
@@ -18,7 +21,7 @@ public static class Glimpse
         _windowIds.Add(id, window);
     }
 
-    public static unsafe void Run(Window window)
+    public static unsafe void Run(Window window, string file = null)
     {
         _sdl = Sdl.GetApi();
         
@@ -27,6 +30,13 @@ public static class Glimpse
 
         _windows = new List<Window>();
         _windowIds = new Dictionary<uint, Window>();
+
+        Player = new AudioPlayer();
+        if (file != null)
+        {
+            Player.ChangeTrack(file);
+            //Player.Play();
+        }
         
         AddWindow(window);
 

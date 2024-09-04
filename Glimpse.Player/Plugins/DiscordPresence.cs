@@ -15,15 +15,15 @@ public class DiscordPresence : Plugin
     
     private static string _currentUrl;
 
-    public static DiscordConfig Config;
+    public DiscordConfig Config;
     
-    public static DiscordRpcClient Client;
+    public DiscordRpcClient Client;
     
     public override void Initialize(AudioPlayer player)
     {
-//#if DEBUG
-//        return;
-//#endif
+#if DEBUG
+        return;
+#endif
 
         _player = player;
         
@@ -61,7 +61,7 @@ public class DiscordPresence : Plugin
         }
     }
 
-    public void SetPresence(TrackInfo info, int currentSecond, int totalSeconds)
+    private void SetPresence(TrackInfo info, int currentSecond, int totalSeconds)
     {
         DateTime now = DateTime.UtcNow;
         
@@ -149,6 +149,6 @@ public class DiscordPresence : Plugin
 
     public override void Dispose()
     {
-        Client.Dispose();
+        Client?.Dispose();
     }
 }

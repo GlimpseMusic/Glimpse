@@ -7,9 +7,11 @@ namespace Glimpse.Forms;
 
 public class MiniPlayer : Window
 {
-    private Image _image;
+    private Image _playButton;
     
-    public MiniPlayer(string[] args)
+    private Image _albumArt;
+    
+    public MiniPlayer()
     {
         Title = "Glimpse MiniPlayer";
         Size = new Size(250, 250);
@@ -17,15 +19,21 @@ public class MiniPlayer : Window
 
     protected override void Initialize()
     {
-        TrackInfo info = TrackInfo.FromFile(@"C:\Users\ollie\Music\Copied\01 - April Showers.mp3");
+        _playButton = Renderer.CreateImage("Assets/Icons/PlayButton.png");
         
-        _image = Renderer.CreateImage(info.AlbumArt.Data);
+        AudioPlayer player = Glimpse.Player;
+
+        _albumArt = Renderer.CreateImage(player.TrackInfo.AlbumArt.Data);
     }
 
     protected override void Update()
     {
         Renderer.Clear(Color.Black);
         
-        Renderer.DrawImage(_image, Vector2.Zero, new Size(250, 250));
+        Renderer.DrawImage(_albumArt, Vector2.Zero, new Size(250, 250), Color.White);
+        
+        Renderer.DrawRectangle(Color.FromArgb(128, Color.Black), new Vector2(0, 190), new Size(250, 60));
+        
+        Renderer.DrawImage(_playButton, new Vector2(250 / 2 - 20, 200), new Size(40, 40), Color.White);
     }
 }
