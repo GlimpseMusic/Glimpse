@@ -24,9 +24,6 @@ public unsafe class BufferShaderSet<TVertex, TIndex> : IDisposable
         
         VertexArray = _gl.CreateVertexArray();
         _gl.BindVertexArray(VertexArray);
-        
-        // Unbind vertex array so we don't affect any that may be bound.
-        gl.BindVertexArray(0);
 
         VertexBuffer = gl.GenBuffer();
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, VertexBuffer);

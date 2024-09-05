@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Glimpse.Player;
+using Hexa.NET.ImGui;
 using Silk.NET.SDL;
 using Renderer = Glimpse.Graphics.Renderer;
 
@@ -31,12 +32,12 @@ public static class Glimpse
         _windows = new List<Window>();
         _windowIds = new Dictionary<uint, Window>();
 
-        Player = new AudioPlayer();
+        /*Player = new AudioPlayer();
         if (file != null)
         {
             Player.ChangeTrack(file);
             //Player.Play();
-        }
+        }*/
         
         AddWindow(window);
 
@@ -61,6 +62,35 @@ public static class Glimpse
                             }
                         }
 
+                        break;
+                    }
+
+                    case EventType.Mousemotion:
+                    {
+                        Window wnd = _windowIds[winEvent.Motion.WindowID];
+                        ImGui.SetCurrentContext(wnd.ImGuiRenderer.ImGuiContext);
+                        
+                        ImGui.GetIO().AddMousePosEvent(winEvent.Motion.X, winEvent.Motion.Y);
+                        break;
+                    }
+
+                    case EventType.Mousebuttondown:
+                    {
+                        Window wnd = _windowIds[winEvent.Button.WindowID];
+                        ImGui.SetCurrentContext(wnd.ImGuiRenderer.ImGuiContext);
+                        
+                        Console.WriteLine(winEvent.Button.Button);
+                        
+                        ImGui.GetIO().AddMouseButtonEvent((int) winEvent.Button.Button - 1, true);
+                        break;
+                    }
+                    
+                    case EventType.Mousebuttonup:
+                    {
+                        Window wnd = _windowIds[winEvent.Button.WindowID];
+                        ImGui.SetCurrentContext(wnd.ImGuiRenderer.ImGuiContext);
+                        
+                        ImGui.GetIO().AddMouseButtonEvent((int) winEvent.Button.Button - 1, false);
                         break;
                     }
                 }

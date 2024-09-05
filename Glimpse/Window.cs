@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Drawing;
+using Glimpse.Graphics;
+using Hexa.NET.ImGui;
 using Silk.NET.OpenGL;
 using Silk.NET.SDL;
 using Renderer = Glimpse.Graphics.Renderer;
@@ -17,6 +19,7 @@ public abstract unsafe class Window : IDisposable
     private void* _glContext;
 
     public Renderer Renderer;
+    public ImGuiRenderer ImGuiRenderer;
 
     public string Title
     {
@@ -89,6 +92,8 @@ public abstract unsafe class Window : IDisposable
         Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)), (uint) _size.Width,
             (uint) _size.Height);
 
+        ImGuiRenderer = new ImGuiRenderer(Renderer.GL, _size);
+
         _isCreated = true;
         
         Initialize();
@@ -99,11 +104,15 @@ public abstract unsafe class Window : IDisposable
     internal void SetActive()
     {
         _sdl.GLMakeCurrent(_window, _glContext);
+        ImGui.SetCurrentContext(ImGuiRenderer.ImGuiContext);
+        ImGui.GetIO().DeltaTime = 1 / 60.0f;
+        ImGui.NewFrame();
         Update();
     }
 
     internal void Present()
     {
+        ImGuiRenderer.Render();
         _sdl.GLSetSwapInterval(1);
         _sdl.GLSwapWindow(_window);
     }

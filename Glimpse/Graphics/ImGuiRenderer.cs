@@ -52,14 +52,14 @@ public class ImGuiRenderer : IDisposable
         _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, (uint) sizeof(ImDrawVert), (void*) 8);
         _gl.EnableVertexAttribArray(2);
         _gl.VertexAttribPointer(2, 4, VertexAttribPointerType.UnsignedByte, true, (uint) sizeof(ImDrawVert), (void*) 16);
-        
-        RecreateFontTexture();
 
         ImGuiIOPtr io = ImGui.GetIO();
         io.DisplaySize = new Vector2(size.Width, size.Height);
         
         io.Fonts.AddFontDefault();
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
+        
+        RecreateFontTexture();
 
         Fonts = new Dictionary<string, ImFontPtr>();
     }
@@ -89,12 +89,14 @@ public class ImGuiRenderer : IDisposable
         {
             //Logger.Trace("Recreate vertex buffer.");
             _vBufferSize = (uint) (drawData.TotalVtxCount + 5000);
+            _bufferSet.ResizeVertexBuffer(_vBufferSize);
         }
 
         if (drawData.TotalIdxCount >= _iBufferSize)
         {
             //Logger.Trace("Recreate index buffer.");
             _iBufferSize = (uint) (drawData.TotalIdxCount + 10000);
+            _bufferSet.ResizeIndexBuffer(_iBufferSize);
         }
 
         uint vertexOffset = 0;
@@ -108,14 +110,14 @@ public class ImGuiRenderer : IDisposable
         {
             ImDrawListPtr cmdList = drawData.CmdLists[i];
             
-            Unsafe.CopyBlock((byte*) vPtr + vertexOffset, (void*) cmdList.VtxBuffer.Data, (uint) (cmdList.VtxBuffer.Size * sizeof(ImDrawVert)));
-            Unsafe.CopyBlock((byte*) iPtr + indexOffset, (void*) cmdList.IdxBuffer.Data, (uint) (cmdList.IdxBuffer.Size * sizeof(ImDrawIdx)));
+            Unsafe.CopyBlock((byte*) vPtr + vertexOffset, cmdList.VtxBuffer.Data, (uint) (cmdList.VtxBuffer.Size * sizeof(ImDrawVert)));
+            Unsafe.CopyBlock((byte*) iPtr + indexOffset, cmdList.IdxBuffer.Data, (uint) (cmdList.IdxBuffer.Size * sizeof(ImDrawIdx)));
 
             vertexOffset += (uint) (cmdList.VtxBuffer.Size * sizeof(ImDrawVert));
             indexOffset += (uint) (cmdList.IdxBuffer.Size * sizeof(ImDrawIdx));
         }
-        _gl.UnmapBuffer(BufferTargetARB.ElementArrayBuffer);
         _gl.UnmapBuffer(BufferTargetARB.ArrayBuffer);
+        _gl.UnmapBuffer(BufferTargetARB.ElementArrayBuffer);
 
         _bufferSet.SetMatrix4x4("uProjection",
             Matrix4x4.CreateOrthographicOffCenter(drawData.DisplayPos.X, drawData.DisplayPos.X + drawData.DisplaySize.X,
@@ -154,7 +156,7 @@ public class ImGuiRenderer : IDisposable
                 //    (int) (drawCmd.VtxOffset + vertexOffset));
 
                 _gl.DrawElementsBaseVertex(PrimitiveType.Triangles, drawCmd.ElemCount, DrawElementsType.UnsignedShort,
-                    (void*) (drawCmd.IdxOffset + indexOffset), (int) (drawCmd.VtxOffset + vertexOffset));
+                    (void*) (drawCmd.IdxOffset + indexOffset * sizeof(ushort)), (int) (drawCmd.VtxOffset + vertexOffset));
             }
 
             vertexOffset += (uint) cmdList.VtxBuffer.Size;
@@ -182,6 +184,11 @@ public class ImGuiRenderer : IDisposable
         _gl.BindTexture(TextureTarget.Texture2D, _imGuiTexture);
         _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint) width, (uint) height, 0,
             PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+        
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.LinearMipmapLinear);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear);
+
+        _gl.GenerateMipmap(TextureTarget.Texture2D);
         
         io.Fonts.SetTexID(new ImTextureID((IntPtr) _imGuiTexture));
     }

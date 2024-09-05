@@ -5,7 +5,7 @@ layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec4 aColor;
 
 out vec2 frag_TexCoord;
-out vec2 frag_Color;
+out vec4 frag_Color;
 
 uniform mat4 uProjection;
 
