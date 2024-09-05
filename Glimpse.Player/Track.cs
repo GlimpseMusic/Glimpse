@@ -28,7 +28,9 @@ public class Track : IDisposable
         get
         {
             ulong totalSamples = _totalBytes / _format.BytesPerSample / _format.Channels;
+            totalSamples += _source.Position;
 
+            // TODO: Make this better.
             return (int) (totalSamples / _format.SampleRate);
         }
     }
@@ -90,10 +92,11 @@ public class Track : IDisposable
     
     private void BufferFinished()
     {
+        _totalBytes += (ulong) _audioBuffer.Length;
+        
         Task.Run(() =>
         {
             ulong bytesProcessed = _stream.GetBuffer(_audioBuffer);
-            _totalBytes += bytesProcessed;
 
             if (bytesProcessed == 0)
             {

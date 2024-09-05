@@ -21,7 +21,7 @@ public class MptStream : CodecStream
 
     public MptStream(string path)
     {
-        _module = Module.FromMemory(File.ReadAllBytes(path), new ModuleOptions());
+        _module = Module.FromMemory(File.ReadAllBytes(path), new ModuleOptions(emulateAmigaResampler: true));
 
         ModuleMetadata metadata = _module.Metadata;
         TrackInfo = new TrackInfo(metadata.Title ?? TrackInfo.UnknownTitle, metadata.Artist ?? TrackInfo.UnknownArtist,
