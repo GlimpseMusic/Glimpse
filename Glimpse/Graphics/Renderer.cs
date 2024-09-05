@@ -13,7 +13,7 @@ public unsafe class Renderer : IDisposable
 {
     private readonly Image _white;
     
-    private readonly BufferShaderSet _imageRenderSet;
+    private readonly BufferShaderSet<Vertex2D, ushort> _imageRenderSet;
 
     private Matrix4x4 _projection;
     
@@ -46,7 +46,7 @@ public unsafe class Renderer : IDisposable
         string imageVertShader = Resource.LoadString(Assembly.GetExecutingAssembly(), ShaderAssemblyBase + "Image.vert");
         string imageFragShader = Resource.LoadString(Assembly.GetExecutingAssembly(), ShaderAssemblyBase + "Image.frag");
 
-        _imageRenderSet = BufferShaderSet.Create(GL, vertices, indices, imageVertShader, imageFragShader);
+        _imageRenderSet = new BufferShaderSet<Vertex2D, ushort>(GL, vertices, indices, imageVertShader, imageFragShader);
         
         GL.EnableVertexAttribArray(0);
         GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, (uint) sizeof(Vertex2D), (void*) 0);
@@ -95,7 +95,7 @@ public unsafe class Renderer : IDisposable
         _imageRenderSet.SetVector4("uTint", tint.Normalize());
         
         GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, image.Texture);
+        GL.BindTexture(TextureTarget.Texture2D, image.ID);
         
         GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedShort, null);
     }

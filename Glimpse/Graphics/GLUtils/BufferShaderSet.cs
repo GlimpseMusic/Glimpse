@@ -4,29 +4,44 @@ using Silk.NET.OpenGL;
 
 namespace Glimpse.Graphics.GLUtils;
 
-public class BufferShaderSet : IDisposable
+public unsafe class BufferShaderSet<TVertex, TIndex> : IDisposable 
+    where TVertex : unmanaged
+    where TIndex : unmanaged
 {
     private readonly GL _gl;
 
-    public readonly uint VertexBuffer;
-    public readonly uint IndexBuffer;
+    public uint VertexBuffer;
+    public uint IndexBuffer;
     
     public readonly uint VertexArray;
 
     public readonly uint Program;
 
-    public BufferShaderSet(GL gl, uint vertexBuffer, uint indexBuffer, string vertexShader, string fragmentShader)
+    public BufferShaderSet(GL gl, in ReadOnlySpan<TVertex> vertices, in ReadOnlySpan<TIndex> indices,
+        string vertexShader, string fragmentShader, BufferUsageARB usage = BufferUsageARB.StaticDraw)
     {
         _gl = gl;
-
-        VertexBuffer = vertexBuffer;
-        IndexBuffer = indexBuffer;
         
         VertexArray = _gl.CreateVertexArray();
         _gl.BindVertexArray(VertexArray);
         
-        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, vertexBuffer);
-        _gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, indexBuffer);
+        // Unbind vertex array so we don't affect any that may be bound.
+        gl.BindVertexArray(0);
+
+        VertexBuffer = gl.GenBuffer();
+        gl.BindBuffer(BufferTargetARB.ArrayBuffer, VertexBuffer);
+
+        fixed (void* pVertices = vertices)
+            gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (vertices.Length * sizeof(TVertex)), pVertices, usage);
+        
+        IndexBuffer = gl.GenBuffer();
+        gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, IndexBuffer);
+
+        fixed (void* pIndices = indices)
+        {
+            gl.BufferData(BufferTargetARB.ElementArrayBuffer, (nuint) (indices.Length * sizeof(TIndex)), pIndices,
+                usage);
+        }
 
         uint vShader = CreateShader(gl, ShaderType.VertexShader, vertexShader);
         uint fShader = CreateShader(gl, ShaderType.FragmentShader, fragmentShader);
@@ -47,6 +62,11 @@ public class BufferShaderSet : IDisposable
         _gl.DeleteShader(fShader);
     }
 
+    public BufferShaderSet(GL gl, uint numVertices, uint numIndices, string vertexShader, string fragmentShader,
+        BufferUsageARB usage = BufferUsageARB.DynamicDraw) : this(gl,
+        new ReadOnlySpan<TVertex>(null, (int) numVertices), new ReadOnlySpan<TIndex>(null, (int) numIndices),
+        vertexShader, fragmentShader, usage) { }
+
     public void SetVector4(string name, Vector4 vector)
     {
         int location = _gl.GetUniformLocation(Program, name);
@@ -65,33 +85,20 @@ public class BufferShaderSet : IDisposable
         _gl.UseProgram(Program);
     }
 
-    public static unsafe BufferShaderSet Create<TVertex, TIndex>(GL gl, in ReadOnlySpan<TVertex> vertices,
-        in ReadOnlySpan<TIndex> indices, string vertexShader, string fragmentShader) 
-        where TVertex : unmanaged
-        where TIndex : unmanaged
+    public void ResizeVertexBuffer(uint newSize, BufferUsageARB usage = BufferUsageARB.DynamicDraw)
     {
-        // Unbind vertex array so we don't affect any that may be bound.
-        gl.BindVertexArray(0);
-
-        uint vertexBuffer = gl.GenBuffer();
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, vertexBuffer);
-
-        fixed (void* pVertices = vertices)
-        {
-            gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (vertices.Length * sizeof(TVertex)), pVertices,
-                BufferUsageARB.StaticDraw);
-        }
-        
-        uint indexBuffer = gl.GenBuffer();
-        gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, indexBuffer);
-
-        fixed (void* pIndices = indices)
-        {
-            gl.BufferData(BufferTargetARB.ElementArrayBuffer, (nuint) (indices.Length * sizeof(TVertex)), pIndices,
-                BufferUsageARB.StaticDraw);
-        }
-
-        return new BufferShaderSet(gl, vertexBuffer, indexBuffer, vertexShader, fragmentShader);
+        _gl.DeleteBuffer(VertexBuffer);
+        VertexBuffer = _gl.GenBuffer();
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, VertexBuffer);
+        _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (newSize * sizeof(TVertex)), null, usage);
+    }
+    
+    public void ResizeIndexBuffer(uint newSize, BufferUsageARB usage = BufferUsageARB.DynamicDraw)
+    {
+        _gl.DeleteBuffer(IndexBuffer);
+        IndexBuffer = _gl.GenBuffer();
+        _gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, IndexBuffer);
+        _gl.BufferData(BufferTargetARB.ElementArrayBuffer, (nuint) (newSize * sizeof(TIndex)), null, usage);
     }
 
     private static uint CreateShader(GL gl, ShaderType type, string source)

@@ -7,7 +7,7 @@ public class Image : IDisposable
 {
     private readonly GL _gl;
 
-    internal readonly uint Texture;
+    public readonly uint ID;
 
     public readonly uint Width;
 
@@ -20,8 +20,8 @@ public class Image : IDisposable
         Width = width;
         Height = height;
 
-        Texture = _gl.GenTexture();
-        _gl.BindTexture(TextureTarget.Texture2D, Texture);
+        ID = _gl.GenTexture();
+        _gl.BindTexture(TextureTarget.Texture2D, ID);
 
         fixed (byte* pData = data)
         {
@@ -37,6 +37,6 @@ public class Image : IDisposable
 
     public void Dispose()
     {
-        _gl.DeleteTexture(Texture);
+        _gl.DeleteTexture(ID);
     }
 }
