@@ -19,9 +19,15 @@ public class MptStream : CodecStream
 
     public override ulong LengthInSamples => (ulong) (_module.DurationInSeconds * _module.SampleRate);
 
-    public MptStream(string path)
+    public MptStream(string path, MptConfig config)
     {
-        _module = Module.FromMemory(File.ReadAllBytes(path), new ModuleOptions(emulateAmigaResampler: true));
+        _module = Module.FromMemory(File.ReadAllBytes(path), new ModuleOptions()
+        {
+            EmulateAmigaResampler = config.EmulateAmigaResampler,
+            EndBehavior = config.FadeOutAtEnd ? EndBehavior.FadeOut : EndBehavior.Stop
+        });
+        
+        _module.SetParameter(ModuleParameter.InterpolationFilterLength, config.ResamplerFilterMode);
 
         ModuleMetadata metadata = _module.Metadata;
         TrackInfo = new TrackInfo(metadata.Title ?? TrackInfo.UnknownTitle, metadata.Artist ?? TrackInfo.UnknownArtist,

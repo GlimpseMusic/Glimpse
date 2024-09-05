@@ -1,13 +1,22 @@
 ﻿using Glimpse.Player;
+using Glimpse.Player.Configs;
 using Glimpse.Player.Plugins;
 
 namespace Glimpse.OpenMPT;
 
 public class MptPlugin : Plugin
 {
+    public MptConfig Config;
+    
     public override void Initialize(AudioPlayer player)
     {
-        player.Codecs.Add(new MptCodec());
+        if (!IConfig.TryGetConfig("MPT", out MptConfig Config))
+        {
+            Config = new MptConfig();
+            IConfig.WriteConfig("MPT", Config);
+        }
+        
+        player.Codecs.Add(new MptCodec(Config));
     }
 
     public override void Dispose()

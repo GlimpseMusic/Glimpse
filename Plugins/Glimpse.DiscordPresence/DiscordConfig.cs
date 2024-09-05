@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Glimpse.Player.Configs;
 
-namespace Glimpse.Player.Configs;
+namespace Glimpse.DiscordPresence;
 
 public class DiscordConfig : IConfig
 {

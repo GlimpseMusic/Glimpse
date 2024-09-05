@@ -31,6 +31,8 @@ public interface IConfig
         string json = File.ReadAllText(fullPath);
 
         config = JsonConvert.DeserializeObject<T>(json);
+        
+        Console.WriteLine($"Config {fullPath} loaded.");
 
         return config != null;
     }
