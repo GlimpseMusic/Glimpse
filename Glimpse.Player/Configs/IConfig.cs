@@ -21,9 +21,11 @@ public interface IConfig
     public static bool TryGetConfig<T>(string name, out T config) where T : IConfig
     {
         string fullPath = Path.Combine(BaseDir, $"{name}.json");
+        Logger.Log($"Trying to load config {fullPath}.");
 
         if (!File.Exists(fullPath))
         {
+            Logger.Log("    ... failed.");
             config = default;
             return false;
         }
@@ -32,7 +34,7 @@ public interface IConfig
 
         config = JsonConvert.DeserializeObject<T>(json);
         
-        Console.WriteLine($"Config {fullPath} loaded.");
+        Logger.Log("    ... loaded.");
 
         return config != null;
     }

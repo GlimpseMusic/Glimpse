@@ -29,6 +29,8 @@ public class AudioPlayer : IDisposable
 
     public readonly List<Plugin> Plugins;
 
+    public readonly List<string> QueuedTracks;
+
     private AssemblyLoadContext _pluginsContext;
     
     private Device _device;
@@ -47,19 +49,24 @@ public class AudioPlayer : IDisposable
 
     public AudioPlayer()
     {
+        Logger.Log("Loading player configuration.");
         if (!IConfig.TryGetConfig("Player", out Config))
         {
+            Logger.Log("   ... Failed: Creating new config.");
             Config = new PlayerConfig();
             IConfig.WriteConfig("Player", Config);
         }
 
+        Logger.Log("Creating SdlDevice.");
         _device = new SdlDevice(Config.SampleRate);
         _device.Context.MasterVolume = Config.Volume;
         
         _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
 
+        Logger.Log("Initializing codecs.");
         Codecs = [new Mp3Codec(), new FlacCodec(), new VorbisCodec(), new WavCodec()];
 
+        Logger.Log("Searching for 'Plugins' directory.");
         if (Directory.Exists("Plugins"))
         {
             _pluginsContext = new AssemblyLoadContext("Plugins");
@@ -68,10 +75,12 @@ public class AudioPlayer : IDisposable
 
             string pluginsLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Plugins");
             
+            Logger.Log($"Searching for plugins in {pluginsLocation}");
             foreach (string file in Directory.GetFiles(pluginsLocation, "*.dll", SearchOption.AllDirectories))
             {
                 try
                 {
+                    Logger.Log($"Loading assembly from {file}");
                     _pluginsContext.LoadFromAssemblyPath(file);
                 }
                 catch (BadImageFormatException)
@@ -99,14 +108,17 @@ public class AudioPlayer : IDisposable
                 
                 ASSEMBLY_GOOD: ;
                 
-                Console.WriteLine($"Plugin {assembly} loaded.");
+                Logger.Log($"Plugin {assembly} loaded.");
                 
                 foreach (Type type in assembly.GetTypes().Where(type => type.IsAssignableTo(typeof(Plugin))))
                 {
+                    Logger.Log($"Initializing plugin {type}");
+                    
                     Plugin plugin = (Plugin) Activator.CreateInstance(type);
                     if (plugin == null)
                         continue;
-
+                    
+                    Logger.Log("    ... Initialize()");
                     plugin.Initialize(this);
 
                     Plugins.Add(plugin);
@@ -119,7 +131,9 @@ public class AudioPlayer : IDisposable
     {
         _activeTrack?.Dispose();
         
+        Logger.Log($"Creating codec stream from file {path}");
         CodecStream stream = CreateStreamFromFile(path);
+        Logger.Log($"Created {stream.GetType()}.");
         TrackInfo info = stream.TrackInfo;
 
         _activeTrack = new Track(_device.Context, stream, info, Config);
@@ -129,6 +143,7 @@ public class AudioPlayer : IDisposable
 
     public void Play()
     {
+        Logger.Log("Start playback.");
         _activeTrack.Play();
         StateChanged(TrackState.Playing);
     }
@@ -149,7 +164,9 @@ public class AudioPlayer : IDisposable
     private CodecStream CreateStreamFromFile(string path)
     {
         string extension = Path.GetExtension(path);
+        Logger.Log($"File extension: {extension}");
         
+        Logger.Log("Checking for codec support.");
         foreach (Codec codec in Codecs)
         {
             if (codec.FileIsSupported(path, extension))
@@ -163,11 +180,17 @@ public class AudioPlayer : IDisposable
     {
         if (Plugins != null)
         {
+            Logger.Log("Disposing all plugins.");
             foreach (Plugin plugin in Plugins)
+            {
+                Logger.Log($"Disposing plugin {plugin.GetType()}");
                 plugin.Dispose();
+            }
         }
 
+        Logger.Log("Disposing track.");
         _activeTrack?.Dispose();
+        Logger.Log("Disposing device.");
         _device.Dispose();
     }
 

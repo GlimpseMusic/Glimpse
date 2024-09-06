@@ -58,11 +58,14 @@ public class Track : IDisposable
         Info = info;
 
         LengthInSeconds = (int) (_stream.LengthInSamples / _format.SampleRate);
+        Logger.Log($"LengthInSeconds: {LengthInSeconds}");
 
+        Logger.Log("Creating source.");
         _source = context.CreateSource(new SourceDescription(SourceType.Pcm, _format));
         
         _audioBuffer = new byte[_format.SampleRate * _format.Channels * _format.BytesPerSample];
 
+        Logger.Log("Creating audio buffers.");
         _buffers = new AudioBuffer[2];
         for (int i = 0; i < _buffers.Length; i++)
         {
@@ -119,9 +122,12 @@ public class Track : IDisposable
 
     public void Dispose()
     {
+        Logger.Log("Disposing source.");
         _source.Dispose();
+        Logger.Log("Disposing buffers.");
         foreach (AudioBuffer buffer in _buffers)
             buffer.Dispose();
+        Logger.Log("Disposing stream.");
         _stream.Dispose();
     }
 }

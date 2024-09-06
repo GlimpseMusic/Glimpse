@@ -10,11 +10,15 @@ public static class GlimpseCli
 {
     public static void Main(string[] args)
     {
+        Logger.Log("Program Start");
+        
         if (args.Length == 0)
         {
             PrintHelp();
             return;
         }
+        
+        Logger.Log($"args.Length = {args.Length}");
         
         List<string> files = new List<string>();
         float? volume = null;
@@ -103,6 +107,8 @@ public static class GlimpseCli
                 }
             }
         }
+        
+        Logger.Log($"files.Count = {files.Count}");
 
         if (files.Count == 0)
         {
@@ -112,11 +118,15 @@ public static class GlimpseCli
             return;
         }
 
-        using AudioPlayer player = new AudioPlayer();
+        Logger.Log("Create Audio Player");
+        AudioPlayer player = new AudioPlayer();
         player.Config.Volume = volume ?? player.Config.Volume;
         player.Config.SpeedAdjust = speed ?? player.Config.SpeedAdjust;
         
+        Logger.Log($"Set Track to {files[currentFile]}");
         player.ChangeTrack(files[currentFile]);
+        
+        Logger.Log("Playing.");
         player.Play();
         
         PrintConsoleText(player.TrackInfo, 0, player.TrackLength, player.TrackState, currentFile, files.Count);
@@ -202,7 +212,12 @@ public static class GlimpseCli
         
         EXIT: ;
         
+        Logger.Log("Quitting.");
+        
         ResetConsole();
+        
+        Logger.Log("Disposing audio player");
+        player.Dispose();
     }
 
     private static void PrintConsoleText(TrackInfo info, int elapsed, int total, TrackState state, int track, int totalTracks)
