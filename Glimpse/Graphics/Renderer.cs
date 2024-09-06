@@ -102,6 +102,12 @@ public unsafe class Renderer : IDisposable
 
     public void DrawRectangle(Color color, Vector2 postion, Size size)
         => DrawImage(_white, postion, size, color);
+
+    public void Resize(Size size)
+    {
+        GL.Viewport(0, 0, (uint) size.Width, (uint) size.Height);
+        _projection = Matrix4x4.CreateOrthographicOffCenter(0, size.Width, size.Height, 0, -1, 1);
+    }
     
     public void Dispose()
     {

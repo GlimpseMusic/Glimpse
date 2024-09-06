@@ -104,6 +104,11 @@ public abstract unsafe class Window : IDisposable
     internal void SetActive()
     {
         _sdl.GLMakeCurrent(_window, _glContext);
+        
+    }
+
+    internal void UpdateWindow()
+    {
         ImGui.SetCurrentContext(ImGuiRenderer.ImGuiContext);
         ImGui.GetIO().DeltaTime = 1 / 60.0f;
         ImGui.NewFrame();

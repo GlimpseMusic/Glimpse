@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using Glimpse.Player;
 using Hexa.NET.ImGui;
 using Silk.NET.SDL;
@@ -60,6 +61,17 @@ public static class Glimpse
                                 _windows.Remove(wnd);
                                 break;
                             }
+
+                            case WindowEventID.Resized:
+                            {
+                                Window wnd = _windowIds[winEvent.Window.WindowID];
+                                Size newSize = new Size(winEvent.Window.Data1, winEvent.Window.Data2);
+                                wnd.SetActive();
+                                wnd.Renderer.Resize(newSize);
+                                wnd.ImGuiRenderer.Resize(newSize);
+                                
+                                break;
+                            }
                         }
 
                         break;
@@ -99,6 +111,7 @@ public static class Glimpse
             foreach (Window wnd in _windows)
             {
                 wnd.SetActive();
+                wnd.UpdateWindow();
                 wnd.Present();
             }
         }

@@ -87,14 +87,14 @@ public class ImGuiRenderer : IDisposable
 
         if (drawData.TotalVtxCount >= _vBufferSize)
         {
-            //Logger.Trace("Recreate vertex buffer.");
+            Console.WriteLine("Recreate vertex buffer.");
             _vBufferSize = (uint) (drawData.TotalVtxCount + 5000);
             _bufferSet.ResizeVertexBuffer(_vBufferSize);
         }
 
         if (drawData.TotalIdxCount >= _iBufferSize)
         {
-            //Logger.Trace("Recreate index buffer.");
+            Console.WriteLine("Recreate index buffer.");
             _iBufferSize = (uint) (drawData.TotalIdxCount + 10000);
             _bufferSet.ResizeIndexBuffer(_iBufferSize);
         }
@@ -156,7 +156,8 @@ public class ImGuiRenderer : IDisposable
                 //    (int) (drawCmd.VtxOffset + vertexOffset));
 
                 _gl.DrawElementsBaseVertex(PrimitiveType.Triangles, drawCmd.ElemCount, DrawElementsType.UnsignedShort,
-                    (void*) (drawCmd.IdxOffset + indexOffset * sizeof(ushort)), (int) (drawCmd.VtxOffset + vertexOffset));
+                    (void*) ((drawCmd.IdxOffset + indexOffset) * sizeof(ImDrawIdx)),
+                    (int) (drawCmd.VtxOffset + vertexOffset));
             }
 
             vertexOffset += (uint) cmdList.VtxBuffer.Size;

@@ -84,16 +84,14 @@ public unsafe class BufferShaderSet<TVertex, TIndex> : IDisposable
 
     public void ResizeVertexBuffer(uint newSize, BufferUsageARB usage = BufferUsageARB.DynamicDraw)
     {
-        _gl.DeleteBuffer(VertexBuffer);
-        VertexBuffer = _gl.GenBuffer();
+        _gl.BindVertexArray(0);
         _gl.BindBuffer(BufferTargetARB.ArrayBuffer, VertexBuffer);
         _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (newSize * sizeof(TVertex)), null, usage);
     }
     
     public void ResizeIndexBuffer(uint newSize, BufferUsageARB usage = BufferUsageARB.DynamicDraw)
     {
-        _gl.DeleteBuffer(IndexBuffer);
-        IndexBuffer = _gl.GenBuffer();
+        _gl.BindVertexArray(0);
         _gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, IndexBuffer);
         _gl.BufferData(BufferTargetARB.ElementArrayBuffer, (nuint) (newSize * sizeof(TIndex)), null, usage);
     }
