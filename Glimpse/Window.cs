@@ -19,7 +19,6 @@ public abstract unsafe class Window : IDisposable
     private void* _glContext;
 
     public Renderer Renderer;
-    public ImGuiRenderer ImGuiRenderer;
 
     public string Title
     {
@@ -89,10 +88,7 @@ public abstract unsafe class Window : IDisposable
         _glContext = sdl.GLCreateContext(_window);
 
         sdl.GLMakeCurrent(_window, _glContext);
-        Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)), (uint) _size.Width,
-            (uint) _size.Height);
-
-        ImGuiRenderer = new ImGuiRenderer(Renderer.GL, _size);
+        Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)), _size);
 
         _isCreated = true;
         
@@ -109,15 +105,16 @@ public abstract unsafe class Window : IDisposable
 
     internal void UpdateWindow()
     {
-        ImGui.SetCurrentContext(ImGuiRenderer.ImGuiContext);
+        ImGui.SetCurrentContext(Renderer.ImGui.ImGuiContext);
         ImGui.GetIO().DeltaTime = 1 / 60.0f;
         ImGui.NewFrame();
+        Renderer.GL.Disable(EnableCap.ScissorTest);
         Update();
     }
 
     internal void Present()
     {
-        ImGuiRenderer.Render();
+        Renderer.ImGui.Render();
         _sdl.GLSetSwapInterval(1);
         _sdl.GLSwapWindow(_window);
     }

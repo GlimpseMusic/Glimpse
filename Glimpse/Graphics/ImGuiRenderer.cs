@@ -82,6 +82,13 @@ public class ImGuiRenderer : IDisposable
     {
         ImGui.SetCurrentContext(_context);
         
+        _gl.Enable(EnableCap.ScissorTest);
+        _gl.Enable(EnableCap.Blend);
+        _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        _gl.Enable(EnableCap.CullFace);
+        _gl.CullFace(TriangleFace.Back);
+        _gl.FrontFace(FrontFaceDirection.CW);
+        
         ImGui.Render();
         ImDrawDataPtr drawData = ImGui.GetDrawData();
 
@@ -150,10 +157,8 @@ public class ImGuiRenderer : IDisposable
                 if (clipMax.X <= clipMin.X || clipMax.Y <= clipMin.Y)
                     continue;
 
-                //cl.SetScissor(new Rectangle((int) clipMin.X, (int) clipMin.Y, (int) clipMax.X - (int) clipMin.X, (int) clipMax.Y - (int) clipMin.Y));
-                
-                //cl.DrawIndexed(drawCmd.ElemCount, drawCmd.IdxOffset + indexOffset,
-                //    (int) (drawCmd.VtxOffset + vertexOffset));
+                _gl.Scissor((int) clipMin.X, (int) (drawData.DisplaySize.Y - clipMax.Y), (uint) (clipMax.X - clipMin.X),
+                    (uint) (clipMax.Y - clipMin.Y));
 
                 _gl.DrawElementsBaseVertex(PrimitiveType.Triangles, drawCmd.ElemCount, DrawElementsType.UnsignedShort,
                     (void*) ((drawCmd.IdxOffset + indexOffset) * sizeof(ImDrawIdx)),

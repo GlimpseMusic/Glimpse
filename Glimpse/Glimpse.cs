@@ -68,7 +68,6 @@ public static class Glimpse
                                 Size newSize = new Size(winEvent.Window.Data1, winEvent.Window.Data2);
                                 wnd.SetActive();
                                 wnd.Renderer.Resize(newSize);
-                                wnd.ImGuiRenderer.Resize(newSize);
                                 
                                 break;
                             }
@@ -80,7 +79,7 @@ public static class Glimpse
                     case EventType.Mousemotion:
                     {
                         Window wnd = _windowIds[winEvent.Motion.WindowID];
-                        ImGui.SetCurrentContext(wnd.ImGuiRenderer.ImGuiContext);
+                        ImGui.SetCurrentContext(wnd.Renderer.ImGui.ImGuiContext);
                         
                         ImGui.GetIO().AddMousePosEvent(winEvent.Motion.X, winEvent.Motion.Y);
                         break;
@@ -89,7 +88,7 @@ public static class Glimpse
                     case EventType.Mousebuttondown:
                     {
                         Window wnd = _windowIds[winEvent.Button.WindowID];
-                        ImGui.SetCurrentContext(wnd.ImGuiRenderer.ImGuiContext);
+                        ImGui.SetCurrentContext(wnd.Renderer.ImGui.ImGuiContext);
                         
                         Console.WriteLine(winEvent.Button.Button);
                         
@@ -100,7 +99,7 @@ public static class Glimpse
                     case EventType.Mousebuttonup:
                     {
                         Window wnd = _windowIds[winEvent.Button.WindowID];
-                        ImGui.SetCurrentContext(wnd.ImGuiRenderer.ImGuiContext);
+                        ImGui.SetCurrentContext(wnd.Renderer.ImGui.ImGuiContext);
                         
                         ImGui.GetIO().AddMouseButtonEvent((int) winEvent.Button.Button - 1, false);
                         break;

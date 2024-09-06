@@ -18,8 +18,10 @@ public unsafe class Renderer : IDisposable
     private Matrix4x4 _projection;
     
     public readonly GL GL;
+
+    public readonly ImGuiRenderer ImGui;
     
-    public Renderer(GL gl, uint width, uint height)
+    public Renderer(GL gl, Size size)
     {
         GL = gl;
         GL.Enable(EnableCap.Blend);
@@ -27,7 +29,7 @@ public unsafe class Renderer : IDisposable
 
         _white = CreateImage([255, 255, 255, 255], 1, 1);
 
-        _projection = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
+        _projection = Matrix4x4.CreateOrthographicOffCenter(0, size.Width, size.Height, 0, -1, 1);
 
         ReadOnlySpan<Vertex2D> vertices = stackalloc Vertex2D[]
         {
@@ -56,6 +58,8 @@ public unsafe class Renderer : IDisposable
         
         GL.EnableVertexAttribArray(2);
         GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, (uint) sizeof(Vertex2D), (void*) 16);
+
+        ImGui = new ImGuiRenderer(GL, size);
     }
 
     public Image CreateImage(byte[] data, uint width, uint height)
@@ -107,6 +111,8 @@ public unsafe class Renderer : IDisposable
     {
         GL.Viewport(0, 0, (uint) size.Width, (uint) size.Height);
         _projection = Matrix4x4.CreateOrthographicOffCenter(0, size.Width, size.Height, 0, -1, 1);
+        
+        ImGui.Resize(size);
     }
     
     public void Dispose()
