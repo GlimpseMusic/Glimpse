@@ -55,6 +55,8 @@ public class ImGuiRenderer : IDisposable
 
         ImGuiIOPtr io = ImGui.GetIO();
         io.DisplaySize = new Vector2(size.Width, size.Height);
+        io.IniFilename = null;
+        io.LogFilename = null;
         
         io.Fonts.AddFontDefault();
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
@@ -85,9 +87,6 @@ public class ImGuiRenderer : IDisposable
         _gl.Enable(EnableCap.ScissorTest);
         _gl.Enable(EnableCap.Blend);
         _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        _gl.Enable(EnableCap.CullFace);
-        _gl.CullFace(TriangleFace.Back);
-        _gl.FrontFace(FrontFaceDirection.CW);
         
         ImGui.Render();
         ImDrawDataPtr drawData = ImGui.GetDrawData();

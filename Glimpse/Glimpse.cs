@@ -33,12 +33,12 @@ public static class Glimpse
         _windows = new List<Window>();
         _windowIds = new Dictionary<uint, Window>();
 
-        /*Player = new AudioPlayer();
+        Player = new AudioPlayer();
         if (file != null)
         {
             Player.ChangeTrack(file);
-            //Player.Play();
-        }*/
+            Player.Play();
+        }
         
         AddWindow(window);
 
@@ -114,6 +114,8 @@ public static class Glimpse
                 wnd.Present();
             }
         }
+        
+        Player.Dispose();
         
         _sdl.Quit();
         _sdl.Dispose();

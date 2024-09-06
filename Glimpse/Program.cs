@@ -8,7 +8,7 @@ public static class Program
     public static void Main(string[] args)
     {
         //if (args.Length > 0)
-            Glimpse.Run(new GlimpsePlayer(), "");
+            Glimpse.Run(new GlimpsePlayer(), null);
         //else
         //    throw new NotImplementedException();
     }
