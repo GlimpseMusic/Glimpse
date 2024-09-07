@@ -116,8 +116,8 @@ public class ImGuiRenderer : IDisposable
         {
             ImDrawListPtr cmdList = drawData.CmdLists[i];
             
-            Unsafe.CopyBlock((byte*) vPtr + vertexOffset, cmdList.VtxBuffer.Data, (uint) (cmdList.VtxBuffer.Size * sizeof(ImDrawVert)));
-            Unsafe.CopyBlock((byte*) iPtr + indexOffset, cmdList.IdxBuffer.Data, (uint) (cmdList.IdxBuffer.Size * sizeof(ImDrawIdx)));
+            Unsafe.CopyBlock((byte*) vPtr + vertexOffset, (void*) cmdList.VtxBuffer.Data, (uint) (cmdList.VtxBuffer.Size * sizeof(ImDrawVert)));
+            Unsafe.CopyBlock((byte*) iPtr + indexOffset, (void*) cmdList.IdxBuffer.Data, (uint) (cmdList.IdxBuffer.Size * sizeof(ImDrawIdx)));
 
             vertexOffset += (uint) (cmdList.VtxBuffer.Size * sizeof(ImDrawVert));
             indexOffset += (uint) (cmdList.IdxBuffer.Size * sizeof(ImDrawIdx));
@@ -195,7 +195,7 @@ public class ImGuiRenderer : IDisposable
 
         _gl.GenerateMipmap(TextureTarget.Texture2D);
         
-        io.Fonts.SetTexID(new ImTextureID((IntPtr) _imGuiTexture));
+        io.Fonts.SetTexID((IntPtr) _imGuiTexture);
     }
     
     public void Dispose()

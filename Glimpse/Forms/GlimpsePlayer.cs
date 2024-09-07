@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Glimpse.Player;
 using Hexa.NET.ImGui;
 using Image = Glimpse.Graphics.Image;
@@ -11,6 +12,8 @@ namespace Glimpse.Forms;
 
 public class GlimpsePlayer : Window
 {
+    private bool _init;
+    
     private string _currentDirectory;
     private List<string> _directories;
     private List<string> _files;
@@ -20,27 +23,49 @@ public class GlimpsePlayer : Window
     public GlimpsePlayer()
     {
         Title = "Glimpse";
-        Size = new Size(800, 450);
+        Size = new Size(1100, 650);
 
         _directories = new List<string>();
         _files = new List<string>();
     }
 
-    protected override void Initialize()
+    protected override unsafe void Initialize()
     {
         ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
         
         Glimpse.Player.TrackChanged += PlayerOnTrackChanged;
+        
+        ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
     }
 
-    protected override void Update()
+    protected override unsafe void Update()
     {
         AudioPlayer player = Glimpse.Player;
         
         Renderer.Clear(Color.Black);
-        ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        
+        uint id = ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode | (ImGuiDockNodeFlags) (1 << 12));
+        //ImGui.SetNextWindowDockID(id, ImGuiCond.Once);
+        
+        if (!_init)
+        {
+            _init = true;
+            
+            ImGui.DockBuilderRemoveNode(id);
+            ImGui.DockBuilderAddNode(id, ImGuiDockNodeFlags.None);
 
-        ImGui.DockSpaceOverViewport();
+            uint outId = id;
+
+            uint transportDock = ImGui.DockBuilderSplitNode(outId, ImGuiDir.Down, 0.2f, null, &outId);
+
+            uint foldersDock = ImGui.DockBuilderSplitNode(outId, ImGuiDir.Left, 0.3f, null, &outId);
+            
+            ImGui.DockBuilderDockWindow("Transport", transportDock);
+            ImGui.DockBuilderDockWindow("Folders", foldersDock);
+            ImGui.DockBuilderDockWindow("Files", outId);
+        
+            ImGui.DockBuilderFinish(id);
+        }
 
         if (ImGui.Begin("Transport"))
         {
@@ -56,7 +81,7 @@ public class GlimpsePlayer : Window
             
             ImGui.SameLine();
 
-            if (ImGui.BeginChild("TrackInfo", ImGuiChildFlags.AlwaysAutoResize))
+            if (ImGui.BeginChild("TrackInfo", new Vector2(0, 0)))
             {
                 ImGui.Text(player.TrackInfo.Title);
                 ImGui.Text(player.TrackInfo.Artist);
@@ -69,6 +94,14 @@ public class GlimpsePlayer : Window
                 ImGui.SliderInt("##transport", ref position, 0, length, "");
                 ImGui.SameLine();
                 ImGui.Text($"{length / 60:0}:{length % 60:00}");
+                
+                ImGui.SameLine();
+                if (ImGui.Button("Play"))
+                    player.Play();
+                
+                ImGui.SameLine();
+                if (ImGui.Button("Pause"))
+                    player.Pause();
                 
                 ImGui.EndChild();
             }

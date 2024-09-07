@@ -7,7 +7,7 @@ namespace Glimpse.Player;
 
 public static class Logger
 {
-    [Conditional("DEBUG")]
+    //[Conditional("DEBUG")]
     public static void Log(string message, [CallerLineNumber] int lineNumber = 0, [CallerFilePath] string file = "")
     {
         string localFile = Path.GetFileName(file);
