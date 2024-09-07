@@ -30,6 +30,8 @@ public static class Logger
 
         string logText = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [LOG] ({localFile}:{lineNumber}) {message}";
         Console.WriteLine(logText);
+#if !DEBUG
         _writer.WriteLine(logText);
+#endif
     }
 }
