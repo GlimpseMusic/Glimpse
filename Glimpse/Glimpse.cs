@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using Glimpse.Database;
 using Glimpse.Player;
+using Glimpse.Player.Configs;
 using Hexa.NET.ImGui;
 using Silk.NET.SDL;
 using Renderer = Glimpse.Graphics.Renderer;
@@ -15,6 +17,8 @@ public static class Glimpse
     private static Dictionary<uint, Window> _windowIds;
 
     public static AudioPlayer Player;
+
+    public static MusicDatabase Database;
 
     public static void AddWindow(Window window)
     {
@@ -38,6 +42,11 @@ public static class Glimpse
         {
             Player.ChangeTrack(file);
             Player.Play();
+        }
+
+        if (!IConfig.TryGetConfig("Database/MusicDatabase", out Database))
+        {
+            Database = new MusicDatabase();
         }
         
         AddWindow(window);

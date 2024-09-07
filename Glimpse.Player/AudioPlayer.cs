@@ -161,19 +161,29 @@ public class AudioPlayer : IDisposable
         StateChanged(TrackState.Stopped);
     }
 
-    private CodecStream CreateStreamFromFile(string path)
+    public bool FileIsSupported(string path, out Codec outCodec)
     {
         string extension = Path.GetExtension(path);
-        Logger.Log($"File extension: {extension}");
-        
-        Logger.Log("Checking for codec support.");
         foreach (Codec codec in Codecs)
         {
             if (codec.FileIsSupported(path, extension))
-                return codec.CreateStream(path);
+            {
+                outCodec = codec;
+                return true;
+            }
         }
 
-        throw new NotSupportedException($"File type '{extension}' not supported.");
+        outCodec = null;
+        return false;
+    }
+
+    private CodecStream CreateStreamFromFile(string path)
+    {
+        Logger.Log("Checking for codec support.");
+        if (FileIsSupported(path, out Codec codec))
+            return codec.CreateStream(path);
+
+        throw new NotSupportedException($"File type '{Path.GetExtension(path)}' not supported.");
     }
 
     public void Dispose()

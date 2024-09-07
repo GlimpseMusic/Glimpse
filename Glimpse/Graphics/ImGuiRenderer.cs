@@ -60,6 +60,7 @@ public class ImGuiRenderer : IDisposable
         
         io.Fonts.AddFontDefault();
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
+        io.FontGlobalScale = 1.0f;
         
         RecreateFontTexture();
 
@@ -190,10 +191,10 @@ public class ImGuiRenderer : IDisposable
         _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint) width, (uint) height, 0,
             PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
         
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.LinearMipmapLinear);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.Linear);
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear);
 
-        _gl.GenerateMipmap(TextureTarget.Texture2D);
+        //_gl.GenerateMipmap(TextureTarget.Texture2D);
         
         io.Fonts.SetTexID((IntPtr) _imGuiTexture);
     }

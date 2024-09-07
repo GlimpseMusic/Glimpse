@@ -35,6 +35,7 @@ public class GlimpsePlayer : Window
         
         Glimpse.Player.TrackChanged += PlayerOnTrackChanged;
         
+        ImFontPtr roboto = Renderer.ImGui.AddFont("Assets/Fonts/Roboto-Regular.ttf", 20, "Roboto-20px");
         ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
     }
 
@@ -43,6 +44,8 @@ public class GlimpsePlayer : Window
         AudioPlayer player = Glimpse.Player;
         
         Renderer.Clear(Color.Black);
+        
+        ImGui.PushFont(Renderer.ImGui.Fonts["Roboto-20px"]);
         
         uint id = ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode | (ImGuiDockNodeFlags) (1 << 12));
         //ImGui.SetNextWindowDockID(id, ImGuiCond.Once);
@@ -110,7 +113,7 @@ public class GlimpsePlayer : Window
         }
 
         //if (ImGui.Begin("Albums"))
-        if (ImGui.Begin("Folders"))
+        if (ImGui.Begin("Folders", ImGuiWindowFlags.HorizontalScrollbar))
         {
             string newDirectory = null;
 
@@ -143,6 +146,8 @@ public class GlimpsePlayer : Window
             
             ImGui.End();
         }
+        
+        ImGui.PopFont();
     }
 
     private void ChangeDirectory(string directory)
