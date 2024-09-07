@@ -17,13 +17,30 @@ public class MusicDatabase : IConfig
         Albums = new Dictionary<string, Album>();
     }
 
-    public void AddDirectory(string directory)
+    public void AddDirectory(string directory, AudioPlayer player)
     {
         Logger.Log($"Adding directory {directory} to database");
 
         foreach (string file in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories))
         {
             Logger.Log($"Indexing {file}");
+            if (!player.FileIsSupported(file, out _))
+                continue;
+            
+            TrackInfo info = TrackInfo.FromFile(file);
+            
+            Tracks.Add(file, new Track(info));
+
+            if (info.Album != null)
+            {
+                if (!Albums.TryGetValue(info.Album, out Album album))
+                {
+                    album = new Album(info.Album);
+                    Albums.Add(info.Album, album);
+                }
+                
+                album.Tracks.Add(file);
+            }
         }
     }
 }

@@ -47,6 +47,7 @@ public static class Glimpse
         if (!IConfig.TryGetConfig("Database/MusicDatabase", out Database))
         {
             Database = new MusicDatabase();
+            IConfig.WriteConfig("Database/MusicDatabase", Database);
         }
         
         AddWindow(window);

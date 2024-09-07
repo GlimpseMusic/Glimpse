@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Glimpse.Database;
 using Glimpse.Player;
 using Hexa.NET.ImGui;
 using Image = Glimpse.Graphics.Image;
+using Track = Glimpse.Database.Track;
 
 namespace Glimpse.Forms;
 
@@ -15,8 +18,9 @@ public class GlimpsePlayer : Window
     private bool _init;
     
     private string _currentDirectory;
-    private List<string> _directories;
-    private List<string> _files;
+
+    private List<string> _queue;
+    private int _currentSong;
 
     private Image _albumArt;
     
@@ -25,18 +29,19 @@ public class GlimpsePlayer : Window
         Title = "Glimpse";
         Size = new Size(1100, 650);
 
-        _directories = new List<string>();
-        _files = new List<string>();
+        _queue = new List<string>();
     }
 
     protected override unsafe void Initialize()
     {
-        ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+        //ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
         
         Glimpse.Player.TrackChanged += PlayerOnTrackChanged;
         
         ImFontPtr roboto = Renderer.ImGui.AddFont("Assets/Fonts/Roboto-Regular.ttf", 20, "Roboto-20px");
         ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+
+        _currentDirectory = Glimpse.Database.Albums.First().Key;
     }
 
     protected override unsafe void Update()
@@ -64,8 +69,8 @@ public class GlimpsePlayer : Window
             uint foldersDock = ImGui.DockBuilderSplitNode(outId, ImGuiDir.Left, 0.3f, null, &outId);
             
             ImGui.DockBuilderDockWindow("Transport", transportDock);
-            ImGui.DockBuilderDockWindow("Folders", foldersDock);
-            ImGui.DockBuilderDockWindow("Files", outId);
+            ImGui.DockBuilderDockWindow("Albums", foldersDock);
+            ImGui.DockBuilderDockWindow("Songs", outId);
         
             ImGui.DockBuilderFinish(id);
         }
@@ -106,16 +111,42 @@ public class GlimpsePlayer : Window
                 if (ImGui.Button("Pause"))
                     player.Pause();
                 
+                ImGui.SameLine();
+                if (ImGui.Button("Prev"))
+                {
+                    _currentSong--;
+                    if (_currentSong < 0)
+                        _currentSong = 0;
+                    
+                    Glimpse.Player.ChangeTrack(_queue[_currentSong]);
+                    Glimpse.Player.Play();
+                }
+                
+                ImGui.SameLine();
+                if (ImGui.Button("Next"))
+                {
+                    _currentSong++;
+                    if (_currentSong >= _queue.Count)
+                    {
+                        Glimpse.Player.Stop();
+                        _queue.Clear();
+                    }
+                    else
+                    {
+                        Glimpse.Player.ChangeTrack(_queue[_currentSong]);
+                        Glimpse.Player.Play();
+                    }
+                }
+                
                 ImGui.EndChild();
             }
             
             ImGui.End();
         }
-
-        //if (ImGui.Begin("Albums"))
-        if (ImGui.Begin("Folders", ImGuiWindowFlags.HorizontalScrollbar))
+        
+        if (ImGui.Begin("Albums", ImGuiWindowFlags.HorizontalScrollbar))
         {
-            string newDirectory = null;
+            /*string newDirectory = null;
 
             if (ImGui.Selectable(".."))
                 newDirectory = Path.GetDirectoryName(_currentDirectory);
@@ -127,30 +158,74 @@ public class GlimpsePlayer : Window
             }
             
             if (newDirectory != null)
-                ChangeDirectory(newDirectory);
+                ChangeDirectory(newDirectory);*/
+
+            foreach ((string name, Album album) in Glimpse.Database.Albums)
+            {
+                if (ImGui.Selectable(name, _currentDirectory == name))
+                    _currentDirectory = name;
+            }
             
             ImGui.End();
         }
-
-        //if (ImGui.Begin("Songs"))
-        if (ImGui.Begin("Files"))
+        
+        if (ImGui.Begin("Songs"))
         {
-            foreach (string file in _files)
+            /*foreach (string file in _files)
             {
                 if (ImGui.Selectable(Path.GetFileName(file)))
                 {
                     player.ChangeTrack(file);
                     player.Play();
                 }
+            }*/
+
+            Album album = Glimpse.Database.Albums[_currentDirectory];
+
+            int song = 0;
+            foreach (string path in album.Tracks)
+            {
+                Track track = Glimpse.Database.Tracks[path];
+
+                TrackInfo info = Glimpse.Player.TrackInfo;
+                
+                if (ImGui.Selectable(track.Title, info.Title == track.Title && info.Album == album.Name))
+                {
+                    _queue.Clear();
+                    _currentSong = song;
+
+                    _queue.AddRange(album.Tracks);
+                    
+                    player.ChangeTrack(path);
+                    player.Play();
+                }
+
+                song++;
             }
             
             ImGui.End();
         }
         
         ImGui.PopFont();
+
+        if (Glimpse.Player.TrackState == TrackState.Stopped && _queue.Count > 0)
+        {
+            _currentSong++;
+
+            if (_currentSong >= _queue.Count)
+            {
+                Glimpse.Player.Stop();
+                _queue.Clear();
+            }
+            else
+            {
+                Glimpse.Player.ChangeTrack(_queue[_currentSong]);
+                Glimpse.Player.Play();
+            }
+        }
     }
 
-    private void ChangeDirectory(string directory)
+    /*private void ChangeDirectory(string directory)
     {
         _currentDirectory = directory;
         _directories.Clear();
@@ -165,7 +240,7 @@ public class GlimpsePlayer : Window
         {
             _files.Add(file);
         }
-    }
+    }*/
     
     private void PlayerOnTrackChanged(TrackInfo info)
     {

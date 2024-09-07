@@ -4,16 +4,13 @@ namespace Glimpse.Database;
 
 public class Album
 {
-    public string Location;
-    
     public string Name;
 
-    public string[] Tracks;
+    public List<string> Tracks;
 
-    public Album(string location, string name, string[] tracks)
+    public Album(string name)
     {
-        Location = location;
         Name = name;
-        Tracks = tracks;
+        Tracks = new List<string>();
     }
 }
