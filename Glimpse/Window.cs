@@ -103,7 +103,6 @@ public abstract unsafe class Window : IDisposable
     internal void SetActive()
     {
         _sdl.GLMakeCurrent(_window, _glContext);
-        
     }
 
     internal void UpdateWindow()

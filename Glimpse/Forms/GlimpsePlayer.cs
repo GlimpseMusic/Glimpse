@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Glimpse.Database;
 using Glimpse.Player;
+using Glimpse.Player.Configs;
 using Hexa.NET.ImGui;
 using Image = Glimpse.Graphics.Image;
 using Track = Glimpse.Database.Track;
@@ -17,7 +18,7 @@ public class GlimpsePlayer : Window
 {
     private bool _init;
     
-    private string _currentDirectory;
+    private string _currentAlbum;
 
     private List<string> _queue;
     private int _currentSong;
@@ -31,11 +32,13 @@ public class GlimpsePlayer : Window
         Size = new Size(1100, 650);
 
         _queue = new List<string>();
+
+        _directories = new List<string>();
     }
 
     protected override unsafe void Initialize()
     {
-        //ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+        ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
 
         _defaultAlbumArt = Renderer.CreateImage("Assets/Icons/Glimpse.png");
         
@@ -43,9 +46,12 @@ public class GlimpsePlayer : Window
         Glimpse.Player.StateChanged += PlayerOnStateChanged;
         
         ImFontPtr roboto = Renderer.ImGui.AddFont("Assets/Fonts/Roboto-Regular.ttf", 20, "Roboto-20px");
-        ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        ImGuiIOPtr io = ImGui.GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        io.FontDefault = roboto;
 
-        _currentDirectory = Glimpse.Database.Albums.First().Key;
+        if (Glimpse.Database.Albums.Count > 0)
+            _currentAlbum = Glimpse.Database.Albums.First().Key;
     }
 
     protected override unsafe void Update()
@@ -54,7 +60,7 @@ public class GlimpsePlayer : Window
         
         Renderer.Clear(Color.Black);
         
-        ImGui.PushFont(Renderer.ImGui.Fonts["Roboto-20px"]);
+        ImGui.ShowStyleEditor();
         
         uint id = ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode | (ImGuiDockNodeFlags) (1 << 12));
         //ImGui.SetNextWindowDockID(id, ImGuiCond.Once);
@@ -162,17 +168,27 @@ public class GlimpsePlayer : Window
             
             if (newDirectory != null)
                 ChangeDirectory(newDirectory);*/
-
-            foreach ((string name, Album album) in Glimpse.Database.Albums)
-            {
-                if (ImGui.Selectable(name, _currentDirectory == name))
-                    _currentDirectory = name;
-            }
             
+            if (ImGui.Button("+"))
+                ImGui.OpenPopup("Add Folder");
+            
+            AddFolders();
+
+            if (ImGui.BeginChild("AlbumList"))
+            {
+
+                foreach ((string name, Album album) in Glimpse.Database.Albums)
+                {
+                    if (ImGui.Selectable(name, _currentAlbum == name))
+                        _currentAlbum = name;
+                }
+                ImGui.EndChild();
+            }
+
             ImGui.End();
         }
         
-        if (ImGui.Begin("Songs"))
+        if (_currentAlbum != null && ImGui.Begin("Songs"))
         {
             /*foreach (string file in _files)
             {
@@ -182,8 +198,8 @@ public class GlimpsePlayer : Window
                     player.Play();
                 }
             }*/
-
-            Album album = Glimpse.Database.Albums[_currentDirectory];
+            
+            Album album = Glimpse.Database.Albums[_currentAlbum];
 
             if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable))
             {
@@ -231,8 +247,6 @@ public class GlimpsePlayer : Window
             
             ImGui.End();
         }
-        
-        ImGui.PopFont();
 
         if (Glimpse.Player.TrackState == TrackState.Stopped && _queue.Count > 0)
         {
@@ -251,26 +265,73 @@ public class GlimpsePlayer : Window
         }
     }
 
-    /*private void ChangeDirectory(string directory)
+    private string _selectedDirectory;
+    private string _currentDirectory;
+    private List<string> _directories;
+    
+    private void AddFolders()
+    {
+        if (ImGui.BeginPopupModal("Add Folder"))
+        {
+            if (ImGui.BeginChild("FoldersList", new Vector2(300, 300), ImGuiChildFlags.AlwaysAutoResize))
+            {
+                string newDirectory = null;
+
+                if (ImGui.Selectable(".."))
+                {
+                    _selectedDirectory = null;
+                    newDirectory = Path.GetDirectoryName(_currentDirectory);
+                }
+                
+                foreach (string directory in _directories)
+                {
+                    if (ImGui.Selectable(Path.GetFileName(directory), directory == _selectedDirectory))
+                    {
+                        if (directory == _selectedDirectory)
+                        {
+                            newDirectory = directory;
+                            _selectedDirectory = null;
+                        }
+                        else
+                            _selectedDirectory = directory;
+                    }
+                }
+                
+                if (newDirectory != null)
+                    ChangeDirectory(newDirectory);
+                
+                ImGui.EndChild();
+            }
+
+            if (ImGui.Button("Add"))
+            {
+                if (_selectedDirectory != null)
+                {
+                    ImGui.CloseCurrentPopup();
+                    Glimpse.Database.AddDirectory(_selectedDirectory, Glimpse.Player);
+                    IConfig.WriteConfig("Database/MusicDatabase", Glimpse.Database);
+                }
+            }
+            
+            ImGui.EndPopup();
+        }
+    }
+
+    private void ChangeDirectory(string directory)
     {
         _currentDirectory = directory;
         _directories.Clear();
-        _files.Clear();
         
         foreach (string directories in Directory.GetDirectories(directory))
         {
             _directories.Add(directories);
         }
-        
-        foreach (string file in Directory.GetFiles(directory))
-        {
-            _files.Add(file);
-        }
-    }*/
+    }
     
     private void PlayerOnTrackChanged(TrackInfo info)
     {
         _albumArt?.Dispose();
+        _albumArt = null;
         TrackInfo.Image art = info.AlbumArt;
 
         if (art == null)
@@ -285,5 +346,6 @@ public class GlimpsePlayer : Window
             return;
         
         _albumArt?.Dispose();
+        _albumArt = null;
     }
 }
