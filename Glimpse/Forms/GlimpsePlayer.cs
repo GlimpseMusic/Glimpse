@@ -60,7 +60,7 @@ public class GlimpsePlayer : Window
         
         Renderer.Clear(Color.Black);
         
-        ImGui.ShowStyleEditor();
+        //ImGui.ShowStyleEditor();
         
         uint id = ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode | (ImGuiDockNodeFlags) (1 << 12));
         //ImGui.SetNextWindowDockID(id, ImGuiCond.Once);
