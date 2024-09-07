@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
 using Glimpse.Graphics;
 using Hexa.NET.ImGui;
 using Silk.NET.OpenGL;
 using Silk.NET.SDL;
+using StbImageSharp;
+using PixelFormat = Silk.NET.OpenGL.PixelFormat;
 using Renderer = Glimpse.Graphics.Renderer;
 
 namespace Glimpse;

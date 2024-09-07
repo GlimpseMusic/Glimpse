@@ -9,6 +9,8 @@ public class TrackInfo
     public const string UnknownArtist = "Unknown Artist";
     
     public const string UnknownAlbum = "Unknown Album";
+
+    public readonly uint? TrackNumber;
     
     public readonly string Title;
 
@@ -18,8 +20,9 @@ public class TrackInfo
 
     public readonly Image AlbumArt;
 
-    public TrackInfo(string title, string artist, string album, Image albumArt)
+    public TrackInfo(uint? trackNumber, string title, string artist, string album, Image albumArt)
     {
+        TrackNumber = trackNumber;
         Title = title;
         Artist = artist;
         Album = album;
@@ -30,6 +33,7 @@ public class TrackInfo
     {
         using File file = File.Create(path);
 
+        uint trackNumber = file.Tag.Track;
         string title = file.Tag.Title ?? UnknownTitle;
         string artist = file.Tag.Performers is { Length: > 0 } ? file.Tag.Performers[0] : UnknownArtist;
         string album = file.Tag.Album ?? UnknownAlbum;
@@ -43,7 +47,7 @@ public class TrackInfo
             albumArt = new Image(picture.Data?.Data, picture.Filename);
         }
 
-        return new TrackInfo(title, artist, album, albumArt);
+        return new TrackInfo(trackNumber, title, artist, album, albumArt);
     }
 
     public class Image

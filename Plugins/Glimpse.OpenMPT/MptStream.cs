@@ -30,7 +30,7 @@ public class MptStream : CodecStream
         _module.SetParameter(ModuleParameter.InterpolationFilterLength, config.ResamplerFilterMode);
 
         ModuleMetadata metadata = _module.Metadata;
-        TrackInfo = new TrackInfo(metadata.Title ?? TrackInfo.UnknownTitle, metadata.Artist ?? TrackInfo.UnknownArtist,
+        TrackInfo = new TrackInfo(null, metadata.Title ?? TrackInfo.UnknownTitle, metadata.Artist ?? TrackInfo.UnknownArtist,
             TrackInfo.UnknownAlbum, null);
     }
     

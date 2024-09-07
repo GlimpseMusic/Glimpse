@@ -61,7 +61,7 @@ public class AudioPlayer : IDisposable
         _device = new SdlDevice(Config.SampleRate);
         _device.Context.MasterVolume = Config.Volume;
         
-        _defaultTrackInfo = new TrackInfo("Unknown Title", "Unknown Artist", "Unknown Album", null);
+        _defaultTrackInfo = new TrackInfo(null, "Unknown Title", "Unknown Artist", "Unknown Album", null);
 
         Logger.Log("Initializing codecs.");
         Codecs = [new Mp3Codec(), new FlacCodec(), new VorbisCodec(), new WavCodec()];
