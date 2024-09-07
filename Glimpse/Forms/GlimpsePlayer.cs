@@ -98,39 +98,40 @@ public class GlimpsePlayer : Window
             
             ImGui.SameLine();
 
-            if (ImGui.BeginChild("TrackInfo", new Vector2(0, 0)))
+            ImGui.BeginChild("MainThing");
+            
+            if (ImGui.BeginChild("TrackInfo", ImGuiChildFlags.AutoResizeX | ImGuiChildFlags.AutoResizeY))
             {
                 ImGui.Text(player.TrackInfo.Title);
                 ImGui.Text(player.TrackInfo.Artist);
                 ImGui.Text(player.TrackInfo.Album);
-             
-                int position = player.ElapsedSeconds;
-                int length = player.TrackLength;
-                ImGui.Text($"{position / 60:0}:{position % 60:00}");
-                ImGui.SameLine();
-                ImGui.SliderInt("##transport", ref position, 0, length, "");
-                ImGui.SameLine();
-                ImGui.Text($"{length / 60:0}:{length % 60:00}");
-                
+
+                ImGui.EndChild();
+            }
+            
+            ImGui.SameLine();
+
+            if (ImGui.BeginChild("TransportControls", ImGuiChildFlags.AutoResizeX | ImGuiChildFlags.AutoResizeY))
+            {
                 ImGui.SameLine();
                 if (ImGui.Button("Play"))
                     player.Play();
-                
+            
                 ImGui.SameLine();
                 if (ImGui.Button("Pause"))
                     player.Pause();
-                
+            
                 ImGui.SameLine();
                 if (ImGui.Button("Prev"))
                 {
                     _currentSong--;
                     if (_currentSong < 0)
                         _currentSong = 0;
-                    
+                
                     Glimpse.Player.ChangeTrack(_queue[_currentSong]);
                     Glimpse.Player.Play();
                 }
-                
+            
                 ImGui.SameLine();
                 if (ImGui.Button("Next"))
                 {
@@ -149,6 +150,21 @@ public class GlimpsePlayer : Window
                 
                 ImGui.EndChild();
             }
+
+            //if (ImGui.BeginChild("SongPosition", ImGuiChildFlags.AutoResizeX))
+            {
+                int position = player.ElapsedSeconds;
+                int length = player.TrackLength;
+                ImGui.Text($"{position / 60:0}:{position % 60:00}");
+                ImGui.SameLine();
+                ImGui.SliderInt("##transport", ref position, 0, length, "");
+                ImGui.SameLine();
+                ImGui.Text($"{length / 60:0}:{length % 60:00}");
+                
+                //ImGui.EndChild();
+            }
+            
+            ImGui.EndChild();
             
             ImGui.End();
         }
