@@ -22,6 +22,11 @@ public class FlacStream : CodecStream
     public override ulong GetBuffer(Span<byte> buffer)
         => _flac.GetBuffer(buffer);
 
+    public override void Seek(ulong sample)
+    {
+        _flac.SeekToSample(sample);
+    }
+
     public override void Dispose()
     {
         _flac.Dispose();

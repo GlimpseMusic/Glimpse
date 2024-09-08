@@ -22,6 +22,11 @@ public class Mp3Stream : CodecStream
     public override ulong GetBuffer(Span<byte> buffer)
         => _mp3.GetBuffer(buffer);
 
+    public override void Seek(ulong sample)
+    {
+        _mp3.SeekToSample(sample);
+    }
+
     public override void Dispose()
     {
         _mp3.Dispose();

@@ -92,6 +92,11 @@ public class Track : IDisposable
     {
         _source.Pause();
     }
+
+    public void Seek(int second)
+    {
+        
+    }
     
     private void BufferFinished()
     {

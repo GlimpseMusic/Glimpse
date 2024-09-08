@@ -59,6 +59,11 @@ public class MptStream : CodecStream
         return totalBytes;
     }
 
+    public override void Seek(ulong sample)
+    {
+        throw new NotImplementedException();
+    }
+
     public override void Dispose()
     {
         _module.Dispose();

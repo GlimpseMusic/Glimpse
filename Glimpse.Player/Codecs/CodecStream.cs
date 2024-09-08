@@ -12,6 +12,8 @@ public abstract class CodecStream : IDisposable
     public abstract ulong LengthInSamples { get; }
 
     public abstract ulong GetBuffer(Span<byte> buffer);
+
+    public abstract void Seek(ulong sample);
     
     public abstract void Dispose();
 }

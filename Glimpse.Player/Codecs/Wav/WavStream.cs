@@ -22,6 +22,11 @@ public class WavStream : CodecStream
     public override ulong GetBuffer(Span<byte> buffer)
         => _wav.GetBuffer(buffer);
 
+    public override void Seek(ulong sample)
+    {
+        _wav.SeekToSample(sample);
+    }
+
     public override void Dispose()
     {
         _wav.Dispose();

@@ -22,6 +22,11 @@ public class VorbisStream : CodecStream
     public override ulong GetBuffer(Span<byte> buffer)
         => _vorbis.GetBuffer(buffer);
 
+    public override void Seek(ulong sample)
+    {
+        _vorbis.SeekToSample(sample);
+    }
+
     public override void Dispose()
     {
         _vorbis.Dispose();
