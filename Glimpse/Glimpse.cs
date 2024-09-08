@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using Glimpse.Database;
+using Glimpse.Platforms;
 using Glimpse.Player;
 using Glimpse.Player.Configs;
 using Hexa.NET.ImGui;
@@ -16,6 +17,8 @@ public static class Glimpse
     private static List<Window> _windows;
     private static Dictionary<uint, Window> _windowIds;
 
+    public static Platform Platform;
+
     public static AudioPlayer Player;
 
     public static MusicDatabase Database;
@@ -29,6 +32,11 @@ public static class Glimpse
 
     public static unsafe void Run(Window window, string file = null)
     {
+        Platform = Platform.AutoDetect();
+        Logger.Log($"Detected platform {Platform.GetType()}");
+        
+        Platform.EnableDPIAwareness();
+        
         _sdl = Sdl.GetApi();
         
         if (_sdl.Init(Sdl.InitVideo | Sdl.InitEvents) < 0)

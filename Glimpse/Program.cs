@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Glimpse.Forms;
 using Glimpse.Player;
 using Glimpse.Player.Configs;
