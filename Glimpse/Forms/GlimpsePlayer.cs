@@ -131,8 +131,6 @@ public class GlimpsePlayer : Window
             ImGui.EndMainMenuBar();
         }
 #endif
-
-        ImGui.ShowStyleEditor();
         
         //ImGui.ShowStyleEditor();
         
@@ -291,12 +289,12 @@ public class GlimpsePlayer : Window
             
             Album album = Glimpse.Database.Albums[_currentAlbum];
 
-            if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable))
+            if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX))
             {
-                ImGui.TableSetupColumn("Track", 1.0f);
-                ImGui.TableSetupColumn("Title", 5.0f);
-                ImGui.TableSetupColumn("Artist", 3.0f);
-                ImGui.TableSetupColumn("Album", 4.0f);
+                ImGui.TableSetupColumn("Track", ImGuiTableColumnFlags.WidthStretch,  1.0f);
+                ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch, 5.0f);
+                ImGui.TableSetupColumn("Artist", ImGuiTableColumnFlags.WidthStretch, 3.0f);
+                ImGui.TableSetupColumn("Album", ImGuiTableColumnFlags.WidthStretch, 4.0f);
                 ImGui.TableHeadersRow();
 
                 int song = 0;
@@ -363,7 +361,7 @@ public class GlimpsePlayer : Window
     {
         if (ImGui.BeginPopupModal("Add Folder"))
         {
-            if (ImGui.BeginChild("FoldersList", new Vector2(300, 300), ImGuiChildFlags.AlwaysAutoResize))
+            if (ImGui.BeginChild("FoldersList", new Vector2(300, 300), ImGuiChildFlags.AutoResizeY))
             {
                 string newDirectory = null;
 
