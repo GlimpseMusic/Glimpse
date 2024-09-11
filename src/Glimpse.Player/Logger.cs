@@ -16,6 +16,8 @@ public static class Logger
 #if !DEBUG
         if (_writer == null)
         {
+            Directory.CreateDirectory(IConfig.BaseDir);
+            
             string fileLocation = Path.Combine(IConfig.BaseDir, "LastSession.log");
 
             Console.WriteLine($"Initializing log file {fileLocation}");

@@ -156,7 +156,7 @@ public class AudioPlayer : IDisposable
 
     public void Stop()
     {
-        _activeTrack.Dispose();
+        _activeTrack?.Dispose();
         _activeTrack = null;
         StateChanged(TrackState.Stopped);
     }

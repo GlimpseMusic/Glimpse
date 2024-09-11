@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using Glimpse.Forms;
 using Glimpse.Graphics;
 using Glimpse.Platforms;
 using Hexa.NET.ImGui;
@@ -21,6 +23,8 @@ public abstract unsafe class Window : IDisposable
     private Sdl _sdl;
     private Silk.NET.SDL.Window* _window;
     private void* _glContext;
+
+    private List<Popup> _popups;
 
     public Renderer Renderer;
 
@@ -67,11 +71,18 @@ public abstract unsafe class Window : IDisposable
     {
         Title = "Window";
         Size = new Size(800, 450);
+
+        _popups = new List<Popup>();
     }
 
     protected virtual void Initialize() { }
 
     protected virtual void Update() { }
+
+    public void AddPopup(Popup popup)
+    {
+        _popups.Add(popup);
+    }
 
     internal uint Create(Sdl sdl, Platform platform)
     {
@@ -120,8 +131,23 @@ public abstract unsafe class Window : IDisposable
         ImGui.SetCurrentContext(Renderer.ImGui.ImGuiContext);
         ImGui.GetIO().DeltaTime = 1 / 60.0f;
         ImGui.NewFrame();
+        
         Renderer.GL.Disable(EnableCap.ScissorTest);
         Update();
+
+        for (int i = 0; i < _popups.Count; i++)
+        {
+            Popup popup = _popups[i];
+            popup.Update();
+
+            if (popup.IsRemoved)
+            {
+                _popups.RemoveAt(i);
+                i--;
+            }
+        }
+
+
     }
 
     internal void Present()

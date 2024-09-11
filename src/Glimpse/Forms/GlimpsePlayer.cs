@@ -23,6 +23,11 @@ public class GlimpsePlayer : Window
     private List<string> _queue;
     private int _currentSong;
 
+    private Image _playButton;
+    private Image _pauseButton;
+    private Image _skipButton;
+    private Image _stopButton;
+
     private Image _defaultAlbumArt;
     private Image _albumArt;
     
@@ -44,6 +49,11 @@ public class GlimpsePlayer : Window
     {
         ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
 
+        _playButton = Renderer.CreateImage("Assets/Icons/PlayButton.png");
+        _pauseButton = Renderer.CreateImage("Assets/Icons/PauseButton.png");
+        _skipButton = Renderer.CreateImage("Assets/Icons/SkipButton.png");
+        _stopButton = Renderer.CreateImage("Assets/Icons/StopButton.png");
+        
         _defaultAlbumArt = Renderer.CreateImage("Assets/Icons/Glimpse.png");
         
         Glimpse.Player.TrackChanged += PlayerOnTrackChanged;
@@ -176,36 +186,53 @@ public class GlimpsePlayer : Window
             {
                 ImGui.Text(player.TrackInfo.Title);
                 ImGui.Text(player.TrackInfo.Artist);
+
+                Vector2 size = ImGui.CalcTextSize(player.TrackInfo.Album);
                 ImGui.Text(player.TrackInfo.Album);
 
                 ImGui.EndChild();
             }
             
             ImGui.SameLine();
-
+            
+            Vector2 centerPos = new Vector2(Size.Width / 2 - 80, ImGui.GetCursorScreenPos().Y);
+            ImGui.SetNextWindowPos(centerPos);
+            
             if (ImGui.BeginChild("TransportControls", ImGuiChildFlags.AutoResizeX | ImGuiChildFlags.AutoResizeY))
             {
-                ImGui.SameLine();
-                if (ImGui.Button("Play"))
-                    player.Play();
-            
-                ImGui.SameLine();
-                if (ImGui.Button("Pause"))
-                    player.Pause();
-            
-                ImGui.SameLine();
-                if (ImGui.Button("Prev"))
+                //Vector2 centerPos = new Vector2(Size.Width / 2, ImGui.GetCursorScreenPos().Y);
+                //float padding = ImGui.GetStyle().WindowPadding.X + 10;
+                
+                ImGui.BeginDisabled(player.TrackState == TrackState.Stopped);
+                
+                ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
+                
+                if (ImGui.ImageButton("BackwardButton", (IntPtr) _skipButton.ID, new Vector2(32), new Vector2(1, 0), new Vector2(0, 1)))
                 {
                     _currentSong--;
                     if (_currentSong < 0)
                         _currentSong = 0;
-                
+
                     Glimpse.Player.ChangeTrack(_queue[_currentSong]);
                     Glimpse.Player.Play();
                 }
-            
+                
                 ImGui.SameLine();
-                if (ImGui.Button("Next"))
+                
+                if (player.TrackState == TrackState.Playing)
+                {
+                    if (ImGui.ImageButton("PauseButton", (IntPtr) _pauseButton.ID, new Vector2(32)))
+                        player.Pause();
+                }
+                else
+                {
+                    if (ImGui.ImageButton("PlayButton", (IntPtr) _playButton.ID, new Vector2(32)))
+                        player.Play();
+                }
+                
+                ImGui.SameLine();
+
+                if (ImGui.ImageButton("ForwardButton", (IntPtr) _skipButton.ID, new Vector2(32)))
                 {
                     _currentSong++;
                     if (_currentSong >= _queue.Count)
@@ -219,6 +246,17 @@ public class GlimpsePlayer : Window
                         Glimpse.Player.Play();
                     }
                 }
+
+                ImGui.SameLine();
+                if (ImGui.ImageButton("StopButton", (IntPtr) _stopButton.ID, new Vector2(32)))
+                {
+                    _queue.Clear();
+                    player.Stop();
+                }
+                
+                ImGui.PopStyleColor();
+                
+                ImGui.EndDisabled();
                 
                 ImGui.EndChild();
             }
@@ -260,14 +298,14 @@ public class GlimpsePlayer : Window
             if (ImGui.Button("+"))
             {
                 _open = true;
-                ImGui.OpenPopup("Add Folder");
+                //ImGui.OpenPopup("Add Folder");
+                AddPopup(new AddFolderPopup());
             }
 
-            AddFolders();
+            //AddFolders();
 
-            if (ImGui.BeginChild("AlbumList"))
+            if (ImGui.BeginChild("AlbumList", ImGuiWindowFlags.HorizontalScrollbar))
             {
-
                 foreach ((string name, Album album) in Glimpse.Database.Albums)
                 {
                     if (ImGui.Selectable(name, _currentAlbum == name))

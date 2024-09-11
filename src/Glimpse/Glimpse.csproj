@@ -30,6 +30,15 @@
         <Content Include="Assets/**/*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+        <Content Remove="Assets/Icons/Glimpse-Dbg.png" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="$(Configuration) == 'Debug'">
+        <Content Remove="Assets/Icons/Glimpse.png" />
+        <Content Include="Assets/Icons/Glimpse-Dbg.png">
+            <Link>Assets/Icons/Glimpse.png</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>
