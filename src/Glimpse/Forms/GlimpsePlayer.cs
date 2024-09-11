@@ -42,14 +42,14 @@ public class GlimpsePlayer : Window
 
     protected override unsafe void Initialize()
     {
-        ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+        ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
 
         _defaultAlbumArt = Renderer.CreateImage("Assets/Icons/Glimpse.png");
         
         Glimpse.Player.TrackChanged += PlayerOnTrackChanged;
         Glimpse.Player.StateChanged += PlayerOnStateChanged;
         
-        ImFontPtr roboto = Renderer.ImGui.AddFont("Assets/Fonts/Roboto-Regular.ttf", 20, "Roboto-20px");
+        ImFontPtr roboto = Renderer.ImGui.AddFont("Assets/Fonts/Roboto-Regular.ttf", 18, "Roboto-20px");
         ImGuiIOPtr io = ImGui.GetIO();
         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         io.FontDefault = roboto;
@@ -256,10 +256,13 @@ public class GlimpsePlayer : Window
             
             if (newDirectory != null)
                 ChangeDirectory(newDirectory);*/
-            
+
             if (ImGui.Button("+"))
+            {
+                _open = true;
                 ImGui.OpenPopup("Add Folder");
-            
+            }
+
             AddFolders();
 
             if (ImGui.BeginChild("AlbumList"))
@@ -356,10 +359,14 @@ public class GlimpsePlayer : Window
     private string _selectedDirectory;
     private string _currentDirectory;
     private List<string> _directories;
+    private bool _open;
     
     private void AddFolders()
     {
-        if (ImGui.BeginPopupModal("Add Folder"))
+        if (!_open)
+            ImGui.CloseCurrentPopup();
+        
+        if (ImGui.BeginPopupModal("Add Folder", ref _open))
         {
             if (ImGui.BeginChild("FoldersList", new Vector2(300, 300), ImGuiChildFlags.AutoResizeY))
             {

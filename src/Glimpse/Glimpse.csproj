@@ -6,7 +6,7 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <ApplicationIcon Condition="$(Configuration) == 'Release'">Icon.ico</ApplicationIcon>
+        <ApplicationIcon Condition="$(Configuration) != 'Debug'">Icon.ico</ApplicationIcon>
         <ApplicationIcon Condition="$(Configuration) == 'Debug'">Icon-Dbg.ico</ApplicationIcon>
     </PropertyGroup>
 

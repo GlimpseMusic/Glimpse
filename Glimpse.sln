@@ -1,12 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse.Player", "Glimpse.Player\Glimpse.Player.csproj", "{0DD03076-52AC-4C16-A861-71F11DB6339F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse.Player", "src\Glimpse.Player\Glimpse.Player.csproj", "{0DD03076-52AC-4C16-A861-71F11DB6339F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MixrSharp", "MixrSharp\MixrSharp\MixrSharp.csproj", "{BD560E05-95EB-40A3-874C-82D7DA0C3015}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "glimpsecli", "glimpsecli\glimpsecli.csproj", "{F1E0BA99-FDF8-4297-A44B-B011AD865696}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "glimpsecli", "src\glimpsecli\glimpsecli.csproj", "{F1E0BA99-FDF8-4297-A44B-B011AD865696}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse", "Glimpse\Glimpse.csproj", "{1C241E46-55CB-4D11-A895-CC449F90AE5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse", "src\Glimpse\Glimpse.csproj", "{1C241E46-55CB-4D11-A895-CC449F90AE5B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{2D9BD12C-4E03-4DD8-8B8C-5A28494F46A9}"
 EndProject

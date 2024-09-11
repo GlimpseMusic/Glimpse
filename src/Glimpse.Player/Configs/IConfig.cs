@@ -13,7 +13,7 @@ public interface IConfig
 #if DEBUG
             return "Config";
 #else
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Glimpse");
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Glimpse");
 #endif
         }
     }
