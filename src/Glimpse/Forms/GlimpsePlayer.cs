@@ -19,6 +19,7 @@ public class GlimpsePlayer : Window
     private bool _init;
     
     private string _currentAlbum;
+    private int _seekPosition;
 
     private List<string> _queue;
     private int _currentSong;
@@ -148,12 +149,15 @@ public class GlimpsePlayer : Window
             _init = true;
             
             ImGui.DockBuilderRemoveNode(id);
-            ImGui.DockBuilderAddNode(id, ImGuiDockNodeFlags.None);
+            ImGui.DockBuilderAddNode(id, ImGuiDockNodeFlags.NoUndocking);
 
             uint outId = id;
 
-            uint transportDock = ImGui.DockBuilderSplitNode(outId, ImGuiDir.Down, 0.2f, null, &outId);
+            uint transportId;
+            uint transportDock = ImGui.DockBuilderSplitNode(outId, ImGuiDir.Down, 0.2f, &transportId, &outId);
 
+            ImGui.DockBuilderGetNode(transportId).LocalFlags |= ImGuiDockNodeFlags.NoResize;
+            
             uint foldersDock = ImGui.DockBuilderSplitNode(outId, ImGuiDir.Left, 0.3f, null, &outId);
             
             ImGui.DockBuilderDockWindow("Transport", transportDock);
@@ -163,7 +167,7 @@ public class GlimpsePlayer : Window
             ImGui.DockBuilderFinish(id);
         }
 
-        if (ImGui.Begin("Transport"))
+        if (ImGui.Begin("Transport", ImGuiWindowFlags.NoResize))
         {
             Vector2 winSize = ImGui.GetContentRegionAvail();
             
@@ -263,7 +267,13 @@ public class GlimpsePlayer : Window
                 int length = player.TrackLength;
                 ImGui.Text($"{position / 60:0}:{position % 60:00}");
                 ImGui.SameLine();
-                ImGui.SliderInt("##transport", ref position, 0, length, "");
+                if (ImGui.SliderInt("##transport", ref position, 0, length, ""))
+                    _seekPosition = position;
+
+                if (ImGui.IsItemDeactivatedAfterEdit())
+                    player.Seek(_seekPosition);
+
+
                 ImGui.SameLine();
                 ImGui.Text($"{length / 60:0}:{length % 60:00}");
                 

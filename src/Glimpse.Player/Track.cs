@@ -95,7 +95,19 @@ public class Track : IDisposable
 
     public void Seek(int second)
     {
-        
+        _source.Pause();
+        _stream.Seek((ulong) (second * _format.SampleRate));
+        _source.ClearBuffers();
+        _currentBuffer = 0;
+        for (int i = 0; i < _buffers.Length; i++)
+        {
+            _stream.GetBuffer(_audioBuffer);
+            _buffers[i].Update(_audioBuffer);
+            _source.SubmitBuffer(_buffers[i]);
+        }
+        _source.Play();
+
+        _totalBytes = (ulong) (second * _format.SampleRate * _format.Channels * _format.BytesPerSample);
     }
     
     private void BufferFinished()

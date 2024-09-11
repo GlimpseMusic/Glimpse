@@ -13,6 +13,7 @@ public abstract class CodecStream : IDisposable
 
     public abstract ulong GetBuffer(Span<byte> buffer);
 
+    // TODO: Return ulong of the current seek position.
     public abstract void Seek(ulong sample);
     
     public abstract void Dispose();

@@ -161,6 +161,11 @@ public class AudioPlayer : IDisposable
         StateChanged(TrackState.Stopped);
     }
 
+    public void Seek(int second)
+    {
+        _activeTrack.Seek(second);
+    }
+
     public bool FileIsSupported(string path, out Codec outCodec)
     {
         string extension = Path.GetExtension(path);

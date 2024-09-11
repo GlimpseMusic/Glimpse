@@ -70,6 +70,11 @@ public class AddFolderPopup : Popup
             }
             
             ImGui.EndDisabled();
+            
+            ImGui.SameLine();
+            
+            if (ImGui.Button("Cancel"))
+                Close();
 
             if (_currentTask is Task task)
             {
@@ -109,7 +114,7 @@ public class AddFolderPopup : Popup
                     if ((dir.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
                         continue;
                     
-                    SubDirectories.Add(new DirectorySource(dir.Name));
+                    SubDirectories.Add(new DirectorySource(dir.FullName));
                 }
             }
             
