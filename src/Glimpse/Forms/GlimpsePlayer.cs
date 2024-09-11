@@ -186,8 +186,7 @@ public class GlimpsePlayer : Window
             {
                 ImGui.Text(player.TrackInfo.Title);
                 ImGui.Text(player.TrackInfo.Artist);
-
-                Vector2 size = ImGui.CalcTextSize(player.TrackInfo.Album);
+                
                 ImGui.Text(player.TrackInfo.Album);
 
                 ImGui.EndChild();
@@ -205,7 +204,10 @@ public class GlimpsePlayer : Window
                 
                 ImGui.BeginDisabled(player.TrackState == TrackState.Stopped);
                 
+                Vector4 buttonColor = *ImGui.GetStyleColorVec4(ImGuiCol.Button);
+                
                 ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
+                ImGui.PushStyleColor(ImGuiCol.ButtonHovered, buttonColor);
                 
                 if (ImGui.ImageButton("BackwardButton", (IntPtr) _skipButton.ID, new Vector2(32), new Vector2(1, 0), new Vector2(0, 1)))
                 {
@@ -254,6 +256,7 @@ public class GlimpsePlayer : Window
                     player.Stop();
                 }
                 
+                ImGui.PopStyleColor();
                 ImGui.PopStyleColor();
                 
                 ImGui.EndDisabled();

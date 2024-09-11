@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
+using Glimpse.Database;
 using Glimpse.Player.Configs;
 using Hexa.NET.ImGui;
 
@@ -14,6 +15,8 @@ public class AddFolderPopup : Popup
     private Task _currentTask;
     private string _currentFile;
     private object _lockObj;
+
+    private IndexResult _result;
 
     public string Selected;
     
@@ -64,8 +67,7 @@ public class AddFolderPopup : Popup
 
                 _currentTask = Task.Run(() =>
                 {
-                    Glimpse.Database.AddDirectory(Selected, Glimpse.Player, _lockObj, ref _currentFile);
-                    IConfig.WriteConfig("Database/MusicDatabase", Glimpse.Database);
+                    _result = MusicDatabase.IndexDirectory(Selected, Glimpse.Player, ref _currentFile);
                 });
             }
             
@@ -83,9 +85,14 @@ public class AddFolderPopup : Popup
                     if (_currentFile != null)
                         ImGui.Text(Path.GetFileName(_currentFile));
                 }
-                
+
                 if (task.IsCompleted)
+                {
+                    Glimpse.Database.AddIndexToDatabase(_result);
+                    IConfig.WriteConfig("Database/MusicDatabase", Glimpse.Database);
+                    _result = default;
                     Close();
+                }
             }
             
             ImGui.EndPopup();
