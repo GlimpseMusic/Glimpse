@@ -19,13 +19,15 @@ public class MusicDatabase : IConfig
         Albums = new Dictionary<string, Album>();
     }
 
-    public void AddDirectory(string directory, AudioPlayer player)
+    public void AddDirectory(string directory, AudioPlayer player, object lockObj, ref string current)
     {
         Logger.Log($"Adding directory {directory} to database");
 
         foreach (string file in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories))
         {
             Logger.Log($"Indexing {file}");
+            lock (lockObj)
+                current = file;
             
             TrackInfo info;
 

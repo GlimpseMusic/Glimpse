@@ -12,6 +12,8 @@ public class AddFolderPopup : Popup
 {
     private DirectorySource _baseDirectory;
     private Task _currentTask;
+    private string _currentFile;
+    private object _lockObj;
 
     public string Selected;
     
@@ -37,6 +39,7 @@ public class AddFolderPopup : Popup
             }
 
             Selected = "";
+            _lockObj = new object();
             
             ImGui.OpenPopup("Add Folder");
         }
@@ -59,13 +62,26 @@ public class AddFolderPopup : Popup
                 
                 Glimpse.Player.Stop();
 
-                Glimpse.Database.AddDirectory(Selected, Glimpse.Player);
-                IConfig.WriteConfig("Database/MusicDatabase", Glimpse.Database);
-                
-                Close();
+                _currentTask = Task.Run(() =>
+                {
+                    Glimpse.Database.AddDirectory(Selected, Glimpse.Player, _lockObj, ref _currentFile);
+                    IConfig.WriteConfig("Database/MusicDatabase", Glimpse.Database);
+                });
             }
             
             ImGui.EndDisabled();
+
+            if (_currentTask is Task task)
+            {
+                lock (_lockObj)
+                {
+                    if (_currentFile != null)
+                        ImGui.Text(Path.GetFileName(_currentFile));
+                }
+                
+                if (task.IsCompleted)
+                    Close();
+            }
             
             ImGui.EndPopup();
         }
@@ -87,8 +103,14 @@ public class AddFolderPopup : Popup
             if (SubDirectories == null)
             {
                 SubDirectories = new List<DirectorySource>();
-                foreach (string dir in Directory.GetDirectories(Path))
-                    SubDirectories.Add(new DirectorySource(dir));
+                DirectoryInfo info = new DirectoryInfo(Path);
+                foreach (DirectoryInfo dir in info.EnumerateDirectories())
+                {
+                    if ((dir.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                        continue;
+                    
+                    SubDirectories.Add(new DirectorySource(dir.Name));
+                }
             }
             
             foreach (DirectorySource directory in SubDirectories)

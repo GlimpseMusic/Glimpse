@@ -41,14 +41,10 @@ public class GlimpsePlayer : Window
         Size = new Size(1100, 650);
 
         _queue = new List<string>();
-
-        _directories = new List<string>();
     }
 
     protected override unsafe void Initialize()
     {
-        ChangeDirectory(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-
         _playButton = Renderer.CreateImage("Assets/Icons/PlayButton.png");
         _pauseButton = Renderer.CreateImage("Assets/Icons/PauseButton.png");
         _skipButton = Renderer.CreateImage("Assets/Icons/SkipButton.png");
@@ -297,12 +293,8 @@ public class GlimpsePlayer : Window
 
             if (ImGui.Button("+"))
             {
-                _open = true;
-                //ImGui.OpenPopup("Add Folder");
                 AddPopup(new AddFolderPopup());
             }
-
-            //AddFolders();
 
             if (ImGui.BeginChild("AlbumList", ImGuiWindowFlags.HorizontalScrollbar))
             {
@@ -391,73 +383,6 @@ public class GlimpsePlayer : Window
                 Glimpse.Player.ChangeTrack(_queue[_currentSong]);
                 Glimpse.Player.Play();
             }
-        }
-    }
-
-    private string _selectedDirectory;
-    private string _currentDirectory;
-    private List<string> _directories;
-    private bool _open;
-    
-    private void AddFolders()
-    {
-        if (!_open)
-            ImGui.CloseCurrentPopup();
-        
-        if (ImGui.BeginPopupModal("Add Folder", ref _open))
-        {
-            if (ImGui.BeginChild("FoldersList", new Vector2(300, 300), ImGuiChildFlags.AutoResizeY))
-            {
-                string newDirectory = null;
-
-                if (ImGui.Selectable(".."))
-                {
-                    _selectedDirectory = null;
-                    newDirectory = Path.GetDirectoryName(_currentDirectory);
-                }
-                
-                foreach (string directory in _directories)
-                {
-                    if (ImGui.Selectable(Path.GetFileName(directory), directory == _selectedDirectory))
-                    {
-                        if (directory == _selectedDirectory)
-                        {
-                            newDirectory = directory;
-                            _selectedDirectory = null;
-                        }
-                        else
-                            _selectedDirectory = directory;
-                    }
-                }
-                
-                if (newDirectory != null)
-                    ChangeDirectory(newDirectory);
-                
-                ImGui.EndChild();
-            }
-
-            if (ImGui.Button("Add"))
-            {
-                if (_selectedDirectory != null)
-                {
-                    ImGui.CloseCurrentPopup();
-                    Glimpse.Database.AddDirectory(_selectedDirectory, Glimpse.Player);
-                    IConfig.WriteConfig("Database/MusicDatabase", Glimpse.Database);
-                }
-            }
-            
-            ImGui.EndPopup();
-        }
-    }
-
-    private void ChangeDirectory(string directory)
-    {
-        _currentDirectory = directory;
-        _directories.Clear();
-        
-        foreach (string directories in Directory.GetDirectories(directory))
-        {
-            _directories.Add(directories);
         }
     }
     
