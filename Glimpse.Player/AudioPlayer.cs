@@ -177,7 +177,7 @@ public class AudioPlayer : IDisposable
         return false;
     }
 
-    private CodecStream CreateStreamFromFile(string path)
+    public CodecStream CreateStreamFromFile(string path)
     {
         Logger.Log("Checking for codec support.");
         if (FileIsSupported(path, out Codec codec))

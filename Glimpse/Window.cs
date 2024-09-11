@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.IO;
 using Glimpse.Graphics;
+using Glimpse.Platforms;
 using Hexa.NET.ImGui;
 using Silk.NET.OpenGL;
 using Silk.NET.SDL;
@@ -72,7 +73,7 @@ public abstract unsafe class Window : IDisposable
 
     protected virtual void Update() { }
 
-    internal uint Create(Sdl sdl)
+    internal uint Create(Sdl sdl, Platform platform)
     {
         _sdl = sdl;
 
@@ -80,13 +81,20 @@ public abstract unsafe class Window : IDisposable
         _sdl.GLSetAttribute(GLattr.ContextMinorVersion, 3);
         _sdl.GLSetAttribute(GLattr.ContextProfileMask, (int) GLprofile.Core);
         
-        const WindowFlags flags = WindowFlags.Opengl | WindowFlags.Resizable | WindowFlags.AllowHighdpi;
+        const WindowFlags flags = WindowFlags.Opengl | WindowFlags.Resizable | WindowFlags.AllowHighdpi | WindowFlags.Hidden;
 
         _window = sdl.CreateWindow(_title, Sdl.WindowposCentered, Sdl.WindowposCentered, _size.Width, _size.Height,
             (uint) flags);
 
         if (_window == null)
             throw new Exception($"Failed to open window: {_sdl.GetErrorS()}");
+
+        if (OperatingSystem.IsWindows())
+        {
+            SysWMInfo wmInfo = new SysWMInfo();
+            _sdl.GetWindowWMInfo(_window, &wmInfo);
+            platform.EnableDarkWindow(wmInfo.Info.Win.Hwnd);
+        }
 
         _glContext = sdl.GLCreateContext(_window);
 
@@ -96,6 +104,8 @@ public abstract unsafe class Window : IDisposable
         _isCreated = true;
         
         Initialize();
+        
+        _sdl.ShowWindow(_window);
 
         return _sdl.GetWindowID(_window);
     }

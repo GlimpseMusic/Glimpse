@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Glimpse.Player;
+using Glimpse.Player.Codecs;
 using Glimpse.Player.Configs;
 
 namespace Glimpse.Database;
@@ -24,11 +26,21 @@ public class MusicDatabase : IConfig
         foreach (string file in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories))
         {
             Logger.Log($"Indexing {file}");
-            if (!player.FileIsSupported(file, out _))
+            
+            TrackInfo info;
+
+            // TODO: This is a bit crude. Improve this.
+            try
+            {
+                CodecStream stream = player.CreateStreamFromFile(file);
+                info = stream.TrackInfo;
+                stream.Dispose();
+            }
+            catch (Exception)
+            {
                 continue;
-            
-            TrackInfo info = TrackInfo.FromFile(file);
-            
+            }
+
             Tracks.Add(file, new Track(info));
 
             if (info.Album != null)

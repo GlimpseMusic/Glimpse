@@ -25,7 +25,7 @@ public static class Glimpse
 
     public static void AddWindow(Window window)
     {
-        uint id = window.Create(_sdl);
+        uint id = window.Create(_sdl, Platform);
         _windows.Add(window);
         _windowIds.Add(id, window);
     }
