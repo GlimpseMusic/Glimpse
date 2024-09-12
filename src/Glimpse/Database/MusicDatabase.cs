@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 using Glimpse.Player;
@@ -8,12 +9,13 @@ using Glimpse.Player.Configs;
 
 namespace Glimpse.Database;
 
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 public class MusicDatabase : IConfig
 {
     public Dictionary<string, Track> Tracks;
     
     public Dictionary<string, Album> Albums;
-
+    
     public MusicDatabase()
     {
         Tracks = new Dictionary<string, Track>();

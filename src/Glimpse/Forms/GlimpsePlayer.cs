@@ -135,6 +135,15 @@ public class GlimpsePlayer : Window
         if (ImGui.BeginMainMenuBar())
         {
             ImGui.Text("DEBUG Menu");
+
+            ImGui.Spacing();
+            
+            if (ImGui.MenuItem("Style Editor"))
+                AddPopup(new StyleEditorPopup());
+            
+            if (ImGui.MenuItem("Settings"))
+                AddPopup(new SettingsPopup());
+            
             ImGui.EndMainMenuBar();
         }
 #endif
@@ -335,7 +344,7 @@ public class GlimpsePlayer : Window
             
             Album album = Glimpse.Database.Albums[_currentAlbum];
 
-            if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX))
+            if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX | ImGuiTableFlags.RowBg))
             {
                 ImGui.TableSetupColumn("Track", ImGuiTableColumnFlags.WidthStretch,  1.0f);
                 ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch, 5.0f);
