@@ -22,6 +22,16 @@ public class AudioPlayer : IDisposable
     public event OnTrackChanged TrackChanged = delegate { };
 
     public event OnStateChanged StateChanged = delegate { };
+    
+    private AssemblyLoadContext _pluginsContext;
+    
+    private Device _device;
+
+    private readonly TrackInfo _defaultTrackInfo;
+    
+    private Track _activeTrack;
+
+    private int _currentTrackIndex;
 
     public readonly PlayerConfig Config;
 
@@ -30,14 +40,6 @@ public class AudioPlayer : IDisposable
     public readonly List<Plugin> Plugins;
 
     public readonly List<string> QueuedTracks;
-
-    private AssemblyLoadContext _pluginsContext;
-    
-    private Device _device;
-
-    private readonly TrackInfo _defaultTrackInfo;
-    
-    private Track _activeTrack;
 
     public int ElapsedSeconds => _activeTrack?.ElapsedSeconds ?? 0;
 
@@ -127,7 +129,7 @@ public class AudioPlayer : IDisposable
         }
     }
 
-    public void ChangeTrack(string path)
+    /*public void ChangeTrack(string path)
     {
         _activeTrack?.Dispose();
         
@@ -139,6 +141,62 @@ public class AudioPlayer : IDisposable
         _activeTrack = new Track(_device.Context, stream, info, Config);
 
         TrackChanged(info);
+    }*/
+
+    /// <summary>
+    /// Queue a track at the given slot.
+    /// </summary>
+    /// <param name="path">The path to the track file.</param>
+    /// <param name="slot">The <see cref="QueueSlot"/> to insert the track at.</param>
+    public void QueueTrack(string path, QueueSlot slot)
+    {
+        Logger.Log($"Queueing track {path}");
+
+        bool isFirstQueue = QueuedTracks.Count == 0;
+
+        switch (slot)
+        {
+            case QueueSlot.AtEnd:
+                QueuedTracks.Add(path);
+                break;
+            case QueueSlot.Queue:
+                throw new NotImplementedException();
+            case QueueSlot.NextTrack:
+                //QueuedTracks.Insert();
+                throw new NotImplementedException();
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(slot), slot, null);
+        }
+        
+        if (isFirstQueue)
+            ChangeTrack(0);
+    }
+
+    public void QueueTracks(IEnumerable<string> paths, QueueSlot slot)
+    {
+        foreach (string path in paths)
+            QueueTrack(path, slot);
+    }
+
+    public void ChangeTrack(int queueIndex)
+    {
+        if (queueIndex >= QueuedTracks.Count || queueIndex < 0)
+            throw new Exception("Cannot queue track that is not in the queue.");
+        
+        _activeTrack?.Dispose();
+        _currentTrackIndex = queueIndex;
+
+        string path = QueuedTracks[queueIndex];
+        
+        Logger.Log($"Creating codec stream from file {path}");
+
+        CodecStream stream = CreateStreamFromFile(path);
+        TrackInfo info = stream.TrackInfo;
+
+        _activeTrack = new Track(_device.Context, stream, info, Config);
+
+        TrackChanged(info, path);
     }
 
     public void Play()
@@ -158,7 +216,36 @@ public class AudioPlayer : IDisposable
     {
         _activeTrack?.Dispose();
         _activeTrack = null;
+        
+        QueuedTracks.Clear();
+        _currentTrackIndex = 0;
+        
         StateChanged(TrackState.Stopped);
+    }
+
+    public void Next()
+    {
+        _currentTrackIndex++;
+
+        if (_currentTrackIndex >= QueuedTracks.Count)
+        {
+            Stop();
+            return;
+        }
+        
+        ChangeTrack(_currentTrackIndex);
+        Play();
+    }
+
+    public void Previous()
+    {
+        _currentTrackIndex--;
+        
+        if (_currentTrackIndex < 0)
+            _currentTrackIndex = 0;
+        
+        ChangeTrack(_currentTrackIndex);
+        Play();
     }
 
     public void Seek(int second)
@@ -209,7 +296,7 @@ public class AudioPlayer : IDisposable
         _device.Dispose();
     }
 
-    public delegate void OnTrackChanged(TrackInfo info);
+    public delegate void OnTrackChanged(TrackInfo info, string path);
 
     public delegate void OnStateChanged(TrackState state);
 }

@@ -57,7 +57,7 @@ public static class Glimpse
         
         if (args.Length > 0)
         {
-            Player.ChangeTrack(args[0]);
+            Player.QueueTrack(args[0], QueueSlot.AtEnd);
             Player.Play();
         }
 

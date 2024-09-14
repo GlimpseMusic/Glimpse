@@ -22,9 +22,6 @@ public class GlimpsePlayer : Window
     private string _currentAlbum;
     private int _seekPosition;
 
-    private List<string> _queue;
-    private int _currentSong;
-
     private Image _playButton;
     private Image _pauseButton;
     private Image _skipButton;
@@ -222,12 +219,7 @@ public class GlimpsePlayer : Window
                 
                 if (ImGui.ImageButton("BackwardButton", (IntPtr) _skipButton.ID, new Vector2(32), new Vector2(1, 0), new Vector2(0, 1)))
                 {
-                    _currentSong--;
-                    if (_currentSong < 0)
-                        _currentSong = 0;
-
-                    Glimpse.Player.ChangeTrack(_queue[_currentSong]);
-                    Glimpse.Player.Play();
+                    player.Previous();
                 }
                 
                 ImGui.SameLine();
@@ -247,23 +239,12 @@ public class GlimpsePlayer : Window
 
                 if (ImGui.ImageButton("ForwardButton", (IntPtr) _skipButton.ID, new Vector2(32)))
                 {
-                    _currentSong++;
-                    if (_currentSong >= _queue.Count)
-                    {
-                        Glimpse.Player.Stop();
-                        _queue.Clear();
-                    }
-                    else
-                    {
-                        Glimpse.Player.ChangeTrack(_queue[_currentSong]);
-                        Glimpse.Player.Play();
-                    }
+                    player.Next();
                 }
 
                 ImGui.SameLine();
                 if (ImGui.ImageButton("StopButton", (IntPtr) _stopButton.ID, new Vector2(32)))
                 {
-                    _queue.Clear();
                     player.Stop();
                 }
                 
@@ -370,10 +351,7 @@ public class GlimpsePlayer : Window
                     
                     if (ImGui.Selectable(track.Title, info.Title == track.Title && info.Album == album.Name, ImGuiSelectableFlags.SpanAllColumns))
                     {
-                        _queue.Clear();
-                        _currentSong = song;
-
-                        _queue.AddRange(album.Tracks);
+                        player.QueueTracks(album.Tracks, QueueSlot.AtEnd);
                     
                         player.ChangeTrack(path);
                         player.Play();
