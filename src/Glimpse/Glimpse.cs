@@ -30,7 +30,7 @@ public static class Glimpse
         _windowIds.Add(id, window);
     }
 
-    public static unsafe void Run(Window window, string file = null)
+    public static unsafe void Run(Window window, string[] args)
     {
         Platform = Platform.AutoDetect();
         Logger.Log($"Detected platform {Platform.GetType()}");
@@ -46,11 +46,6 @@ public static class Glimpse
         _windowIds = new Dictionary<uint, Window>();
 
         Player = new AudioPlayer();
-        if (file != null)
-        {
-            Player.ChangeTrack(file);
-            Player.Play();
-        }
 
         if (!IConfig.TryGetConfig("Database/MusicDatabase", out Database))
         {
@@ -59,6 +54,12 @@ public static class Glimpse
         }
         
         AddWindow(window);
+        
+        if (args.Length > 0)
+        {
+            Player.ChangeTrack(args[0]);
+            Player.Play();
+        }
 
         while (_windows.Count > 0)
         {

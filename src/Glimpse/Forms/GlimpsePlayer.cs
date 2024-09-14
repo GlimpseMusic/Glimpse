@@ -6,6 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Glimpse.Database;
+using Glimpse.Platforms;
 using Glimpse.Player;
 using Glimpse.Player.Configs;
 using Hexa.NET.ImGui;
@@ -55,6 +56,7 @@ public class GlimpsePlayer : Window
         
         Glimpse.Player.TrackChanged += PlayerOnTrackChanged;
         Glimpse.Player.StateChanged += PlayerOnStateChanged;
+        Glimpse.Platform.ButtonPressed += PlatformOnButtonPressed;
         
         ImFontPtr roboto = Renderer.ImGui.AddFont("Assets/Fonts/Roboto-Regular.ttf", 18, "Roboto-20px");
         ImGuiIOPtr io = ImGui.GetIO();
@@ -422,10 +424,50 @@ public class GlimpsePlayer : Window
     
     private void PlayerOnStateChanged(TrackState state)
     {
+        Glimpse.Platform.SetPlayState(state, Glimpse.Player.TrackInfo);
+        
         if (state != TrackState.Stopped)
             return;
         
         _albumArt?.Dispose();
         _albumArt = null;
+    }
+    
+    private void PlatformOnButtonPressed(TransportButton button)
+    {
+        AudioPlayer player = Glimpse.Player;
+        
+        switch (button)
+        {
+            case TransportButton.Play:
+                player.Play();
+                break;
+            case TransportButton.Pause:
+                player.Pause();
+                break;
+            case TransportButton.Next:
+                _currentSong++;
+                if (_currentSong >= _queue.Count)
+                {
+                    Glimpse.Player.Stop();
+                    _queue.Clear();
+                }
+                else
+                {
+                    Glimpse.Player.ChangeTrack(_queue[_currentSong]);
+                    Glimpse.Player.Play();
+                }
+                break;
+            case TransportButton.Previous:
+                _currentSong--;
+                if (_currentSong < 0)
+                    _currentSong = 0;
+
+                Glimpse.Player.ChangeTrack(_queue[_currentSong]);
+                Glimpse.Player.Play();
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(button), button, null);
+        }
     }
 }

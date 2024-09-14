@@ -16,10 +16,7 @@ public static class Program
         try
 #endif
         {
-            //if (args.Length > 0)
-            Glimpse.Run(new GlimpsePlayer());
-            //else
-            //    throw new NotImplementedException();
+            Glimpse.Run(new GlimpsePlayer(), args);
         }
 #if !DEBUG
         catch (Exception e)

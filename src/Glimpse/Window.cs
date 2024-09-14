@@ -100,12 +100,7 @@ public abstract unsafe class Window : IDisposable
         if (_window == null)
             throw new Exception($"Failed to open window: {_sdl.GetErrorS()}");
 
-        if (OperatingSystem.IsWindows())
-        {
-            SysWMInfo wmInfo = new SysWMInfo();
-            _sdl.GetWindowWMInfo(_window, &wmInfo);
-            platform.EnableDarkWindow(wmInfo.Info.Win.Hwnd);
-        }
+        
 
         _glContext = sdl.GLCreateContext(_window);
 
@@ -117,6 +112,14 @@ public abstract unsafe class Window : IDisposable
         Initialize();
         
         _sdl.ShowWindow(_window);
+        
+        if (OperatingSystem.IsWindows())
+        {
+            SysWMInfo wmInfo = new SysWMInfo();
+            _sdl.GetWindowWMInfo(_window, &wmInfo);
+            platform.EnableDarkWindow(wmInfo.Info.Win.Hwnd);
+            platform.InitializeMainWindow(wmInfo.Info.Win.Hwnd);
+        }
 
         return _sdl.GetWindowID(_window);
     }

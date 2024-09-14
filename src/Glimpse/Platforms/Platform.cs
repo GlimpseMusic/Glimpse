@@ -1,12 +1,24 @@
 ﻿using System;
+using Glimpse.Player;
 
 namespace Glimpse.Platforms;
 
 public abstract class Platform
 {
+    public event OnButtonPressed ButtonPressed = delegate { };
+
+    public abstract void InitializeMainWindow(nint hwnd);
+    
     public abstract void EnableDPIAwareness();
 
     public abstract void EnableDarkWindow(nint hwnd);
+
+    public abstract void SetPlayState(TrackState state, TrackInfo info);
+
+    protected void InvokeButtonPressed(TransportButton button)
+    {
+        ButtonPressed(button);
+    }
 
     public static Platform AutoDetect()
     {
@@ -18,4 +30,6 @@ public abstract class Platform
         
         throw new NotSupportedException();
     }
+
+    public delegate void OnButtonPressed(TransportButton button);
 }
