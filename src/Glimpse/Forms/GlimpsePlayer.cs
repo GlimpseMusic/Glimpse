@@ -29,6 +29,9 @@ public class GlimpsePlayer : Window
 
     private Image _defaultAlbumArt;
     private Image _albumArt;
+
+    private byte[] _newAlbumArt;
+    private bool _shouldDeleteArt;
     
     public GlimpsePlayer()
     {
@@ -38,8 +41,6 @@ public class GlimpsePlayer : Window
         Title = "Glimpse";
 #endif
         Size = new Size(1100, 650);
-
-        _queue = new List<string>();
     }
 
     protected override unsafe void Initialize()
@@ -126,6 +127,18 @@ public class GlimpsePlayer : Window
 
     protected override unsafe void Update()
     {
+        if (_newAlbumArt != null)
+        {
+            _albumArt?.Dispose();
+            _albumArt = Renderer.CreateImage(_newAlbumArt);
+            _newAlbumArt = null;
+        }
+        else if (_shouldDeleteArt)
+        {
+            _albumArt?.Dispose();
+            _albumArt = null;
+        }
+        
         AudioPlayer player = Glimpse.Player;
         
         Renderer.Clear(Color.Black);
@@ -351,9 +364,9 @@ public class GlimpsePlayer : Window
                     
                     if (ImGui.Selectable(track.Title, info.Title == track.Title && info.Album == album.Name, ImGuiSelectableFlags.SpanAllColumns))
                     {
-                        player.QueueTracks(album.Tracks, QueueSlot.AtEnd);
+                        player.QueueTracks(album.Tracks, QueueSlot.Clear);
                     
-                        player.ChangeTrack(path);
+                        player.ChangeTrack(song);
                         player.Play();
                     }
                     
@@ -370,34 +383,16 @@ public class GlimpsePlayer : Window
             
             ImGui.End();
         }
-
-        if (Glimpse.Player.TrackState == TrackState.Stopped && _queue.Count > 0)
-        {
-            _currentSong++;
-
-            if (_currentSong >= _queue.Count)
-            {
-                Glimpse.Player.Stop();
-                _queue.Clear();
-            }
-            else
-            {
-                Glimpse.Player.ChangeTrack(_queue[_currentSong]);
-                Glimpse.Player.Play();
-            }
-        }
     }
     
-    private void PlayerOnTrackChanged(TrackInfo info)
+    private void PlayerOnTrackChanged(TrackInfo info, string path)
     {
-        _albumArt?.Dispose();
-        _albumArt = null;
         TrackInfo.Image art = info.AlbumArt;
 
-        if (art == null)
-            return;
-
-        _albumArt = Renderer.CreateImage(art.Data);
+        if (art?.Data == null)
+            _shouldDeleteArt = true;
+        else
+            _newAlbumArt = art.Data;
     }
     
     private void PlayerOnStateChanged(TrackState state)
@@ -424,25 +419,10 @@ public class GlimpsePlayer : Window
                 player.Pause();
                 break;
             case TransportButton.Next:
-                _currentSong++;
-                if (_currentSong >= _queue.Count)
-                {
-                    Glimpse.Player.Stop();
-                    _queue.Clear();
-                }
-                else
-                {
-                    Glimpse.Player.ChangeTrack(_queue[_currentSong]);
-                    Glimpse.Player.Play();
-                }
+                player.Next();
                 break;
             case TransportButton.Previous:
-                _currentSong--;
-                if (_currentSong < 0)
-                    _currentSong = 0;
-
-                Glimpse.Player.ChangeTrack(_queue[_currentSong]);
-                Glimpse.Player.Play();
+                player.Previous();
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(button), button, null);

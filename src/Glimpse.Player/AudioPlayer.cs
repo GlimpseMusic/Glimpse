@@ -68,6 +68,8 @@ public class AudioPlayer : IDisposable
         Logger.Log("Initializing codecs.");
         Codecs = [new Mp3Codec(), new FlacCodec(), new VorbisCodec(), new WavCodec()];
 
+        QueuedTracks = new List<string>();
+
         Logger.Log("Searching for 'Plugins' directory.");
         if (Directory.Exists("Plugins"))
         {
@@ -129,20 +131,6 @@ public class AudioPlayer : IDisposable
         }
     }
 
-    /*public void ChangeTrack(string path)
-    {
-        _activeTrack?.Dispose();
-        
-        Logger.Log($"Creating codec stream from file {path}");
-        CodecStream stream = CreateStreamFromFile(path);
-        Logger.Log($"Created {stream.GetType()}.");
-        TrackInfo info = stream.TrackInfo;
-
-        _activeTrack = new Track(_device.Context, stream, info, Config);
-
-        TrackChanged(info);
-    }*/
-
     /// <summary>
     /// Queue a track at the given slot.
     /// </summary>
@@ -175,6 +163,12 @@ public class AudioPlayer : IDisposable
 
     public void QueueTracks(IEnumerable<string> paths, QueueSlot slot)
     {
+        if (slot == QueueSlot.Clear)
+        {
+            QueuedTracks.Clear();
+            slot = QueueSlot.AtEnd;
+        }
+        
         foreach (string path in paths)
             QueueTrack(path, slot);
     }
@@ -194,7 +188,7 @@ public class AudioPlayer : IDisposable
         CodecStream stream = CreateStreamFromFile(path);
         TrackInfo info = stream.TrackInfo;
 
-        _activeTrack = new Track(_device.Context, stream, info, Config);
+        _activeTrack = new Track(_device.Context, stream, info, Config, OnTrackFinish);
 
         TrackChanged(info, path);
     }
@@ -276,6 +270,11 @@ public class AudioPlayer : IDisposable
             return codec.CreateStream(path);
 
         throw new NotSupportedException($"File type '{Path.GetExtension(path)}' not supported.");
+    }
+
+    private void OnTrackFinish()
+    {
+        Next();
     }
 
     public void Dispose()

@@ -19,6 +19,8 @@ public class Track : IDisposable
 
     private ulong _totalBytes;
 
+    private Action _onFinish;
+
     public readonly TrackInfo Info;
     
     public readonly int LengthInSeconds;
@@ -49,12 +51,13 @@ public class Track : IDisposable
         }
     }
     
-    internal Track(Context context, CodecStream stream, TrackInfo info, PlayerConfig config)
+    internal Track(Context context, CodecStream stream, TrackInfo info, PlayerConfig config, Action onFinish)
     {
         _stream = stream;
+        _onFinish = onFinish;
 
         _format = stream.Format;
-
+        
         Info = info;
 
         LengthInSeconds = (int) (_stream.LengthInSamples / _format.SampleRate);
@@ -122,6 +125,7 @@ public class Track : IDisposable
             {
                 // Disable looping so the source can successfully stop.
                 _source.Looping = false;
+                _onFinish();
                 return;
             }
 
