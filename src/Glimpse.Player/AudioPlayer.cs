@@ -32,6 +32,7 @@ public class AudioPlayer : IDisposable
     private Track _activeTrack;
 
     private int _currentTrackIndex;
+    private int _currentQueueIndex;
 
     public readonly PlayerConfig Config;
 
@@ -48,6 +49,10 @@ public class AudioPlayer : IDisposable
     public TrackInfo TrackInfo => _activeTrack?.Info ?? _defaultTrackInfo;
 
     public TrackState TrackState => _activeTrack?.State ?? TrackState.Stopped;
+
+    public int CurrentTrackIndex => _currentTrackIndex;
+
+    public string CurrentTrack => QueuedTracks[_currentTrackIndex];
 
     public AudioPlayer()
     {
@@ -87,8 +92,9 @@ public class AudioPlayer : IDisposable
                     Logger.Log($"Loading assembly from {file}");
                     _pluginsContext.LoadFromAssemblyPath(file);
                 }
-                catch (BadImageFormatException)
+                catch (BadImageFormatException e)
                 {
+                    Logger.Log($"Failed to load DLL: {e}");
                     // If this is thrown then it's likely a native DLL.
                 }
             }
@@ -148,10 +154,11 @@ public class AudioPlayer : IDisposable
                 QueuedTracks.Add(path);
                 break;
             case QueueSlot.Queue:
-                throw new NotImplementedException();
+                InsertTrackAtIndex(_currentTrackIndex + ++_currentQueueIndex, path);
+                break;
             case QueueSlot.NextTrack:
-                //QueuedTracks.Insert();
-                throw new NotImplementedException();
+                InsertTrackAtIndex(_currentTrackIndex + 1, path);
+                _currentQueueIndex++;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(slot), slot, null);
@@ -226,6 +233,10 @@ public class AudioPlayer : IDisposable
             Stop();
             return;
         }
+
+        _currentQueueIndex--;
+        if (_currentQueueIndex < 0)
+            _currentQueueIndex = 0;
         
         ChangeTrack(_currentTrackIndex);
         Play();
@@ -237,6 +248,9 @@ public class AudioPlayer : IDisposable
         
         if (_currentTrackIndex < 0)
             _currentTrackIndex = 0;
+
+        if (_currentQueueIndex != 0)
+            _currentQueueIndex++;
         
         ChangeTrack(_currentTrackIndex);
         Play();
@@ -270,6 +284,14 @@ public class AudioPlayer : IDisposable
             return codec.CreateStream(path);
 
         throw new NotSupportedException($"File type '{Path.GetExtension(path)}' not supported.");
+    }
+
+    private void InsertTrackAtIndex(int index, string path)
+    {
+        if (index >= QueuedTracks.Count)
+            QueuedTracks.Add(path);
+        else
+            QueuedTracks.Insert(index, path);
     }
 
     private void OnTrackFinish()

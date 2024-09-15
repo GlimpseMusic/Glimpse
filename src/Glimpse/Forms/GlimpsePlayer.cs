@@ -135,6 +135,8 @@ public class GlimpsePlayer : Window
         }
         else if (_shouldDeleteArt)
         {
+            _shouldDeleteArt = false;
+            
             _albumArt?.Dispose();
             _albumArt = null;
         }
@@ -337,48 +339,98 @@ public class GlimpsePlayer : Window
                     player.Play();
                 }
             }*/
-            
-            Album album = Glimpse.Database.Albums[_currentAlbum];
 
-            if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX | ImGuiTableFlags.RowBg))
+            if (ImGui.BeginTabBar("SongsTabs"))
             {
-                ImGui.TableSetupColumn("Track", ImGuiTableColumnFlags.WidthStretch,  1.0f);
-                ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch, 5.0f);
-                ImGui.TableSetupColumn("Artist", ImGuiTableColumnFlags.WidthStretch, 3.0f);
-                ImGui.TableSetupColumn("Album", ImGuiTableColumnFlags.WidthStretch, 4.0f);
-                ImGui.TableHeadersRow();
-
-                int song = 0;
-                foreach (string path in album.Tracks)
+                if (ImGui.BeginTabItem("Tracks"))
                 {
-                    Track track = Glimpse.Database.Tracks[path];
-                    TrackInfo info = Glimpse.Player.TrackInfo;
-                    
-                    ImGui.TableNextRow();
-                    
-                    ImGui.TableNextColumn();
-                    if (track.TrackNumber is uint trackNumber)
-                        ImGui.Text(trackNumber.ToString());
+                    Album album = Glimpse.Database.Albums[_currentAlbum];
 
-                    ImGui.TableNextColumn();
-                    
-                    if (ImGui.Selectable(track.Title, info.Title == track.Title && info.Album == album.Name, ImGuiSelectableFlags.SpanAllColumns))
+                    if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX | ImGuiTableFlags.RowBg))
                     {
-                        player.QueueTracks(album.Tracks, QueueSlot.Clear);
-                    
-                        player.ChangeTrack(song);
-                        player.Play();
+                        ImGui.TableSetupColumn("Track", ImGuiTableColumnFlags.WidthStretch,  1.0f);
+                        ImGui.TableSetupColumn("Title", ImGuiTableColumnFlags.WidthStretch, 5.0f);
+                        ImGui.TableSetupColumn("Artist", ImGuiTableColumnFlags.WidthStretch, 3.0f);
+                        ImGui.TableSetupColumn("Album", ImGuiTableColumnFlags.WidthStretch, 4.0f);
+                        ImGui.TableHeadersRow();
+
+                        int song = 0;
+                        foreach (string path in album.Tracks)
+                        {
+                            Track track = Glimpse.Database.Tracks[path];
+                            TrackInfo info = Glimpse.Player.TrackInfo;
+                            
+                            ImGui.TableNextRow();
+                            
+                            ImGui.TableNextColumn();
+                            if (track.TrackNumber is uint trackNumber)
+                                ImGui.Text(trackNumber.ToString());
+
+                            ImGui.TableNextColumn();
+                            
+                            if (ImGui.Selectable(track.Title, info.Title == track.Title && info.Album == album.Name, ImGuiSelectableFlags.SpanAllColumns))
+                            {
+                                player.QueueTracks(album.Tracks, QueueSlot.Clear);
+                            
+                                player.ChangeTrack(song);
+                                player.Play();
+                            }
+
+                            if (ImGui.BeginPopupContextItem())
+                            {
+                                if (ImGui.Selectable("Add to queue"))
+                                    player.QueueTrack(path, QueueSlot.Queue);
+                                if (ImGui.Selectable("Play next"))
+                                    player.QueueTrack(path, QueueSlot.NextTrack);
+                                
+                                ImGui.EndPopup();
+                            }
+                            
+                            ImGui.TableNextColumn();
+                            ImGui.Text(track.Artist);
+                            ImGui.TableNextColumn();
+                            ImGui.Text(track.Album);
+
+                            song++;
+                        }
+                        
+                        ImGui.EndTable();
                     }
                     
-                    ImGui.TableNextColumn();
-                    ImGui.Text(track.Artist);
-                    ImGui.TableNextColumn();
-                    ImGui.Text(track.Album);
+                    ImGui.EndTabItem();
+                }
 
-                    song++;
+                if (ImGui.BeginTabItem("Queue"))
+                {
+                    if (ImGui.BeginChild("QueuedTracks"))
+                    {
+                        int song = 0;
+                        foreach (string path in player.QueuedTracks)
+                        {
+                            bool selected = song == player.CurrentTrackIndex;
+                            bool dark = song < player.CurrentTrackIndex;
+                        
+                            if (dark)
+                                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+
+                            if (ImGui.Selectable($"{song + 1}. {Glimpse.Database.Tracks[path].Title}", selected))
+                            {
+                                player.ChangeTrack(song);
+                                player.Play();
+                            }
+                            if (dark)
+                                ImGui.PopStyleColor();
+
+                            song++;
+                        }
+                        
+                        ImGui.EndChild();
+                    }
+                    
+                    ImGui.EndTabItem();
                 }
                 
-                ImGui.EndTable();
+                ImGui.EndTabBar();
             }
             
             ImGui.End();
@@ -401,9 +453,8 @@ public class GlimpsePlayer : Window
         
         if (state != TrackState.Stopped)
             return;
-        
-        _albumArt?.Dispose();
-        _albumArt = null;
+
+        _shouldDeleteArt = true;
     }
     
     private void PlatformOnButtonPressed(TransportButton button)

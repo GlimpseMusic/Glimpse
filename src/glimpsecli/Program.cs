@@ -123,8 +123,10 @@ public static class GlimpseCli
         player.Config.Volume = volume ?? player.Config.Volume;
         player.Config.SpeedAdjust = speed ?? player.Config.SpeedAdjust;
         
-        Logger.Log($"Set Track to {files[currentFile]}");
-        player.ChangeTrack(files[currentFile]);
+        foreach (string path in files)
+            player.QueueTrack(path, QueueSlot.AtEnd);
+
+        player.ChangeTrack(0);
         
         Logger.Log("Playing.");
         player.Play();
@@ -177,8 +179,7 @@ public static class GlimpseCli
                             goto EXIT;
                         }
 
-                        player.ChangeTrack(files[currentFile]);
-                        player.Play();
+                        player.Next();
 
                         break;
                     }
@@ -189,22 +190,11 @@ public static class GlimpseCli
                         if (currentFile < 0)
                             currentFile = 0;
                 
-                        player.ChangeTrack(files[currentFile]);
-                        player.Play();
+                        player.Previous();
 
                         break;
                     }
                 }
-            }
-
-            if (player.TrackState == TrackState.Stopped)
-            {
-                currentFile++;
-                if (currentFile >= files.Count)
-                    break;
-                
-                player.ChangeTrack(files[currentFile]);
-                player.Play();
             }
             
             Thread.Sleep(125);

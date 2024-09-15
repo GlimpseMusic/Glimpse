@@ -37,7 +37,7 @@ public class DiscordPresence : Plugin
         player.StateChanged += PlayerOnStateChanged;
     }
 
-    private void PlayerOnTrackChanged(TrackInfo info)
+    private void PlayerOnTrackChanged(TrackInfo info, string path)
     {
         SetPresence(info, _player.ElapsedSeconds, _player.TrackLength);
     }
