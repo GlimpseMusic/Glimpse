@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using Windows.Media;
 using Windows.Media.Playback;
 using Glimpse.Player;
@@ -11,6 +12,11 @@ public unsafe class WindowsPlatform : Platform
 {
     //private ISystemMediaTransportControls* _transportControls;
     private SystemMediaTransportControls _transportControls;
+
+    public WindowsPlatform()
+    {
+        TerraFX.Interop.Windows.Windows.CoInitialize(null);
+    }
 
     public override void InitializeMainWindow(IntPtr hwnd)
     {
@@ -46,13 +52,23 @@ public unsafe class WindowsPlatform : Platform
 
     public override void EnableDPIAwareness()
     {
-        SetProcessDPIAware();
+        TerraFX.Interop.Windows.Windows.SetProcessDPIAware();
     }
 
     public override void EnableDarkWindow(nint hwnd)
     {
         BOOL value = true;
         TerraFX.Interop.Windows.Windows.DwmSetWindowAttribute((HWND) hwnd, 20, &value, (uint) sizeof(BOOL));
+    }
+
+    public override void OpenFileInExplorer(string path)
+    {
+        fixed (char* pPath = path)
+        {
+            ITEMIDLIST* list = TerraFX.Interop.Windows.Windows.ILCreateFromPathW(pPath);
+            TerraFX.Interop.Windows.Windows.SHOpenFolderAndSelectItems(list, 0, null, 0);
+            TerraFX.Interop.Windows.Windows.ILFree(list);
+        }
     }
 
     public override void SetPlayState(TrackState state, TrackInfo info)
@@ -79,7 +95,4 @@ public unsafe class WindowsPlatform : Platform
                 throw new ArgumentOutOfRangeException(nameof(state), state, null);
         }
     }
-
-    [DllImport("user32.dll")]
-    private static extern bool SetProcessDPIAware();
 }

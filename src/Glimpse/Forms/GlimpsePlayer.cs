@@ -10,6 +10,8 @@ using Glimpse.Platforms;
 using Glimpse.Player;
 using Glimpse.Player.Configs;
 using Hexa.NET.ImGui;
+using Silk.NET.SDL;
+using Color = System.Drawing.Color;
 using Image = Glimpse.Graphics.Image;
 using Track = Glimpse.Database.Track;
 
@@ -382,6 +384,15 @@ public class GlimpsePlayer : Window
                                     player.QueueTrack(path, QueueSlot.Queue);
                                 if (ImGui.Selectable("Play next"))
                                     player.QueueTrack(path, QueueSlot.NextTrack);
+                                if (ImGui.Selectable("Add to end"))
+                                    player.QueueTrack(path, QueueSlot.AtEnd);
+                                
+                                ImGui.Spacing();
+
+                                if (ImGui.Selectable("Show File In Explorer"))
+                                {
+                                    Glimpse.Platform.OpenFileInExplorer(path);
+                                }
                                 
                                 ImGui.EndPopup();
                             }

@@ -11,6 +11,12 @@ public class LinuxPlatform : Platform
     public override void EnableDPIAwareness() { }
     
     public override void EnableDarkWindow(nint hwnd) { }
+    
+    public override void OpenFileInExplorer(string path)
+    {
+        throw new NotImplementedException();
+    }
+
     public override void SetPlayState(TrackState state, TrackInfo info)
     {
         throw new NotImplementedException();
