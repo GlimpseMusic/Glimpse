@@ -12,13 +12,7 @@ public class LinuxPlatform : Platform
     
     public override void EnableDarkWindow(nint hwnd) { }
     
-    public override void OpenFileInExplorer(string path)
-    {
-        throw new NotImplementedException();
-    }
+    public override void OpenFileInExplorer(string path) { }
 
-    public override void SetPlayState(TrackState state, TrackInfo info)
-    {
-        throw new NotImplementedException();
-    }
+    public override void SetPlayState(TrackState state, TrackInfo info) { }
 }

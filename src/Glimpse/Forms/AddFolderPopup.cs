@@ -134,15 +134,16 @@ public class AddFolderPopup : Popup
                 string dirName = System.IO.Path.GetFileName(directory.Path);
                 if (string.IsNullOrWhiteSpace(dirName))
                     dirName = directory.Path;
-                
+
                 if (ImGui.TreeNodeEx(dirName, flags))
+                {
                     directory.Update(ref selected);
-                
+                    ImGui.TreePop();
+                }
+
                 if (ImGui.IsItemClicked())
                     selected = directory.Path;
             }
-            
-            ImGui.TreePop();
         }
     }
 }
