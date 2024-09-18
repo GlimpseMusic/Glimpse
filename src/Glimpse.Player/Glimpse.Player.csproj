@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\MixrSharp\MixrSharp\MixrSharp.csproj" />
+      <ProjectReference Include="..\Glimpse.Api\Glimpse.Api.csproj" />
     </ItemGroup>
 
     <ItemGroup>
