@@ -29,8 +29,8 @@ public abstract class Platform
         
         if (OperatingSystem.IsLinux())
             return new LinuxPlatform();
-        
-        throw new NotSupportedException();
+
+        return new NullPlatform();
     }
 
     public delegate void OnButtonPressed(TransportButton button);

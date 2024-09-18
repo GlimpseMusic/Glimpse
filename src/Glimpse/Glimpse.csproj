@@ -22,6 +22,7 @@
       <PackageReference Include="Silk.NET.SDL" Version="2.21.0" />
       <PackageReference Include="StbImageSharp" Version="2.27.14" />
       <PackageReference Include="TerraFX.Interop.Windows" Version="10.0.26100" />
+      <PackageReference Include="Tmds.DBus" Version="0.20.0" />
     </ItemGroup>
     
     <ItemGroup>
