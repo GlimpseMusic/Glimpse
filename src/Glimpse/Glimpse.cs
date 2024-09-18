@@ -53,6 +53,8 @@ public static class Glimpse
             IConfig.WriteConfig("Database/MusicDatabase", Database);
         }
         
+        Database.Initialize();
+        
         AddWindow(window);
         
         if (args.Length > 0)

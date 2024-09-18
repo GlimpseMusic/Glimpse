@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Glimpse.Player;
 using Glimpse.Player.Codecs;
@@ -20,6 +21,12 @@ public class MusicDatabase : IConfig
     {
         Tracks = new Dictionary<string, Track>();
         Albums = new Dictionary<string, Album>();
+    }
+
+    public void Initialize()
+    {
+        Tracks = Tracks.OrderBy(pair => pair.Key).ToDictionary();
+        Albums = Albums.OrderBy(pair => pair.Key).ToDictionary();
     }
 
     public void AddIndexToDatabase(in IndexResult index)

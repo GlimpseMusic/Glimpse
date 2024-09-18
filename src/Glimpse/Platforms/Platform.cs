@@ -24,8 +24,8 @@ public abstract class Platform
 
     public static Platform AutoDetect()
     {
-        //if (OperatingSystem.IsWindows())
-        //    return new WindowsPlatform();
+        if (OperatingSystem.IsWindows())
+            return new WindowsPlatform();
         
         if (OperatingSystem.IsLinux())
             return new LinuxPlatform();

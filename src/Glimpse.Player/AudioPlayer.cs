@@ -259,6 +259,7 @@ public class AudioPlayer : IDisposable
     public void Seek(int second)
     {
         _activeTrack.Seek(second);
+        StateChanged(TrackState);
     }
 
     public bool FileIsSupported(string path, out Codec outCodec)

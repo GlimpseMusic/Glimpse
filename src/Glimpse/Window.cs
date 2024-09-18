@@ -99,8 +99,16 @@ public abstract unsafe class Window : IDisposable
 
         if (_window == null)
             throw new Exception($"Failed to open window: {_sdl.GetErrorS()}");
-
         
+        ImageResult result = ImageResult.FromMemory(File.ReadAllBytes("Assets/Icons/Glimpse.png"));
+        Surface* surface;
+        fixed (byte* pData = result.Data)
+        {
+            surface = sdl.CreateRGBSurfaceWithFormatFrom(pData, result.Width, result.Height, 0, result.Width * 4,
+                Sdl.PixelformatAbgr8888);
+        }
+
+        sdl.SetWindowIcon(_window, surface);
 
         _glContext = sdl.GLCreateContext(_window);
 
