@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DiscordRPC;
 using Glimpse.Player;
 using Glimpse.Player.Configs;
@@ -9,7 +10,7 @@ using MetaBrainz.MusicBrainz.Interfaces.Searches;
 
 namespace Glimpse.DiscordPresence;
 
-public class DiscordPresence : Plugin
+public partial class DiscordPresence : Plugin
 {
     private AudioPlayer _player;
     
@@ -64,27 +65,9 @@ public class DiscordPresence : Plugin
         Client.SetPresence(presence);
         
         string albumName = info.Album;
-
-        int startIndex = albumName.IndexOf("disc", StringComparison.OrdinalIgnoreCase);
-
-        if (startIndex != -1)
-        {
-            int endIndex;
-            bool foundNumber = false;
-
-            for (endIndex = startIndex + "disc".Length; endIndex < albumName.Length; endIndex++)
-            {
-                char c = albumName[endIndex];
-
-                if (c is not ' ' && c is < '0' or > '9')
-                    break;
-
-                foundNumber = true;
-            }
-
-            if (foundNumber)
-                albumName = albumName.Remove(startIndex, endIndex - startIndex).Replace("()", "").Replace("[]", "").Trim();
-        }
+        Console.WriteLine($"AlbumName: {albumName}");
+        albumName = RemoveDiscNumberRegex().Replace(albumName, "");
+        Console.WriteLine(albumName);
 
         if (Config.AlbumArt.TryGetValue(albumName, out _currentUrl))
         {
@@ -141,4 +124,8 @@ public class DiscordPresence : Plugin
     {
         Client.Dispose();
     }
+
+    [GeneratedRegex(@"\s*([\[(]*)\s*(disc|cd)(\s*)\d+\s*([)\]]*)",
+        RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace | RegexOptions.CultureInvariant)]
+    private static partial Regex RemoveDiscNumberRegex();
 }
