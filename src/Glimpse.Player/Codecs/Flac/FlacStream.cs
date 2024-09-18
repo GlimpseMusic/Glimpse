@@ -1,4 +1,5 @@
 ﻿using System;
+using Glimpse.Api;
 using MixrSharp;
 
 namespace Glimpse.Player.Codecs.Flac;
@@ -16,7 +17,7 @@ public class FlacStream : CodecStream
     public FlacStream(string path)
     {
         _flac = new MixrSharp.Stream.Flac(path);
-        TrackInfo = TrackInfo.FromFile(path);
+        TrackInfo = Utils.TrackInfoFromTags(path);
     }
 
     public override ulong GetBuffer(Span<byte> buffer)

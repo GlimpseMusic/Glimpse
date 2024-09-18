@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using DiscordRPC;
+using Glimpse.Api;
 using Glimpse.Player;
 using Glimpse.Player.Configs;
 using Glimpse.Player.Plugins;
@@ -12,7 +13,7 @@ namespace Glimpse.DiscordPresence;
 
 public partial class DiscordPresence : Plugin
 {
-    private AudioPlayer _player;
+    private IAudioPlayer _player;
     
     private static string _currentUrl;
 
@@ -20,7 +21,7 @@ public partial class DiscordPresence : Plugin
     
     public DiscordRpcClient Client;
     
-    public override void Initialize(AudioPlayer player)
+    public override void Initialize(IAudioPlayer player)
     {
         _player = player;
         
@@ -42,7 +43,7 @@ public partial class DiscordPresence : Plugin
         switch (state)
         {
             case TrackState.Playing:
-                SetPresence(_player.TrackInfo, _player.ElapsedSeconds, _player.TrackLength);
+                SetPresence(_player.CurrentTrack, _player.ElapsedSeconds, _player.TrackLength);
                 break;
             
             case TrackState.Paused:

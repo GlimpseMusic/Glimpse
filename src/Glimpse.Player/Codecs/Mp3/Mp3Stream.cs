@@ -1,4 +1,5 @@
 ﻿using System;
+using Glimpse.Api;
 using MixrSharp;
 
 namespace Glimpse.Player.Codecs.Mp3;
@@ -16,7 +17,7 @@ public class Mp3Stream : CodecStream
     public Mp3Stream(string path)
     {
         _mp3 = new MixrSharp.Stream.Mp3(path);
-        TrackInfo = TrackInfo.FromFile(path);
+        TrackInfo = Utils.TrackInfoFromTags(path);
     }
     
     public override ulong GetBuffer(Span<byte> buffer)

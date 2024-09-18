@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Glimpse.Api;
 using Glimpse.Player;
 using Glimpse.Player.Configs;
 

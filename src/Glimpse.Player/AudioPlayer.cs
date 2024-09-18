@@ -20,9 +20,9 @@ namespace Glimpse.Player;
 
 public class AudioPlayer : IAudioPlayer, IDisposable
 {
-    public event OnTrackChanged TrackChanged = delegate { };
+    public event IAudioPlayer.OnTrackChanged TrackChanged = delegate { };
 
-    public event OnStateChanged StateChanged = delegate { };
+    public event IAudioPlayer.OnStateChanged StateChanged = delegate { };
     
     private AssemblyLoadContext _pluginsContext;
     
@@ -41,19 +41,26 @@ public class AudioPlayer : IAudioPlayer, IDisposable
 
     public readonly List<Plugin> Plugins;
 
-    public readonly List<string> QueuedTracks;
-
+    public readonly List<string> QueuedTracksInternal;
+    
     public int ElapsedSeconds => _activeTrack?.ElapsedSeconds ?? 0;
 
     public int TrackLength => _activeTrack?.LengthInSeconds ?? 0;
 
-    public TrackInfo TrackInfo => _activeTrack?.Info ?? _defaultTrackInfo;
+    public TrackInfo CurrentTrack => _activeTrack?.Info ?? _defaultTrackInfo;
 
-    public TrackState TrackState => _activeTrack?.State ?? TrackState.Stopped;
+    public TrackState State => _activeTrack?.State ?? TrackState.Stopped;
 
     public int CurrentTrackIndex => _currentTrackIndex;
 
-    public string CurrentTrack => QueuedTracks[_currentTrackIndex];
+    public IEnumerable<string> QueuedTracks
+    {
+        get
+        {
+            foreach (string path in QueuedTracksInternal)
+                yield return path;
+        }
+    }
 
     public AudioPlayer()
     {
@@ -74,7 +81,7 @@ public class AudioPlayer : IAudioPlayer, IDisposable
         Logger.Log("Initializing codecs.");
         Codecs = [new Mp3Codec(), new FlacCodec(), new VorbisCodec(), new WavCodec()];
 
-        QueuedTracks = new List<string>();
+        QueuedTracksInternal = new List<string>();
 
         Logger.Log("Searching for 'Plugins' directory.");
         if (Directory.Exists("Plugins"))
@@ -137,22 +144,17 @@ public class AudioPlayer : IAudioPlayer, IDisposable
             }
         }
     }
-
-    /// <summary>
-    /// Queue a track at the given slot.
-    /// </summary>
-    /// <param name="path">The path to the track file.</param>
-    /// <param name="slot">The <see cref="QueueSlot"/> to insert the track at.</param>
+    
     public void QueueTrack(string path, QueueSlot slot)
     {
         Logger.Log($"Queueing track {path}");
 
-        bool isFirstQueue = QueuedTracks.Count == 0;
+        bool isFirstQueue = QueuedTracksInternal.Count == 0;
 
         switch (slot)
         {
             case QueueSlot.AtEnd:
-                QueuedTracks.Add(path);
+                QueuedTracksInternal.Add(path);
                 break;
             case QueueSlot.Queue:
                 InsertTrackAtIndex(_currentTrackIndex + ++_currentQueueIndex, path);
@@ -173,7 +175,7 @@ public class AudioPlayer : IAudioPlayer, IDisposable
     {
         if (slot == QueueSlot.Clear)
         {
-            QueuedTracks.Clear();
+            QueuedTracksInternal.Clear();
             slot = QueueSlot.AtEnd;
         }
         
@@ -183,13 +185,13 @@ public class AudioPlayer : IAudioPlayer, IDisposable
 
     public void ChangeTrack(int queueIndex)
     {
-        if (queueIndex >= QueuedTracks.Count || queueIndex < 0)
+        if (queueIndex >= QueuedTracksInternal.Count || queueIndex < 0)
             throw new Exception("Cannot queue track that is not in the queue.");
         
         _activeTrack?.Dispose();
         _currentTrackIndex = queueIndex;
 
-        string path = QueuedTracks[queueIndex];
+        string path = QueuedTracksInternal[queueIndex];
         
         Logger.Log($"Creating codec stream from file {path}");
 
@@ -219,7 +221,7 @@ public class AudioPlayer : IAudioPlayer, IDisposable
         _activeTrack?.Dispose();
         _activeTrack = null;
         
-        QueuedTracks.Clear();
+        QueuedTracksInternal.Clear();
         _currentTrackIndex = 0;
         
         StateChanged(TrackState.Stopped);
@@ -229,7 +231,7 @@ public class AudioPlayer : IAudioPlayer, IDisposable
     {
         _currentTrackIndex++;
 
-        if (_currentTrackIndex >= QueuedTracks.Count)
+        if (_currentTrackIndex >= QueuedTracksInternal.Count)
         {
             Stop();
             return;
@@ -260,7 +262,7 @@ public class AudioPlayer : IAudioPlayer, IDisposable
     public void Seek(int second)
     {
         _activeTrack.Seek(second);
-        StateChanged(TrackState);
+        StateChanged(State);
     }
 
     public bool FileIsSupported(string path, out Codec outCodec)
@@ -290,10 +292,10 @@ public class AudioPlayer : IAudioPlayer, IDisposable
 
     private void InsertTrackAtIndex(int index, string path)
     {
-        if (index >= QueuedTracks.Count)
-            QueuedTracks.Add(path);
+        if (index >= QueuedTracksInternal.Count)
+            QueuedTracksInternal.Add(path);
         else
-            QueuedTracks.Insert(index, path);
+            QueuedTracksInternal.Insert(index, path);
     }
 
     private void OnTrackFinish()
@@ -318,8 +320,4 @@ public class AudioPlayer : IAudioPlayer, IDisposable
         Logger.Log("Disposing device.");
         _device.Dispose();
     }
-
-    public delegate void OnTrackChanged(TrackInfo info, string path);
-
-    public delegate void OnStateChanged(TrackState state);
 }

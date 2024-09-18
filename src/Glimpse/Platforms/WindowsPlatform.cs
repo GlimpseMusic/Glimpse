@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Windows.Media;
 using Windows.Media.Playback;
+using Glimpse.Api;
 using Glimpse.Player;
 using TerraFX.Interop.Windows;
 

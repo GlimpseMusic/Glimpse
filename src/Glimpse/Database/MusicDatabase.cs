@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Glimpse.Api;
 using Glimpse.Player;
 using Glimpse.Player.Codecs;
 using Glimpse.Player.Configs;

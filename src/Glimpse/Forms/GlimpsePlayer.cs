@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Glimpse.Api;
 using Glimpse.Database;
 using Glimpse.Platforms;
 using Glimpse.Player;
@@ -209,10 +210,10 @@ public class GlimpsePlayer : Window
             
             if (ImGui.BeginChild("TrackInfo", ImGuiChildFlags.AutoResizeX | ImGuiChildFlags.AutoResizeY))
             {
-                ImGui.Text(player.TrackInfo.Title);
-                ImGui.Text(player.TrackInfo.Artist);
+                ImGui.Text(player.CurrentTrack.Title);
+                ImGui.Text(player.CurrentTrack.Artist);
                 
-                ImGui.Text(player.TrackInfo.Album);
+                ImGui.Text(player.CurrentTrack.Album);
 
                 ImGui.EndChild();
             }
@@ -227,7 +228,7 @@ public class GlimpsePlayer : Window
                 //Vector2 centerPos = new Vector2(Size.Width / 2, ImGui.GetCursorScreenPos().Y);
                 //float padding = ImGui.GetStyle().WindowPadding.X + 10;
                 
-                ImGui.BeginDisabled(player.TrackState == TrackState.Stopped);
+                ImGui.BeginDisabled(player.State == TrackState.Stopped);
                 
                 Vector4 buttonColor = *ImGui.GetStyleColorVec4(ImGuiCol.Button);
                 
@@ -241,7 +242,7 @@ public class GlimpsePlayer : Window
                 
                 ImGui.SameLine();
                 
-                if (player.TrackState == TrackState.Playing)
+                if (player.State == TrackState.Playing)
                 {
                     if (ImGui.ImageButton("PauseButton", (IntPtr) _pauseButton.ID, new Vector2(32)))
                         player.Pause();
@@ -360,7 +361,7 @@ public class GlimpsePlayer : Window
                         foreach (string path in album.Tracks)
                         {
                             Track track = Glimpse.Database.Tracks[path];
-                            TrackInfo info = Glimpse.Player.TrackInfo;
+                            TrackInfo info = Glimpse.Player.CurrentTrack;
                             
                             ImGui.TableNextRow();
                             
@@ -416,7 +417,7 @@ public class GlimpsePlayer : Window
                     if (ImGui.BeginChild("QueuedTracks"))
                     {
                         int song = 0;
-                        foreach (string path in player.QueuedTracks)
+                        foreach (string path in player.QueuedTracksInternal)
                         {
                             bool selected = song == player.CurrentTrackIndex;
                             bool dark = song < player.CurrentTrackIndex;
@@ -460,7 +461,7 @@ public class GlimpsePlayer : Window
     
     private void PlayerOnStateChanged(TrackState state)
     {
-        Glimpse.Platform.SetPlayState(state, Glimpse.Player.TrackInfo);
+        Glimpse.Platform.SetPlayState(state, Glimpse.Player.CurrentTrack);
         
         if (state != TrackState.Stopped)
             return;

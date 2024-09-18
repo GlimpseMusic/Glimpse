@@ -1,4 +1,5 @@
 ﻿using System;
+using Glimpse.Api;
 using MixrSharp;
 
 namespace Glimpse.Player.Codecs.Vorbis;
@@ -16,7 +17,7 @@ public class VorbisStream : CodecStream
     public VorbisStream(string path)
     {
         _vorbis = new MixrSharp.Stream.Vorbis(path);
-        TrackInfo = TrackInfo.FromFile(path);
+        TrackInfo = Utils.TrackInfoFromTags(path);
     }
     
     public override ulong GetBuffer(Span<byte> buffer)

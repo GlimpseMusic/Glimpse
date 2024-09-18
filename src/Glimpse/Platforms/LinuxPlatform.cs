@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using Glimpse.Api;
 using Glimpse.Player;
 
 namespace Glimpse.Platforms;
