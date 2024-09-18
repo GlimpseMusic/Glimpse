@@ -2,23 +2,23 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Glimpse.Api;
 using Glimpse.Player.Configs;
 
 namespace Glimpse.Player;
 
-public static class Logger
+public class Logger : ILogger
 {
     private static StreamWriter _writer;
-    
-    //[Conditional("DEBUG")]
-    public static void Log(string message, [CallerLineNumber] int lineNumber = 0, [CallerFilePath] string file = "")
+
+    public Logger(string logDirectory)
     {
-#if !DEBUG
+//#if !DEBUG
         if (_writer == null)
         {
-            Directory.CreateDirectory(IConfig.BaseDir);
+            Directory.CreateDirectory(logDirectory);
             
-            string fileLocation = Path.Combine(IConfig.BaseDir, "LastSession.log");
+            string fileLocation = Path.Combine(logDirectory, "LastSession.log");
 
             Console.WriteLine($"Initializing log file {fileLocation}");
             _writer = new StreamWriter(fileLocation)
@@ -26,8 +26,12 @@ public static class Logger
                 AutoFlush = true
             };
         }
-#endif
-        
+//#endif
+    }
+    
+    //[Conditional("DEBUG")]
+    public void Log(string message, [CallerLineNumber] int lineNumber = 0, [CallerFilePath] string file = "")
+    {
         string localFile = Path.GetFileName(file);
 
         string logText = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [LOG] ({localFile}:{lineNumber}) {message}";

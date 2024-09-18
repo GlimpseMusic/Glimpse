@@ -1,4 +1,6 @@
-﻿namespace Glimpse.Player.Configs;
+﻿using Glimpse.Api;
+
+namespace Glimpse.Player.Configs;
 
 public class PlayerConfig : IConfig
 {

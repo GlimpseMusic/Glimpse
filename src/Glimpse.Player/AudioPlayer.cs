@@ -11,7 +11,6 @@ using Glimpse.Player.Codecs.Mp3;
 using Glimpse.Player.Codecs.Vorbis;
 using Glimpse.Player.Codecs.Wav;
 using Glimpse.Player.Configs;
-using Glimpse.Player.Plugins;
 using MixrSharp;
 using MixrSharp.Devices;
 using MixrSharp.Stream;
@@ -23,6 +22,8 @@ public class AudioPlayer : IAudioPlayer, IDisposable
     public event IAudioPlayer.OnTrackChanged TrackChanged = delegate { };
 
     public event IAudioPlayer.OnStateChanged StateChanged = delegate { };
+
+    private readonly Logger _logger;
     
     private AssemblyLoadContext _pluginsContext;
     
@@ -62,28 +63,30 @@ public class AudioPlayer : IAudioPlayer, IDisposable
         }
     }
 
-    public AudioPlayer()
+    public AudioPlayer(GlimpseBase glimpse)
     {
-        Logger.Log("Loading player configuration.");
-        if (!IConfig.TryGetConfig("Player", out Config))
+        _logger = glimpse.Log;
+        
+        _logger.Log("Loading player configuration.");
+        if (!glimpse.ConfigManager.TryGetConfig("Player", out Config))
         {
-            Logger.Log("   ... Failed: Creating new config.");
+            _logger.Log("   ... Failed: Creating new config.");
             Config = new PlayerConfig();
-            IConfig.WriteConfig("Player", Config);
+            glimpse.ConfigManager.WriteConfig("Player", Config);
         }
 
-        Logger.Log("Creating SdlDevice.");
+        _logger.Log("Creating SdlDevice.");
         _device = new SdlDevice(Config.SampleRate);
         _device.Context.MasterVolume = Config.Volume;
         
         _defaultTrackInfo = new TrackInfo(null, "Unknown Title", "Unknown Artist", "Unknown Album", null);
 
-        Logger.Log("Initializing codecs.");
+        _logger.Log("Initializing codecs.");
         Codecs = [new Mp3Codec(), new FlacCodec(), new VorbisCodec(), new WavCodec()];
 
         QueuedTracksInternal = new List<string>();
 
-        Logger.Log("Searching for 'Plugins' directory.");
+        _logger.Log("Searching for 'Plugins' directory.");
         if (Directory.Exists("Plugins"))
         {
             _pluginsContext = new AssemblyLoadContext("Plugins");
@@ -92,17 +95,17 @@ public class AudioPlayer : IAudioPlayer, IDisposable
 
             string pluginsLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Plugins");
             
-            Logger.Log($"Searching for plugins in {pluginsLocation}");
+            _logger.Log($"Searching for plugins in {pluginsLocation}");
             foreach (string file in Directory.GetFiles(pluginsLocation, "*.dll", SearchOption.AllDirectories))
             {
                 try
                 {
-                    Logger.Log($"Loading assembly from {file}");
+                    _logger.Log($"Loading assembly from {file}");
                     _pluginsContext.LoadFromAssemblyPath(file);
                 }
                 catch (BadImageFormatException e)
                 {
-                    Logger.Log($"Failed to load DLL: {e}");
+                    _logger.Log($"Failed to load DLL: {e}");
                     // If this is thrown then it's likely a native DLL.
                 }
             }
@@ -126,18 +129,18 @@ public class AudioPlayer : IAudioPlayer, IDisposable
                 
                 ASSEMBLY_GOOD: ;
                 
-                Logger.Log($"Plugin {assembly} loaded.");
+                _logger.Log($"Plugin {assembly} loaded.");
                 
                 foreach (Type type in assembly.GetTypes().Where(type => type.IsAssignableTo(typeof(Plugin))))
                 {
-                    Logger.Log($"Initializing plugin {type}");
+                    _logger.Log($"Initializing plugin {type}");
                     
                     Plugin plugin = (Plugin) Activator.CreateInstance(type);
                     if (plugin == null)
                         continue;
                     
-                    Logger.Log("    ... Initialize()");
-                    plugin.Initialize(this);
+                    _logger.Log("    ... Initialize()");
+                    plugin.Initialize(glimpse);
 
                     Plugins.Add(plugin);
                 }
@@ -147,7 +150,7 @@ public class AudioPlayer : IAudioPlayer, IDisposable
     
     public void QueueTrack(string path, QueueSlot slot)
     {
-        Logger.Log($"Queueing track {path}");
+        _logger.Log($"Queueing track {path}");
 
         bool isFirstQueue = QueuedTracksInternal.Count == 0;
 
@@ -193,19 +196,19 @@ public class AudioPlayer : IAudioPlayer, IDisposable
 
         string path = QueuedTracksInternal[queueIndex];
         
-        Logger.Log($"Creating codec stream from file {path}");
+        _logger.Log($"Creating codec stream from file {path}");
 
         CodecStream stream = CreateStreamFromFile(path);
         TrackInfo info = stream.TrackInfo;
 
-        _activeTrack = new Track(_device.Context, stream, info, Config, OnTrackFinish);
+        _activeTrack = new Track(_logger, _device.Context, stream, info, Config, OnTrackFinish);
 
         TrackChanged(info, path);
     }
 
     public void Play()
     {
-        Logger.Log("Start playback.");
+        _logger.Log("Start playback.");
         _activeTrack.Play();
         StateChanged(TrackState.Playing);
     }
@@ -283,7 +286,7 @@ public class AudioPlayer : IAudioPlayer, IDisposable
 
     public CodecStream CreateStreamFromFile(string path)
     {
-        Logger.Log("Checking for codec support.");
+        _logger.Log("Checking for codec support.");
         if (FileIsSupported(path, out Codec codec))
             return codec.CreateStream(path);
 
@@ -307,17 +310,17 @@ public class AudioPlayer : IAudioPlayer, IDisposable
     {
         if (Plugins != null)
         {
-            Logger.Log("Disposing all plugins.");
+            _logger.Log("Disposing all plugins.");
             foreach (Plugin plugin in Plugins)
             {
-                Logger.Log($"Disposing plugin {plugin.GetType()}");
+                _logger.Log($"Disposing plugin {plugin.GetType()}");
                 plugin.Dispose();
             }
         }
 
-        Logger.Log("Disposing track.");
+        _logger.Log("Disposing track.");
         _activeTrack?.Dispose();
-        Logger.Log("Disposing device.");
+        _logger.Log("Disposing device.");
         _device.Dispose();
     }
 }

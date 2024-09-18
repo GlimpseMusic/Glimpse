@@ -10,6 +10,8 @@ namespace Glimpse.Player;
 
 public class Track : IDisposable
 {
+    private readonly Logger _logger;
+    
     private CodecStream _stream;
     private AudioFormat _format;
     private AudioSource _source;
@@ -52,8 +54,10 @@ public class Track : IDisposable
         }
     }
     
-    internal Track(Context context, CodecStream stream, TrackInfo info, PlayerConfig config, Action onFinish)
+    internal Track(Logger logger, Context context, CodecStream stream, TrackInfo info, PlayerConfig config, Action onFinish)
     {
+        _logger = logger;
+        
         _stream = stream;
         _onFinish = onFinish;
 
@@ -62,14 +66,14 @@ public class Track : IDisposable
         Info = info;
 
         LengthInSeconds = (int) (_stream.LengthInSamples / _format.SampleRate);
-        Logger.Log($"LengthInSeconds: {LengthInSeconds}");
+        _logger.Log($"LengthInSeconds: {LengthInSeconds}");
 
-        Logger.Log("Creating source.");
+        _logger.Log("Creating source.");
         _source = context.CreateSource(new SourceDescription(SourceType.Pcm, _format));
         
         _audioBuffer = new byte[_format.SampleRate * _format.Channels * _format.BytesPerSample];
 
-        Logger.Log("Creating audio buffers.");
+        _logger.Log("Creating audio buffers.");
         _buffers = new AudioBuffer[2];
         for (int i = 0; i < _buffers.Length; i++)
         {
@@ -144,12 +148,12 @@ public class Track : IDisposable
 
     public void Dispose()
     {
-        Logger.Log("Disposing source.");
+        _logger.Log("Disposing source.");
         _source.Dispose();
-        Logger.Log("Disposing buffers.");
+        _logger.Log("Disposing buffers.");
         foreach (AudioBuffer buffer in _buffers)
             buffer.Dispose();
-        Logger.Log("Disposing stream.");
+        _logger.Log("Disposing stream.");
         _stream.Dispose();
     }
 }

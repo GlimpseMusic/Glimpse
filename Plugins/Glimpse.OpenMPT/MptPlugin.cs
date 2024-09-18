@@ -1,6 +1,6 @@
-﻿using Glimpse.Player;
+﻿using Glimpse.Api;
+using Glimpse.Player;
 using Glimpse.Player.Configs;
-using Glimpse.Player.Plugins;
 
 namespace Glimpse.OpenMPT;
 

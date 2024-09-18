@@ -1,9 +1,6 @@
 using System.Text.RegularExpressions;
 using DiscordRPC;
-using Glimpse.Api;
-using Glimpse.Player;
-using Glimpse.Player.Configs;
-using Glimpse.Player.Plugins;
+using Glimpse.Api;  
 using MetaBrainz.MusicBrainz;
 using MetaBrainz.MusicBrainz.CoverArt;
 using MetaBrainz.MusicBrainz.CoverArt.Interfaces;
@@ -13,7 +10,7 @@ namespace Glimpse.DiscordPresence;
 
 public partial class DiscordPresence : Plugin
 {
-    private IAudioPlayer _player;
+    private IGlimpse _glimpse;
     
     private static string _currentUrl;
 
@@ -21,29 +18,31 @@ public partial class DiscordPresence : Plugin
     
     public DiscordRpcClient Client;
     
-    public override void Initialize(IAudioPlayer player)
+    public override void Initialize(IGlimpse glimpse)
     {
-        _player = player;
+        _glimpse = glimpse;
         
         Client = new DiscordRpcClient("1280266653950804111");
         
-        if (!IConfig.TryGetConfig("Discord", out Config))
+        if (!_glimpse.ConfigManager.TryGetConfig("Discord", out Config))
         {
             Config = new DiscordConfig();
-            IConfig.WriteConfig("Discord", Config);
+            _glimpse.ConfigManager.WriteConfig("Discord", Config);
         }
         
         Client.Initialize();
         
-        player.StateChanged += PlayerOnStateChanged;
+        _glimpse.AudioPlayer.StateChanged += PlayerOnStateChanged;
     }
 
     void PlayerOnStateChanged(TrackState state)
     {
+        IAudioPlayer player = _glimpse.AudioPlayer;
+        
         switch (state)
         {
             case TrackState.Playing:
-                SetPresence(_player.CurrentTrack, _player.ElapsedSeconds, _player.TrackLength);
+                SetPresence(player.CurrentTrack, player.ElapsedSeconds, player.TrackLength);
                 break;
             
             case TrackState.Paused:
@@ -111,7 +110,7 @@ public partial class DiscordPresence : Plugin
                     {
                         _currentUrl = image.Location?.ToString();
                         Config.AlbumArt[albumName] = _currentUrl;
-                        IConfig.WriteConfig("Discord", Config);
+                        _glimpse.ConfigManager.WriteConfig("Discord", Config);
                         break;
                     }
                 }
