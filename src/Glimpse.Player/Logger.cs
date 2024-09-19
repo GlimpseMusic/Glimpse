@@ -13,20 +13,17 @@ public class Logger : ILogger
 
     public Logger(string logDirectory)
     {
-//#if !DEBUG
-        if (_writer == null)
-        {
-            Directory.CreateDirectory(logDirectory);
-            
-            string fileLocation = Path.Combine(logDirectory, "LastSession.log");
+#if !DEBUG
+        Directory.CreateDirectory(logDirectory);
+        
+        string fileLocation = Path.Combine(logDirectory, "LastSession.log");
 
-            Console.WriteLine($"Initializing log file {fileLocation}");
-            _writer = new StreamWriter(fileLocation)
-            {
-                AutoFlush = true
-            };
-        }
-//#endif
+        Console.WriteLine($"Initializing log file {fileLocation}");
+        _writer = new StreamWriter(fileLocation)
+        {
+            AutoFlush = true
+        };
+#endif
     }
     
     //[Conditional("DEBUG")]

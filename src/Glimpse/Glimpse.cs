@@ -12,7 +12,7 @@ using Renderer = Glimpse.Graphics.Renderer;
 
 namespace Glimpse;
 
-public static class Glimpse
+public class Glimpse : GlimpseBase
 {
     private static Sdl _sdl;
     private static List<Window> _windows;
@@ -24,17 +24,17 @@ public static class Glimpse
 
     public static MusicDatabase Database;
 
-    public static void AddWindow(Window window)
+    public void AddWindow(Window window)
     {
         uint id = window.Create(_sdl, Platform);
         _windows.Add(window);
         _windowIds.Add(id, window);
     }
 
-    public static unsafe void Run(Window window, string[] args)
+    public unsafe void Run(Window window, string[] args)
     {
         Platform = Platform.AutoDetect();
-        Logger.Log($"Detected platform {Platform.GetType()}");
+        Log.Log($"Detected platform {Platform.GetType()}");
         
         Platform.EnableDPIAwareness();
         
@@ -46,12 +46,10 @@ public static class Glimpse
         _windows = new List<Window>();
         _windowIds = new Dictionary<uint, Window>();
 
-        Player = new AudioPlayer();
-
-        if (!IConfig.TryGetConfig("Database/MusicDatabase", out Database))
+        if (!Config.TryGetConfig("Database/MusicDatabase", out Database))
         {
             Database = new MusicDatabase();
-            IConfig.WriteConfig("Database/MusicDatabase", Database);
+            Config.WriteConfig("Database/MusicDatabase", Database);
         }
         
         Database.Initialize();
