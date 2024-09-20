@@ -198,6 +198,9 @@ public class AudioPlayer : IDisposable
         _activeTrack = new Track(_device.Context, stream, info, Config, OnTrackFinish);
 
         TrackChanged(info, path);
+        
+        if (Config.AutoPlay)
+            Play();
     }
 
     public void Play()
@@ -239,7 +242,6 @@ public class AudioPlayer : IDisposable
             _currentQueueIndex = 0;
         
         ChangeTrack(_currentTrackIndex);
-        Play();
     }
 
     public void Previous()
@@ -253,7 +255,6 @@ public class AudioPlayer : IDisposable
             _currentQueueIndex++;
         
         ChangeTrack(_currentTrackIndex);
-        Play();
     }
 
     public void Seek(int second)

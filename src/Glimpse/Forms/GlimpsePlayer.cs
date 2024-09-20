@@ -28,6 +28,8 @@ public class GlimpsePlayer : Window
     private Image _pauseButton;
     private Image _skipButton;
     private Image _stopButton;
+    private Image _plusButton;
+    private Image _cogButton;
 
     private Image _defaultAlbumArt;
     private Image _albumArt;
@@ -51,6 +53,8 @@ public class GlimpsePlayer : Window
         _pauseButton = Renderer.CreateImage("Assets/Icons/PauseButton.png");
         _skipButton = Renderer.CreateImage("Assets/Icons/SkipButton.png");
         _stopButton = Renderer.CreateImage("Assets/Icons/StopButton.png");
+        _plusButton = Renderer.CreateImage("Assets/Icons/plus.png");
+        _cogButton = Renderer.CreateImage("Assets/Icons/cog.png");
         
         _defaultAlbumArt = Renderer.CreateImage("Assets/Icons/Glimpse.png");
         
@@ -313,10 +317,13 @@ public class GlimpsePlayer : Window
             if (newDirectory != null)
                 ChangeDirectory(newDirectory);*/
 
-            if (ImGui.Button("+"))
-            {
+            if (ImGui.ImageButton("Settings", (IntPtr) _cogButton.ID, new Vector2(16)))
+                AddPopup(new SettingsPopup());
+            
+            ImGui.SameLine();
+            
+            if (ImGui.ImageButton("AddDirs", (IntPtr) _plusButton.ID, new Vector2(16)))
                 AddPopup(new AddFolderPopup());
-            }
 
             if (ImGui.BeginChild("AlbumList", ImGuiWindowFlags.HorizontalScrollbar))
             {
@@ -375,7 +382,6 @@ public class GlimpsePlayer : Window
                                 player.QueueTracks(album.Tracks, QueueSlot.Clear);
                             
                                 player.ChangeTrack(song);
-                                player.Play();
                             }
 
                             if (ImGui.BeginPopupContextItem())
@@ -425,10 +431,7 @@ public class GlimpsePlayer : Window
                                 ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
 
                             if (ImGui.Selectable($"{song + 1}. {Glimpse.Database.Tracks[path].Title}", selected))
-                            {
                                 player.ChangeTrack(song);
-                                player.Play();
-                            }
                             if (dark)
                                 ImGui.PopStyleColor();
 

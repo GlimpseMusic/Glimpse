@@ -81,6 +81,7 @@ public abstract unsafe class Window : IDisposable
 
     public void AddPopup(Popup popup)
     {
+        popup.Renderer = Renderer;
         _popups.Add(popup);
     }
 
@@ -153,12 +154,11 @@ public abstract unsafe class Window : IDisposable
 
             if (popup.IsRemoved)
             {
+                popup.Dispose();
                 _popups.RemoveAt(i);
                 i--;
             }
         }
-
-
     }
 
     internal void Present()

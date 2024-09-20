@@ -128,9 +128,6 @@ public static class GlimpseCli
 
         player.ChangeTrack(0);
         
-        Logger.Log("Playing.");
-        player.Play();
-        
         PrintConsoleText(player.TrackInfo, 0, player.TrackLength, player.TrackState, currentFile, files.Count);
 
         Console.CancelKeyPress += (sender, eventArgs) =>
