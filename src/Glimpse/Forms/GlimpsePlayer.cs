@@ -238,7 +238,7 @@ public class GlimpsePlayer : Window
                 ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
                 ImGui.PushStyleColor(ImGuiCol.ButtonHovered, buttonColor);
                 
-                if (ImGui.ImageButton("BackwardButton", (IntPtr) _skipButton.ID, new Vector2(32), new Vector2(1, 0), new Vector2(0, 1)))
+                if (ImGui.ImageButton("BackwardButton", (IntPtr) _skipButton.ID, ScaleVec(32), new Vector2(1, 0), new Vector2(0, 1)))
                 {
                     player.Previous();
                 }
@@ -247,24 +247,24 @@ public class GlimpsePlayer : Window
                 
                 if (player.TrackState == TrackState.Playing)
                 {
-                    if (ImGui.ImageButton("PauseButton", (IntPtr) _pauseButton.ID, new Vector2(32)))
+                    if (ImGui.ImageButton("PauseButton", (IntPtr) _pauseButton.ID, ScaleVec(32)))
                         player.Pause();
                 }
                 else
                 {
-                    if (ImGui.ImageButton("PlayButton", (IntPtr) _playButton.ID, new Vector2(32)))
+                    if (ImGui.ImageButton("PlayButton", (IntPtr) _playButton.ID, ScaleVec(32)))
                         player.Play();
                 }
                 
                 ImGui.SameLine();
 
-                if (ImGui.ImageButton("ForwardButton", (IntPtr) _skipButton.ID, new Vector2(32)))
+                if (ImGui.ImageButton("ForwardButton", (IntPtr) _skipButton.ID, ScaleVec(32)))
                 {
                     player.Next();
                 }
 
                 ImGui.SameLine();
-                if (ImGui.ImageButton("StopButton", (IntPtr) _stopButton.ID, new Vector2(32)))
+                if (ImGui.ImageButton("StopButton", (IntPtr) _stopButton.ID, ScaleVec(32)))
                 {
                     player.Stop();
                 }
@@ -317,12 +317,12 @@ public class GlimpsePlayer : Window
             if (newDirectory != null)
                 ChangeDirectory(newDirectory);*/
 
-            if (ImGui.ImageButton("Settings", (IntPtr) _cogButton.ID, new Vector2(16)))
+            if (ImGui.ImageButton("Settings", (IntPtr) _cogButton.ID, ScaleVec(16)))
                 AddPopup(new SettingsPopup());
             
             ImGui.SameLine();
             
-            if (ImGui.ImageButton("AddDirs", (IntPtr) _plusButton.ID, new Vector2(16)))
+            if (ImGui.ImageButton("AddDirs", (IntPtr) _plusButton.ID, ScaleVec(16)))
                 AddPopup(new AddFolderPopup());
 
             if (ImGui.BeginChild("AlbumList", ImGuiWindowFlags.HorizontalScrollbar))
@@ -493,4 +493,13 @@ public class GlimpsePlayer : Window
                 throw new ArgumentOutOfRangeException(nameof(button), button, null);
         }
     }
+
+    private Vector2 ScaleVec(float x, float y)
+    {
+        float scale = Scale;
+        return new Vector2((int) (x * scale), (int) (y * scale));
+    }
+
+    private Vector2 ScaleVec(float scalar)
+        => ScaleVec(scalar, scalar);
 }

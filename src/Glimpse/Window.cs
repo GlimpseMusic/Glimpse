@@ -19,6 +19,7 @@ public abstract unsafe class Window : IDisposable
     private bool _isCreated;
     private string _title;
     private Size _size;
+    private float _scale;
     
     private Sdl _sdl;
     private Silk.NET.SDL.Window* _window;
@@ -67,6 +68,8 @@ public abstract unsafe class Window : IDisposable
         }
     }
 
+    public float Scale => _scale;
+
     protected Window()
     {
         Title = "Window";
@@ -95,6 +98,12 @@ public abstract unsafe class Window : IDisposable
         
         const WindowFlags flags = WindowFlags.Opengl | WindowFlags.Resizable | WindowFlags.AllowHighdpi | WindowFlags.Hidden;
 
+        float dpi;
+        _sdl.GetDisplayDPI(0, &dpi, null, null);
+        _scale = dpi / 96.0f;
+        
+        _size = new Size((int) (_size.Width * _scale), (int) (_size.Height * _scale));
+        
         _window = sdl.CreateWindow(_title, Sdl.WindowposCentered, Sdl.WindowposCentered, _size.Width, _size.Height,
             (uint) flags);
 
@@ -114,13 +123,11 @@ public abstract unsafe class Window : IDisposable
         _glContext = sdl.GLCreateContext(_window);
 
         sdl.GLMakeCurrent(_window, _glContext);
-        Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)), _size);
+        Renderer = new Renderer(GL.GetApi(s => (nint) _sdl.GLGetProcAddress(s)), _size, _scale);
 
         _isCreated = true;
         
         Initialize();
-        
-        _sdl.ShowWindow(_window);
         
         if (OperatingSystem.IsWindows())
         {
@@ -129,6 +136,8 @@ public abstract unsafe class Window : IDisposable
             platform.EnableDarkWindow(wmInfo.Info.Win.Hwnd);
             platform.InitializeMainWindow(wmInfo.Info.Win.Hwnd);
         }
+        
+        _sdl.ShowWindow(_window);
 
         return _sdl.GetWindowID(_window);
     }
