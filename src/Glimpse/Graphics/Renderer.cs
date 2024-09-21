@@ -11,6 +11,8 @@ namespace Glimpse.Graphics;
 
 public unsafe class Renderer : IDisposable
 {
+    private float _scale;
+    
     private readonly Image _white;
     
     private readonly BufferShaderSet<Vertex2D, ushort> _imageRenderSet;
@@ -21,9 +23,11 @@ public unsafe class Renderer : IDisposable
 
     public readonly ImGuiRenderer ImGui;
     
-    public Renderer(GL gl, Size size)
+    public Renderer(GL gl, Size size, float scale)
     {
         GL = gl;
+        _scale = scale;
+        
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
@@ -59,7 +63,7 @@ public unsafe class Renderer : IDisposable
         GL.EnableVertexAttribArray(2);
         GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, (uint) sizeof(Vertex2D), (void*) 16);
 
-        ImGui = new ImGuiRenderer(GL, size);
+        ImGui = new ImGuiRenderer(GL, size, scale);
     }
 
     public Image CreateImage(byte[] data, uint width, uint height)

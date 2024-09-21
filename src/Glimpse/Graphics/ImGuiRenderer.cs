@@ -15,6 +15,7 @@ public class ImGuiRenderer : IDisposable
 {
     private GL _gl;
     private Size _size;
+    private float _scale;
     
     private readonly ImGuiContextPtr _context;
     
@@ -29,10 +30,11 @@ public class ImGuiRenderer : IDisposable
 
     public ImGuiContextPtr ImGuiContext => _context;
     
-    public unsafe ImGuiRenderer(GL gl, Size size)
+    public unsafe ImGuiRenderer(GL gl, Size size, float scale)
     {
         _gl = gl;
         _size = size;
+        _scale = scale;
         
         _context = ImGui.CreateContext();
         ImGui.SetCurrentContext(_context);
@@ -55,12 +57,15 @@ public class ImGuiRenderer : IDisposable
 
         ImGuiIOPtr io = ImGui.GetIO();
         io.DisplaySize = new Vector2(size.Width, size.Height);
+        io.DisplayFramebufferScale = new Vector2(scale, scale);
         io.IniFilename = null;
         io.LogFilename = null;
         
         io.Fonts.AddFontDefault();
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
         io.FontGlobalScale = 1.0f;
+
+        ImGui.GetStyle().ScaleAllSizes(scale);
         
         RecreateFontTexture();
 
@@ -69,7 +74,7 @@ public class ImGuiRenderer : IDisposable
 
     public ImFontPtr AddFont(string path, uint size, string name)
     {
-        ImFontPtr font = ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size);
+        ImFontPtr font = ImGui.GetIO().Fonts.AddFontFromFileTTF(path, (uint) (size * _scale));
         Fonts.Add(name, font);
         RecreateFontTexture();
 

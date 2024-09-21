@@ -1,8 +1,13 @@
-﻿namespace Glimpse.Forms;
+﻿using System;
+using Glimpse.Graphics;
 
-public abstract class Popup
+namespace Glimpse.Forms;
+
+public abstract class Popup : IDisposable
 {
     public bool IsRemoved;
+
+    public Renderer Renderer;
     
     public abstract void Update();
 
@@ -10,4 +15,6 @@ public abstract class Popup
     {
         IsRemoved = true;
     }
+
+    public virtual void Dispose() { }
 }
