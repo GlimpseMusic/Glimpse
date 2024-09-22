@@ -301,6 +301,8 @@ public class GlimpsePlayer : Window
             ImGui.End();
         }
         
+        bool switchToTrackList = false;
+        
         if (ImGui.Begin("Albums", ImGuiWindowFlags.HorizontalScrollbar))
         {
             /*string newDirectory = null;
@@ -324,13 +326,24 @@ public class GlimpsePlayer : Window
             
             if (ImGui.ImageButton("AddDirs", (IntPtr) _plusButton.ID, ScaleVec(16)))
                 AddPopup(new AddFolderPopup());
-
+            
             if (ImGui.BeginChild("AlbumList", ImGuiWindowFlags.HorizontalScrollbar))
             {
                 foreach ((string name, Album album) in Glimpse.Database.Albums)
                 {
                     if (ImGui.Selectable(name, _currentAlbum == name))
+                    {
                         _currentAlbum = name;
+                        switchToTrackList = true;
+                    }
+
+                    if (ImGui.BeginPopupContextItem())
+                    {
+                        if (ImGui.Selectable("Add to queue"))
+                            player.QueueTracks(album.Tracks, QueueSlot.AtEnd);
+                        
+                        ImGui.EndPopup();
+                    }
                 }
                 ImGui.EndChild();
             }
@@ -351,7 +364,10 @@ public class GlimpsePlayer : Window
 
             if (ImGui.BeginTabBar("SongsTabs"))
             {
-                if (ImGui.BeginTabItem("Tracks"))
+                ImGuiTabItemFlags trackFlags =
+                    switchToTrackList ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None;
+                
+                if (ImGui.BeginTabItem("Tracks", trackFlags))
                 {
                     Album album = Glimpse.Database.Albums[_currentAlbum];
 
