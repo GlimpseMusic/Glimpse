@@ -49,7 +49,7 @@ public class AddFolderPopup : Popup
         
         if (ImGui.BeginPopupModal("Add Folder", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove))
         {
-            if (ImGui.BeginChild("FoldersList", new Vector2(300, 300), ImGuiChildFlags.AutoResizeY))
+            if (ImGui.BeginChild("FoldersList", ScaleVec(300, 300), ImGuiChildFlags.AutoResizeY))
             {
                 _baseDirectory.Update(ref Selected);
                 ImGui.EndChild();

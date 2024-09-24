@@ -16,7 +16,7 @@ public class SettingsPopup : Popup
         
         if (ImGui.BeginPopupModal("Settings", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.AlwaysAutoResize))
         {
-            if (ImGui.BeginChild("SettingsItems", new Vector2(500, 350)))
+            if (ImGui.BeginChild("SettingsItems", ScaleVec(500, 350)))
             {
                 if (ImGui.BeginTabBar("SettingsTab"))
                 {
@@ -56,7 +56,7 @@ public class SettingsPopup : Popup
 
                         if (ImGui.BeginChild("GlimpseLogo", ImGuiChildFlags.AlwaysAutoResize | ImGuiChildFlags.AutoResizeX | ImGuiChildFlags.AutoResizeY))
                         {
-                            ImGui.Image((IntPtr) _glimpseLogo.ID, new Vector2(128, 128));
+                            ImGui.Image((IntPtr) _glimpseLogo.ID, ScaleVec(128, 128));
                             ImGui.EndChild();
                         }
 
