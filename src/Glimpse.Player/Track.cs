@@ -103,6 +103,7 @@ public class Track : IDisposable
 
     public void Seek(int second)
     {
+        SourceState state = _source.State;
         _source.Pause();
         _stream.Seek((ulong) (second * _format.SampleRate));
         _source.ClearBuffers();
@@ -113,7 +114,9 @@ public class Track : IDisposable
             _buffers[i].Update(_audioBuffer);
             _source.SubmitBuffer(_buffers[i]);
         }
-        _source.Play();
+        
+        if (state == SourceState.Playing)
+            _source.Play();
 
         _totalBytes = (ulong) (second * _format.SampleRate * _format.Channels * _format.BytesPerSample);
     }
