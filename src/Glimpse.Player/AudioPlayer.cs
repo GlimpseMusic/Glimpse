@@ -52,7 +52,7 @@ public class AudioPlayer : IDisposable
 
     public int CurrentTrackIndex => _currentTrackIndex;
 
-    public string CurrentTrack => QueuedTracks[_currentTrackIndex];
+    public string CurrentTrack => QueuedTracks.Count == 0 ? string.Empty : QueuedTracks[_currentTrackIndex];
 
     public AudioPlayer()
     {
@@ -142,11 +142,11 @@ public class AudioPlayer : IDisposable
     /// </summary>
     /// <param name="path">The path to the track file.</param>
     /// <param name="slot">The <see cref="QueueSlot"/> to insert the track at.</param>
-    public void QueueTrack(string path, QueueSlot slot)
+    public void QueueTrack(string path, QueueSlot slot, bool autoPlay = true)
     {
         Logger.Log($"Queueing track {path}");
 
-        bool isFirstQueue = QueuedTracks.Count == 0;
+        bool isFirstQueue = autoPlay && QueuedTracks.Count == 0;
 
         switch (slot)
         {
@@ -177,7 +177,7 @@ public class AudioPlayer : IDisposable
         }
         
         foreach (string path in paths)
-            QueueTrack(path, slot);
+            QueueTrack(path, slot, false);
     }
 
     public void ChangeTrack(int queueIndex)

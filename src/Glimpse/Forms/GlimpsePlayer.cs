@@ -19,6 +19,8 @@ namespace Glimpse.Forms;
 
 public class GlimpsePlayer : Window
 {
+    private const string ShowAllString = "*";
+    
     private bool _init;
     
     private string _currentAlbum;
@@ -127,8 +129,7 @@ public class GlimpsePlayer : Window
         colors[(int) ImGuiCol.NavWindowingDimBg]      = new Vector4(0.80f, 0.80f, 0.80f, 0.20f);
         colors[(int) ImGuiCol.ModalWindowDimBg]       = new Vector4(0.80f, 0.80f, 0.80f, 0.35f);
 
-        if (Glimpse.Database.Albums.Count > 0)
-            _currentAlbum = Glimpse.Database.Albums.First().Key;
+        _currentAlbum = ShowAllString;
     }
 
     protected override unsafe void Update()
@@ -329,6 +330,12 @@ public class GlimpsePlayer : Window
             
             if (ImGui.BeginChild("AlbumList", ImGuiWindowFlags.HorizontalScrollbar))
             {
+                if (ImGui.Selectable("Show All", _currentAlbum == ShowAllString))
+                {
+                    _currentAlbum = ShowAllString;
+                    switchToTrackList = true;
+                }
+
                 foreach ((string name, Album album) in Glimpse.Database.Albums)
                 {
                     if (ImGui.Selectable(name, _currentAlbum == name))
@@ -369,7 +376,15 @@ public class GlimpsePlayer : Window
                 
                 if (ImGui.BeginTabItem("Tracks", trackFlags))
                 {
-                    Album album = Glimpse.Database.Albums[_currentAlbum];
+                    IEnumerable<string> trackList;
+
+                    if (_currentAlbum == ShowAllString)
+                        trackList = Glimpse.Database.Tracks.Keys;
+                    else
+                    {
+                        Album album = Glimpse.Database.Albums[_currentAlbum];
+                        trackList = album.Tracks;
+                    }
 
                     if (ImGui.BeginTable("SongTable", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX | ImGuiTableFlags.RowBg))
                     {
@@ -379,11 +394,12 @@ public class GlimpsePlayer : Window
                         ImGui.TableSetupColumn("Album", ImGuiTableColumnFlags.WidthStretch, 4.0f);
                         ImGui.TableHeadersRow();
 
+                        string currentTrackPath = Glimpse.Player.CurrentTrack;
+                        
                         int song = 0;
-                        foreach (string path in album.Tracks)
+                        foreach (string path in trackList)
                         {
                             Track track = Glimpse.Database.Tracks[path];
-                            TrackInfo info = Glimpse.Player.TrackInfo;
                             
                             ImGui.TableNextRow();
                             
@@ -393,9 +409,9 @@ public class GlimpsePlayer : Window
 
                             ImGui.TableNextColumn();
                             
-                            if (ImGui.Selectable(track.Title, info.Title == track.Title && info.Album == album.Name, ImGuiSelectableFlags.SpanAllColumns))
+                            if (ImGui.Selectable($"{track.Title}##{path}", path == currentTrackPath, ImGuiSelectableFlags.SpanAllColumns))
                             {
-                                player.QueueTracks(album.Tracks, QueueSlot.Clear);
+                                player.QueueTracks(trackList, QueueSlot.Clear);
                             
                                 player.ChangeTrack(song);
                             }
