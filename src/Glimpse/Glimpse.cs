@@ -52,7 +52,7 @@ public class Glimpse : GlimpseBase
             Config.WriteConfig("Database/MusicDatabase", Database);
         }
         
-        Database.Initialize();
+        Database.Refresh();
         
         AddWindow(window);
         

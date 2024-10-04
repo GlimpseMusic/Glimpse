@@ -1,4 +1,6 @@
+using System;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using DiscordRPC;
 using Glimpse.Api;  
 using MetaBrainz.MusicBrainz;
@@ -54,6 +56,8 @@ public partial class DiscordPresence : Plugin
 
     private void SetPresence(TrackInfo info, int currentSecond, int totalSeconds)
     {
+        Logger.Log($"Set discord presence to track: {info.Artist} - {info.Title}");
+        
         DateTime now = DateTime.UtcNow;
         
         RichPresence presence = new RichPresence()

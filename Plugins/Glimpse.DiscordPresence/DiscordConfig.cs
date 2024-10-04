@@ -1,4 +1,5 @@
-﻿using Glimpse.Api;
+﻿using System.Collections.Generic;
+using Glimpse.Player.Configs;
 
 namespace Glimpse.DiscordPresence;
 
