@@ -23,7 +23,7 @@ public class MusicDatabase : IConfig
         Albums = new Dictionary<string, Album>();
     }
 
-    public void Initialize()
+    public void Refresh()
     {
         Tracks = Tracks.OrderBy(pair => pair.Key).ToDictionary();
         Albums = Albums.OrderBy(pair => pair.Key).ToDictionary();
@@ -34,10 +34,12 @@ public class MusicDatabase : IConfig
         Logger.Log($"Adding indexed directory {index.Directory} to dataabase.");
         
         foreach ((string path, Track track) in index.Tracks)
-            Tracks.Add(path, track);
+            Tracks[path] = track;
         
         foreach ((string name, Album album) in index.Albums)
-            Albums.Add(name, album);
+            Albums[name] = album;
+        
+        Refresh();
     }
 
     public static IndexResult IndexDirectory(string directory, AudioPlayer player, ref string current)
