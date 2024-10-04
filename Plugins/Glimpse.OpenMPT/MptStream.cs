@@ -61,7 +61,7 @@ public class MptStream : CodecStream
 
     public override void Seek(ulong sample)
     {
-        throw new NotImplementedException();
+        _module.Seek(sample / (double) _module.SampleRate);
     }
 
     public override void Dispose()
