@@ -25,7 +25,7 @@ public class MusicDatabase : IConfig
 
     public void Refresh()
     {
-        Tracks = Tracks.OrderBy(pair => pair.Key).ToDictionary();
+        Tracks = Tracks.OrderBy(pair => pair.Value.Title).ToDictionary();
         Albums = Albums.OrderBy(pair => pair.Key).ToDictionary();
     }
 

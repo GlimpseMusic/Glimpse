@@ -16,7 +16,7 @@ public partial class DiscordPresence : Plugin
 {
     private AudioPlayer _player;
     
-    private static string _currentUrl;
+    private string _currentUrl;
 
     public DiscordConfig Config;
     
@@ -25,6 +25,7 @@ public partial class DiscordPresence : Plugin
     public override void Initialize(AudioPlayer player)
     {
         _player = player;
+        _currentUrl = "glimpse";
         
         Client = new DiscordRpcClient("1280266653950804111");
         
@@ -57,6 +58,7 @@ public partial class DiscordPresence : Plugin
     private void SetPresence(TrackInfo info, int currentSecond, int totalSeconds)
     {
         Logger.Log($"Set discord presence to track: {info.Artist} - {info.Title}");
+        _currentUrl = "glimpse";
         
         DateTime now = DateTime.UtcNow;
         
@@ -115,11 +117,11 @@ public partial class DiscordPresence : Plugin
                         _currentUrl = image.Location?.ToString();
                         Config.AlbumArt[albumName] = _currentUrl;
                         IConfig.WriteConfig("Discord", Config);
+                        
+                        Client.UpdateLargeAsset(_currentUrl);
                         break;
                     }
                 }
-                
-                Client.UpdateLargeAsset(_currentUrl);
             });
         }
     }
