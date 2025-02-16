@@ -2,6 +2,10 @@
 
 public interface IAudioPlayer
 {
+    public float Volume { get; set; }
+    
+    public double Speed { get; set; }
+    
     public PlayerState State { get; }
     
     public TimeSpan ElapsedTime { get; }
