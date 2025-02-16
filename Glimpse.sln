@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse", "src\Glimpse\Glimpse.csproj", "{9B30761D-9B60-46F8-96C3-AF14AB5DE1FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glimpse.Api", "src\Glimpse.Api\Glimpse.Api.csproj", "{0043C0CB-EC27-4C8A-BC81-DA3196217D4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{9B30761D-9B60-46F8-96C3-AF14AB5DE1FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B30761D-9B60-46F8-96C3-AF14AB5DE1FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B30761D-9B60-46F8-96C3-AF14AB5DE1FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0043C0CB-EC27-4C8A-BC81-DA3196217D4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0043C0CB-EC27-4C8A-BC81-DA3196217D4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0043C0CB-EC27-4C8A-BC81-DA3196217D4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0043C0CB-EC27-4C8A-BC81-DA3196217D4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
