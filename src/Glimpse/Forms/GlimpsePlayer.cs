@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Numerics;
 using System.Text.Json.Nodes;
 using Glimpse.API;
+using Glimpse.API.Database;
 using Glimpse.Audio;
 using Glimpse.Database;
 using Glimpse.Locales;
@@ -12,7 +13,7 @@ using Hexa.NET.ImGui;
 using Newtonsoft.Json.Linq;
 using Color = System.Drawing.Color;
 using Image = Glimpse.Graphics.Image;
-using Track = Glimpse.Database.Track;
+using Track = Glimpse.API.Database.Track;
 
 namespace Glimpse.Forms;
 

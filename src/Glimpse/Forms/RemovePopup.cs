@@ -1,8 +1,9 @@
+using Glimpse.API.Database;
 using Glimpse.Audio;
 using Glimpse.Database;
 using Glimpse.Locales;
 using Hexa.NET.ImGui;
-using Track = Glimpse.Database.Track;
+using Track = Glimpse.API.Database.Track;
 
 namespace Glimpse.Forms;
 

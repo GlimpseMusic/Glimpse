@@ -1,20 +1,18 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Glimpse.API;
+using Glimpse.API.Database;
 using Glimpse.Audio;
 using Glimpse.Configs;
 using Newtonsoft.Json;
+using Track = Glimpse.API.Database.Track;
 
 namespace Glimpse.Database;
 
-[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
-public class MusicDatabase : IConfig
+public class MusicDatabase
 {
-    public const string DatabaseName = "Database/MusicDatabase";
-
-    [JsonIgnore] public Logger Logger;
+    private readonly Logger _logger;
     
-    public Dictionary<string, Track> Tracks;
-    public Dictionary<string, Album> Albums;
+    
     
     public MusicDatabase()
     {
@@ -30,7 +28,7 @@ public class MusicDatabase : IConfig
 
     public void AddIndexToDatabase(in IndexResult index)
     {
-        Logger.Log($"Adding indexed directory {index.Directory} to dataabase.");
+        _logger.Log($"Adding indexed directory {index.Directory} to dataabase.");
 
         foreach ((string path, Track track) in index.Tracks)
         {

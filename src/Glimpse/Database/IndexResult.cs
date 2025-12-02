@@ -1,4 +1,6 @@
-﻿namespace Glimpse.Database;
+﻿using Glimpse.API.Database;
+
+namespace Glimpse.Database;
 
 public struct IndexResult
 {

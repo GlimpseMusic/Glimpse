@@ -1,4 +1,4 @@
-﻿namespace Glimpse.Database;
+﻿namespace Glimpse.API.Database;
 
 public class Album
 {

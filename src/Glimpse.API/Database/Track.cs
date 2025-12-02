@@ -1,7 +1,4 @@
-﻿using Glimpse.API;
-using Glimpse.Audio;
-
-namespace Glimpse.Database;
+﻿namespace Glimpse.API.Database;
 
 public struct Track
 {
