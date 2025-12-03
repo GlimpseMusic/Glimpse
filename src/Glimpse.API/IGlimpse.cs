@@ -1,4 +1,6 @@
-﻿namespace Glimpse.API;
+﻿using Glimpse.API.Database;
+
+namespace Glimpse.API;
 
 public interface IGlimpse
 {
@@ -11,4 +13,6 @@ public interface IGlimpse
     public IAudioPlayer Player { get; }
     
     public ILocale? Locale { get; }
+    
+    public IMusicDatabase? Database { get; }
 }

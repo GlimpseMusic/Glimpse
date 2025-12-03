@@ -146,10 +146,11 @@ public class GlimpsePlayer : Window
         colors[(int) ImGuiCol.NavWindowingDimBg]      = new Vector4(0.80f, 0.80f, 0.80f, 0.20f);
         colors[(int) ImGuiCol.ModalWindowDimBg]       = new Vector4(0.80f, 0.80f, 0.80f, 0.35f);
 
+        _albumList = Glimpse.Database.SelectAllAlbums();
         ChangeAlbum(null);
         
         if (Glimpse.Database.Folders.Count == 0)
-            AddPopup(new AddFolderPopup());
+            AddPopup(new ManageFoldersPopup());
 
 #if !DEBUG
         Task.Run(CheckForNewerVersion);

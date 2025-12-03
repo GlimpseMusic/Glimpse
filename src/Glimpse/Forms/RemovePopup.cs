@@ -25,7 +25,7 @@ public sealed class RemovePopup : Popup
     
     public override void Update()
     {
-        Locale locale = Glimpse.Locale;
+        /*Locale locale = Glimpse.Locale;
         string popupName = locale.GetString("Popup.Remove.Name");
         
         if (!ImGui.IsPopupOpen(popupName))
@@ -86,6 +86,6 @@ public sealed class RemovePopup : Popup
                 Close();
             
             ImGui.EndPopup();
-        }
+        }*/
     }
 }

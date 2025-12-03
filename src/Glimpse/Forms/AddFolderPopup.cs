@@ -8,11 +8,7 @@ namespace Glimpse.Forms;
 public class AddFolderPopup : Popup
 {
     private DirectorySource _baseDirectory;
-    private Task _currentTask;
     private string _currentFile;
-    private object _lockObj;
-
-    private IndexResult _result;
 
     public string Selected;
     
@@ -41,7 +37,6 @@ public class AddFolderPopup : Popup
             }
 
             Selected = "";
-            _lockObj = new object();
             
             ImGui.OpenPopup(popupName);
         }
@@ -56,46 +51,17 @@ public class AddFolderPopup : Popup
 
             ImGui.SetNextItemWidth(500);
             ImGui.InputTextWithHint("##FolderPath", "Path", ref Selected, 5000);
-
-            ImGui.BeginDisabled(string.IsNullOrWhiteSpace(Selected) || _currentTask != null);
             
             if (ImGui.Button(locale.GetString("Button.Add")))
             {
                 Glimpse.Player.Stop();
-
-                _currentTask = Task.Run(() =>
-                {
-                    _result = MusicDatabase.IndexDirectory(Selected, Glimpse.Player, Glimpse.Logger, ref _currentFile);
-                });
+                Glimpse.Database.UpdateLibrary();
             }
-            
-            ImGui.EndDisabled();
             
             ImGui.SameLine();
             
-            ImGui.BeginDisabled(_currentTask != null);
-            
             if (ImGui.Button(locale.GetString("Button.Cancel")))
                 Close();
-            
-            ImGui.EndDisabled();
-
-            if (_currentTask is Task task)
-            {
-                lock (_lockObj)
-                {
-                    if (_currentFile != null)
-                        ImGui.Text(Path.GetFileName(_currentFile));
-                }
-
-                if (task.IsCompleted)
-                {
-                    Glimpse.Database.AddIndexToDatabase(_result);
-                    Glimpse.ConfigManager.WriteConfig(MusicDatabase.DatabaseName, Glimpse.Database);
-                    _result = default;
-                    Close();
-                }
-            }
             
             ImGui.EndPopup();
         }

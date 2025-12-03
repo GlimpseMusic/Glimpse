@@ -2,6 +2,8 @@ namespace Glimpse.API.Database;
 
 public interface IMusicDatabase
 {
+    public event OnRefreshAvailable RefreshAvailable;
+    
     /// <summary>
     /// The list of added folders that are indexed into the database.
     /// </summary>
@@ -40,4 +42,6 @@ public interface IMusicDatabase
     /// <returns>An ordered array of tracks.</returns>
     /// <remarks><see cref="OrderBy.TrackAndAlbum"/> and <see cref="OrderBy.TrackNumber"/> will have the same effect.</remarks>
     public Track[] SelectAlbum(string albumName, OrderBy orderBy = OrderBy.TrackNumber, Direction direction = Direction.Descending);
+
+    public delegate void OnRefreshAvailable(IMusicDatabase database);
 }

@@ -63,6 +63,9 @@
         
         "Popup.AddDirs.Name": "Add Folders",
         
+        "Popup.ManageFolders.Name": "Manage Folders",
+        
+        
         "Popup.Remove.Name": "Remove",
         "Popup.Remove.Confirmation": "Remove {0} from library?",
         "Popup.Remove.SongsConfirmation": "Also remove songs from library?",
