@@ -1,6 +1,6 @@
 ﻿namespace Glimpse.API.Database;
 
-public class Album
+public record struct Album
 {
     public string Name;
 

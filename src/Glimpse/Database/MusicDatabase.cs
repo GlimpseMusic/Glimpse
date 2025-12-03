@@ -1,96 +1,60 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Glimpse.API;
 using Glimpse.API.Database;
-using Glimpse.Audio;
-using Glimpse.Configs;
-using Newtonsoft.Json;
-using Track = Glimpse.API.Database.Track;
 
 namespace Glimpse.Database;
 
-public class MusicDatabase
+public class MusicDatabase : IMusicDatabase
 {
+    public const string DatabaseName = "Database/MusicDatabase";
+
     private readonly Logger _logger;
-    
-    
-    
-    public MusicDatabase()
-    {
-        Tracks = new Dictionary<string, Track>();
-        Albums = new Dictionary<string, Album>();
-    }
+    private readonly ConfigManager _configManager;
+    private readonly SerializedDatabase _database;
 
-    public void Refresh()
-    {
-        Tracks = Tracks.OrderBy(pair => pair.Value.Album).ThenBy(pair => pair.Value.TrackNumber).ToDictionary();
-        Albums = Albums.OrderBy(pair => pair.Key).ToDictionary();
-    }
+    public IReadOnlyList<string> Folders => _database.Folders;
 
-    public void AddIndexToDatabase(in IndexResult index)
-    {
-        _logger.Log($"Adding indexed directory {index.Directory} to dataabase.");
+    public IReadOnlyDictionary<string, Track> Tracks => _database.Tracks;
 
-        foreach ((string path, Track track) in index.Tracks)
+    public IReadOnlyDictionary<string, Album> Albums => _database.Albums;
+
+    public MusicDatabase(Logger logger, ConfigManager configManager)
+    {
+        _logger = logger;
+        _configManager = configManager;
+
+        if (!_configManager.TryGetConfig(DatabaseName, out _database))
         {
-            Track trk = track;
-            
-            if (Tracks.TryGetValue(path, out Track oldTrack))
-            {
-                // Copy over playback metadata to the new track.
-                trk.Rating = oldTrack.Rating;
-                trk.PlayCount = oldTrack.PlayCount;
-                trk.LastPlayed = oldTrack.LastPlayed;
-            }
-            
-            Tracks[path] = trk;
+            _database = new SerializedDatabase();
+            _configManager.WriteConfig(DatabaseName, _database);
         }
+    }
 
-        foreach ((string name, Album album) in index.Albums)
-            Albums[name] = album;
+    public Track[] SelectAllTracks(OrderBy orderBy = OrderBy.TrackAndAlbum, Direction direction = Direction.Descending)
+    {
+        // TODO: Implement orderBy and direction
+        return _database.Tracks.Values.OrderBy(track => track.Album).ThenBy(track => track.TrackNumber).ToArray();
+    }
+
+    public Album[] SelectAllAlbums()
+    {
+        return _database.Albums.Values.ToArray();
+    }
+
+    public Track[] SelectAlbum(string albumName, OrderBy orderBy = OrderBy.TrackNumber, Direction direction = Direction.Descending)
+    {
+        Album album = _database.Albums[albumName];
+        Track[] tracks = new Track[album.Tracks.Count];
+
+        for (int i = 0; i < album.Tracks.Count; i++)
+            tracks[i] = _database.Tracks[album.Tracks[i]];
+
+        return tracks.OrderBy(track => track.TrackNumber).ToArray();
+    }
+
+    public void UpdateTrack(Track track)
+    {
+        if (!_database.Tracks.ContainsKey(track.Path))
+            throw new Exception($"Cannot update track: Track with path {track.Path} is not present in the database.");
         
-        Refresh();
-    }
-
-    public static IndexResult IndexDirectory(string directory, AudioPlayer player, Logger logger, ref string current)
-    {
-        logger.Log($"Indexing directory {directory}.");
-
-        Dictionary<string, Track> tracks = new Dictionary<string, Track>();
-        Dictionary<string, Album> albums = new Dictionary<string, Album>();
-
-        foreach (FileInfo file in new DirectoryInfo(directory).EnumerateFiles("*.*", SearchOption.AllDirectories).OrderBy(info => info.Name))
-        {
-            logger.Log($"Indexing {file}");
-            current = file.FullName;
-            
-            TrackInfo info;
-
-            // As GetTrackInfoForFile throws an exception if the track is supported, simply catch all errors, log them,
-            // then carry on.
-            try
-            {
-                info = player.GetTrackInfoForFile(file.FullName);
-            }
-            catch (Exception e)
-            {
-                logger.Log($"Exception occurred while getting track info: {e}");
-                continue;
-            }
-
-            tracks.Add(file.FullName, new Track(info));
-
-            if (info.Album != null)
-            {
-                if (!albums.TryGetValue(info.Album, out Album album))
-                {
-                    album = new Album(info.Album);
-                    albums.Add(info.Album, album);
-                }
-                
-                album.Tracks.Add(file.FullName);
-            }
-        }
-
-        return new IndexResult(directory, tracks, albums);
+        _database.Tracks[track.Path] = track;
     }
 }

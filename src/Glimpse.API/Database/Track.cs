@@ -1,7 +1,12 @@
-﻿namespace Glimpse.API.Database;
+﻿using System.Text.Json.Serialization;
 
-public struct Track
+namespace Glimpse.API.Database;
+
+public record struct Track
 {
+    // No need to serialize the path as it's the primary key.
+    [JsonIgnore] public string Path;
+    
     public uint? TrackNumber;
     
     public string? Title;
@@ -20,8 +25,9 @@ public struct Track
 
     public DateTime? LastPlayed;
 
-    public Track(TrackInfo info)
+    public Track(string path, TrackInfo info)
     {
+        Path = path;
         TrackNumber = info.TrackNumber;
         Title = info.Title;
         Artist = info.Artist;
