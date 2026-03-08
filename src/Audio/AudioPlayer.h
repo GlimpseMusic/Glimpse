@@ -1,10 +1,11 @@
 #pragma once
 
-#include <cstdint>
+#include "Glimpse/IAudioPlayer.h"
+#include "AudioDevice.h"
 
 #include <mixr/mixr.hpp>
 
-#include "AudioDevice.h"
+#include <cstdint>
 
 namespace Glimpse
 {
@@ -15,12 +16,13 @@ namespace Glimpse
         double Speed;
     };
 
-    class AudioPlayer final
+    class AudioPlayer final : public IAudioPlayer
     {
         std::unique_ptr<mixr::Context> _context;
         std::unique_ptr<AudioDevice> _device;
 
     public:
         explicit AudioPlayer(const AudioPlayerConfig& config);
+        [[nodiscard]] TrackState State() const override { return TrackState::Stopped; }
     };
 }

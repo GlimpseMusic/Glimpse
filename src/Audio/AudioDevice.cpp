@@ -6,8 +6,18 @@
 
 void AudioCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
-    auto context = static_cast<mixr::Context*>(userdata);
-    std::cout << "Callback" << std::endl;
+    const auto context = static_cast<mixr::Context*>(userdata);
+
+    constexpr int bufferSize = 512;
+    float buffer[bufferSize];
+
+    while (additional_amount > 0)
+    {
+        const int total = std::min(additional_amount, bufferSize);
+        context->MixToStereoF32Buffer(buffer, bufferSize / 4);
+        SDL_PutAudioStreamData(stream, buffer, total);
+        additional_amount -= total;
+    }
 }
 
 namespace Glimpse

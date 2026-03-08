@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstdint>
-
 #include <SDL3/SDL.h>
 #include <mixr/mixr.hpp>
+
+#include <cstdint>
 
 namespace Glimpse
 {
