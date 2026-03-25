@@ -21,6 +21,8 @@ namespace Glimpse.Forms;
 public class GlimpsePlayer : Window
 {
     private const string ShowAllString = "*";
+    private const uint IconSize = 16;
+    private const uint BigIconSize = IconSize * 2;
     
     private bool _init;
     private ImGuiStyle _defaultStyle;
@@ -294,7 +296,7 @@ public class GlimpsePlayer : Window
 
                 ImGui.SameLine();
 
-                Vector2 iconSize = new Vector2(32) * Scale;
+                Vector2 iconSize = new Vector2(BigIconSize) * Scale;
                 // Even though there are 4 icons, 3 icons makes it *feel* more centered, even though it's shifted to the right.
                 const int numIcons = 3;
                 float spacing = ImGui.GetStyle().ItemSpacing.X;
@@ -364,9 +366,9 @@ public class GlimpsePlayer : Window
                 {
                     ImGui.BeginDisabled();
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0, 0, 0, 0));
-                    ImGui.ImageButton("ShuffleButton", _shuffleButton, ScaleVec(16), Vector4.Zero, iconsColor);
+                    ImGui.ImageButton("ShuffleButton", _shuffleButton, ScaleVec(IconSize), Vector4.Zero, iconsColor);
                     ImGui.SameLine(0, 0);
-                    ImGui.ImageButton("RepeatButton", _repeatButton, ScaleVec(16), Vector4.Zero, iconsColor);
+                    ImGui.ImageButton("RepeatButton", _repeatButton, ScaleVec(IconSize), Vector4.Zero, iconsColor);
                     ImGui.PopStyleColor();
                     ImGui.EndDisabled();
 
@@ -618,7 +620,7 @@ public class GlimpsePlayer : Window
                         float amount = (float.Sin(_newVersionBlinker) + 1) / 2;
                         
                         ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Lerp(buttonColor, highlightColor, amount));
-                        if (ImGui.ImageButton("Update", _updateButton, ScaleVec(16), Vector4.Zero, iconsColor))
+                        if (ImGui.ImageButton("Update", _updateButton, ScaleVec(IconSize), Vector4.Zero, iconsColor))
                             OpenLink(_newVersionURL);
                         
                         ImGuiE.SetItemTooltipUnformatted(locale.GetString("Player.UpdateAvailable", _newVersion));
@@ -633,20 +635,20 @@ public class GlimpsePlayer : Window
                             _newVersionBlinker -= float.Pi * 2;
                     }
 
-                    if (ImGui.ImageButton("ReportBug", _bugButton, ScaleVec(16), Vector4.Zero, iconsColor))
+                    if (ImGui.ImageButton("ReportBug", _bugButton, ScaleVec(IconSize), Vector4.Zero, iconsColor))
                         OpenLink("https://github.com/aquagoose/Glimpse/issues/new?template=bug_report.md");
 
                     ImGuiE.SetItemTooltipUnformatted(locale.GetString("Player.ReportBug"));
                     
                     ImGui.SameLine();
                     
-                    if (ImGui.ImageButton("Settings", _cogButton, ScaleVec(16), Vector4.Zero, iconsColor))
+                    if (ImGui.ImageButton("Settings", _cogButton, ScaleVec(IconSize), Vector4.Zero, iconsColor))
                         AddPopup(new SettingsPopup());
                     ImGuiE.SetItemTooltipUnformatted(locale.GetString("Player.Settings"));
             
                     ImGui.SameLine();
             
-                    if (ImGui.ImageButton("AddDirs", _plusButton, ScaleVec(16), Vector4.Zero, iconsColor))
+                    if (ImGui.ImageButton("AddDirs", _plusButton, ScaleVec(IconSize), Vector4.Zero, iconsColor))
                         AddPopup(new AddFolderPopup());
                     ImGuiE.SetItemTooltipUnformatted(locale.GetString("Player.AddDirs"));
                     
@@ -788,7 +790,7 @@ public class GlimpsePlayer : Window
                                 ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0);
                                 for (int i = 0; i < 5; i++)
                                 {
-                                    if (ImGui.ImageButton($"{path}rating{i}", i < rating ? _starFilled : _star, ScaleVec(16), Vector4.Zero, iconsColor))
+                                    if (ImGui.ImageButton($"{path}rating{i}", i < rating ? _starFilled : _star, ScaleVec(IconSize), Vector4.Zero, iconsColor))
                                     {
                                         track.Rating = (byte) (i + 1);
                                         Glimpse.Database.Tracks[path] = track;
@@ -838,7 +840,7 @@ public class GlimpsePlayer : Window
                     {
                         List<string> queuedTracks = player.QueuedTracks;
                         ImGuiListClipperPtr clipper = ImGui.ImGuiListClipper();
-                        clipper.Begin(queuedTracks.Count, (32 + 2) * Scale);
+                        clipper.Begin(queuedTracks.Count, (BigIconSize + 2) * Scale);
 
                         while (clipper.Step())
                         {
@@ -859,7 +861,7 @@ public class GlimpsePlayer : Window
                                     ImGui.PopStyleColor();*/
 
                                 Vector2 cursorPos = ImGui.GetCursorPos();
-                                int height = (int) ((32 + 6) * Scale);
+                                int height = (int) ((BigIconSize + 6) * Scale);
                                 
                                 if (ImGui.Selectable($"##Queue{i}", selected, ImGuiSelectableFlags.AllowOverlap, new Vector2(0, height)))
                                     player.ChangeTrack(i);
@@ -875,7 +877,7 @@ public class GlimpsePlayer : Window
                                 {
                                     float posY = ImGui.GetCursorPosY();
                                     ImGui.SetCursorPosY(posY + 1);
-                                    ImGui.PushFont(ImFontPtr.Null, 32);
+                                    ImGui.PushFont(ImFontPtr.Null, BigIconSize);
                                     ImGui.TextUnformatted($"{i + 1}");
                                     ImGui.PopFont();
                                     ImGui.SetCursorPosY(posY);
