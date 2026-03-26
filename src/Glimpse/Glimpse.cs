@@ -49,7 +49,7 @@ public class Glimpse : IGlimpse, IDisposable
 
     public Locale Locale;
 
-    public MusicDatabase? Database;
+    public DatabaseManager? Database;
     
     public Dictionary<string, IPlugin>? Plugins;
 
@@ -147,10 +147,10 @@ public class Glimpse : IGlimpse, IDisposable
             Config.Language = defaultLocale;
         }
 
-        if (!ConfigManager.TryGetConfig(MusicDatabase.DatabaseName, out Database))
+        if (!ConfigManager.TryGetConfig(DatabaseManager.DatabaseName, out Database))
         {
-            Database = new MusicDatabase();
-            ConfigManager.WriteConfig(MusicDatabase.DatabaseName, Database);
+            Database = new DatabaseManager();
+            ConfigManager.WriteConfig(DatabaseManager.DatabaseName, Database);
         }
 
         Database!.Logger = Logger;
@@ -356,7 +356,7 @@ public class Glimpse : IGlimpse, IDisposable
         }
         
         Player.Dispose();
-        ConfigManager.WriteConfig(MusicDatabase.DatabaseName, Database);
+        ConfigManager.WriteConfig(DatabaseManager.DatabaseName, Database);
         Platform.Dispose();
         _pipeServer.Close();
         

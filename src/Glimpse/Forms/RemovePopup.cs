@@ -32,7 +32,7 @@ public sealed class RemovePopup : Popup
 
         if (ImGui.BeginPopupModal(popupName, ImGuiWindowFlags.AlwaysAutoResize))
         {
-            MusicDatabase db = Glimpse.Database;
+            DatabaseManager db = Glimpse.Database;
             AudioPlayer player = Glimpse.Player;
             
             string name = _isAlbum ? _nameOrPath : (db.Tracks[_nameOrPath].Title ?? locale.GetString("UnknownTrack"));

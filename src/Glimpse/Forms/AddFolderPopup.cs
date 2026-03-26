@@ -65,7 +65,7 @@ public class AddFolderPopup : Popup
 
                 _currentTask = Task.Run(() =>
                 {
-                    _result = MusicDatabase.IndexDirectory(Selected, Glimpse.Player, Glimpse.Logger, ref _currentFile);
+                    _result = DatabaseManager.IndexDirectory(Selected, Glimpse.Player, Glimpse.Logger, ref _currentFile);
                 });
             }
             
@@ -91,7 +91,7 @@ public class AddFolderPopup : Popup
                 if (task.IsCompleted)
                 {
                     Glimpse.Database.AddIndexToDatabase(_result);
-                    Glimpse.ConfigManager.WriteConfig(MusicDatabase.DatabaseName, Glimpse.Database);
+                    Glimpse.ConfigManager.WriteConfig(DatabaseManager.DatabaseName, Glimpse.Database);
                     _result = default;
                     Close();
                 }

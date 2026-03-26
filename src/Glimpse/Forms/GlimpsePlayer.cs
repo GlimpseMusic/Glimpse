@@ -38,6 +38,8 @@ public class GlimpsePlayer : Window
     private int _currentRowHover;
     private int _currentRatingHover;
 
+    private IReadOnlyCollection<TrackLinkData> _albumsList;
+
     private Image _playButton;
     private Image _pauseButton;
     private Image _skipButton;
@@ -245,6 +247,7 @@ public class GlimpsePlayer : Window
         {
             Vector2 winSize = ImGui.GetContentRegionAvail();
 
+            // Ensure the album art is scaled to the window height
             ImGui.BeginChild("AlbumArt", new Vector2(winSize.Y));
             {
                 ImGui.Image(_albumArt ?? _defaultAlbumArt, new Vector2(winSize.Y));
@@ -254,6 +257,7 @@ public class GlimpsePlayer : Window
             
             ImGui.SameLine();
 
+            // Main transport controls
             ImGui.BeginChild("MainView");
             {
                 ImGui.BeginChild("TrackInfo", ImGuiChildFlags.AutoResizeX | ImGuiChildFlags.AutoResizeY);
@@ -280,8 +284,7 @@ public class GlimpsePlayer : Window
                             switchView = AlbumView.Artists;
                             _currentAlbum = player.CurrentTrack.Artist;
                         }
-
-
+                        
                         if (ImGuiE.TextButton(player.CurrentTrack?.Album ?? locale.GetString("UnknownAlbum")) &&
                             player.CurrentTrack?.Album != null)
                         {
@@ -434,20 +437,6 @@ public class GlimpsePlayer : Window
         
         if (ImGui.Begin("Albums", ImGuiWindowFlags.HorizontalScrollbar))
         {
-            /*string newDirectory = null;
-
-            if (ImGui.Selectable(".."))
-                newDirectory = Path.GetDirectoryName(_currentDirectory);
-            
-            foreach (string directory in _directories)
-            {
-                if (ImGui.Selectable(Path.GetFileName(directory)))
-                    newDirectory = directory;
-            }
-            
-            if (newDirectory != null)
-                ChangeDirectory(newDirectory);*/
-
             Vector2 contentRegion = ImGui.GetContentRegionAvail() - ImGui.GetStyle().ItemSpacing;
             const float split = 0.6f;
             
@@ -461,33 +450,44 @@ public class GlimpsePlayer : Window
             
             ImGui.SameLine();
             
-            /*ImGui.SetNextItemWidth(contentRegion.X * (1.0f - split));
-            string preview = _currentView switch
+            if (ImGui.BeginTabBar("AlbumTabs"))
             {
-                AlbumView.Albums => locale.GetString("Player.ViewSelect.Albums"),
-                AlbumView.Artists => locale.GetString("Player.ViewSelect.Artists"),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-            if (ImGui.BeginCombo("##DisplaySelector", preview))
-            {
-                if (ImGui.Selectable(locale.GetString("Player.ViewSelect.Albums")))
+                //ImGui.PushFont(_iconsFont, 32);
+
+                if (switchView is AlbumView view)
+                    _currentView = view;
+
+                if (ImGuiE.BeginTabItemTooltip("\ue019##Albums", locale.GetString("Player.ViewSelect.Albums"), switchView is AlbumView.Albums))
                 {
-                    _currentView = AlbumView.Albums;
-                    _currentAlbum = ShowAllString;
+                    if (switchView == null)
+                        _currentView = AlbumView.Albums;
+                    _albumsList = Glimpse.Database.Albums.Values;
+                    ImGui.EndTabItem();
                 }
 
-                if (ImGui.Selectable(locale.GetString("Player.ViewSelect.Artists")))
+                if (ImGuiE.BeginTabItemTooltip("\ue01a##Artists", locale.GetString("Player.ViewSelect.Artists"), switchView is AlbumView.Artists))
                 {
-                    _currentView = AlbumView.Artists;
-                    _currentAlbum = ShowAllString;
+                    if (switchView == null)
+                        _currentView = AlbumView.Artists;
+                    _albumsList = Glimpse.Database.Artists.Values;
+                    ImGui.EndTabItem();
                 }
-                //ImGui.Selectable("Playlists");
                 
-                ImGui.EndCombo();
-            }*/
+                if (ImGuiE.BeginTabItemTooltip("\ue521##Genres", locale.GetString("Player.ViewSelect.Genres"), switchView is AlbumView.Genres))
+                {
+                    if (switchView == null)
+                        _currentView = AlbumView.Genres;
+                    _albumsList = Glimpse.Database.Genres.Values;
+                    ImGui.EndTabItem();
+                }
 
-            void DrawItemList()
-            {
+                ImGui.BeginDisabled();
+                if (ImGuiE.BeginTabItemTooltip("\ue05f##Playlists", locale.GetString("Player.ViewSelect.Playlists")))
+                {
+                    ImGui.EndTabItem();
+                }
+                ImGui.EndDisabled();
+                
                 ImGui.BeginChild("AlbumList", ImGuiWindowFlags.HorizontalScrollbar);
                 {
                     if (ImGui.Selectable(locale.GetString("Player.Albums.ShowAll"), _currentAlbum == ShowAllString))
@@ -496,21 +496,13 @@ public class GlimpsePlayer : Window
                         switchToTrackList = true;
                     }
 
-                    IReadOnlyCollection<TrackLinkData> datas = _currentView switch
-                    {
-                        AlbumView.Albums => Glimpse.Database.Albums.Values,
-                        AlbumView.Artists => Glimpse.Database.Artists.Values,
-                        AlbumView.Genres => Glimpse.Database.Genres.Values,
-                        _ => throw new ArgumentOutOfRangeException()
-                    };
-
                     ImGuiListClipperPtr clipper = ImGui.ImGuiListClipper();
-                    clipper.Begin(datas.Count);
+                    clipper.Begin(_albumsList.Count);
                     
                     while (clipper.Step())
                     {
                         IEnumerable<TrackLinkData> albumsRange =
-                            datas.Take(new Range(clipper.DisplayStart, clipper.DisplayEnd));
+                            _albumsList.Take(new Range(clipper.DisplayStart, clipper.DisplayEnd));
                         
                         foreach (TrackLinkData data in albumsRange)
                         {
@@ -543,45 +535,6 @@ public class GlimpsePlayer : Window
                     
                     ImGui.EndChild();
                 }
-            }
-            
-            if (ImGui.BeginTabBar("AlbumTabs"))
-            {
-                //ImGui.PushFont(_iconsFont, 32);
-
-                if (switchView is AlbumView view)
-                    _currentView = view;
-
-                if (ImGuiE.BeginTabItemTooltip("\ue019##Albums", locale.GetString("Player.ViewSelect.Albums"), switchView is AlbumView.Albums))
-                {
-                    if (switchView == null)
-                        _currentView = AlbumView.Albums;
-                    DrawItemList();
-                    ImGui.EndTabItem();
-                }
-
-                if (ImGuiE.BeginTabItemTooltip("\ue01a##Artists", locale.GetString("Player.ViewSelect.Artists"), switchView is AlbumView.Artists))
-                {
-                    if (switchView == null)
-                        _currentView = AlbumView.Artists;
-                    DrawItemList();
-                    ImGui.EndTabItem();
-                }
-                
-                if (ImGuiE.BeginTabItemTooltip("\ue521##Genres", locale.GetString("Player.ViewSelect.Genres"), switchView is AlbumView.Genres))
-                {
-                    if (switchView == null)
-                        _currentView = AlbumView.Genres;
-                    DrawItemList();
-                    ImGui.EndTabItem();
-                }
-
-                ImGui.BeginDisabled();
-                if (ImGuiE.BeginTabItemTooltip("\ue05f##Playlists", locale.GetString("Player.ViewSelect.Playlists")))
-                {
-                    ImGui.EndTabItem();
-                }
-                ImGui.EndDisabled();
                 
                 ImGui.EndTabBar();
             }
