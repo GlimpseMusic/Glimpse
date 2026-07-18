@@ -6,7 +6,18 @@
 
 void AudioCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
+    auto context = static_cast<sl::Context*>(userdata);
 
+    constexpr int bufferSize = 512;
+    float buffer[bufferSize];
+
+    while (additional_amount > 0)
+    {
+        context->MixToStereoF32Buffer(buffer, bufferSize);
+        int total = std::min(additional_amount, bufferSize);
+        SDL_PutAudioStreamData(stream, buffer, total * 4);
+        additional_amount -= total;
+    }
 }
 
 namespace gmp
@@ -33,7 +44,7 @@ namespace gmp
         {
             .format = SDL_AUDIO_F32,
             .channels = 2,
-            .freq = static_cast<int>(48000)
+            .freq = static_cast<int>(_sampleRate)
         };
 
         _device = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, AudioCallback, &_context);
