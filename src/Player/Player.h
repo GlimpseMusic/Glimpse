@@ -44,9 +44,12 @@ namespace gmp
 
         std::vector<uint8_t> _workBuffer;
         std::vector<std::unique_ptr<sl::AudioBuffer>> _buffers;
+        size_t _currentBuffer{};
 
         std::unique_ptr<sls::AudioStream> _stream{};
         std::unique_ptr<sl::AudioSource> _streamSource{};
+
+        static void StreamCallback(void* userData);
 
     public:
         explicit Player(const PlayerConfig& config);
@@ -54,7 +57,10 @@ namespace gmp
         // Get the current playback state.
         PlayState State();
 
+        // Add a track to the queue, at the given queue slot.
         void QueueTrack(const std::string& path, QueueSlot slot = QueueSlot::AtEnd);
+
+        // Play a track at the given index.
         [[nodiscard]] bool PlayTrack(size_t queueIndex);
     };
 }

@@ -7,6 +7,22 @@
 
 namespace gmp
 {
+    // todo threading !!!!!!!!!
+    void Player::StreamCallback(void* userData)
+    {
+        auto player = static_cast<Player*>(userData);
+        sls::AudioStream& stream = *player->_stream;
+        auto& workBuffer = player->_workBuffer;
+        auto& buffers = player->_buffers;
+        sl::AudioSource& streamSource = *player->_streamSource;
+        size_t* currentBuffer = &player->_currentBuffer;
+
+        stream.GetBuffer(workBuffer.data(), workBuffer.size());
+        buffers[*currentBuffer]->Update(workBuffer.data(), workBuffer.size());
+        streamSource.SubmitBuffer(buffers[*currentBuffer].get());
+        *currentBuffer = (*currentBuffer + 1) % buffers.size();
+    }
+
     Player::Player(const PlayerConfig& config)
     {
         _context = std::make_unique<sl::Context>(config.SampleRate);
@@ -77,6 +93,7 @@ namespace gmp
             .Format = _stream->Format()
         };
         _streamSource = _context->CreateSource(sourceDesc);
+        _streamSource->SetBufferFinishedCallback(StreamCallback, this);
 
         for (const auto& buffer : _buffers)
         {
