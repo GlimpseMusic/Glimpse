@@ -17,3 +17,6 @@ target_link_libraries(Glimpse PRIVATE Slant++)
 
 add_subdirectory(external/SDL)
 target_link_libraries(Glimpse PRIVATE SDL3::SDL3)
+
+add_subdirectory(external/fmt)
+target_link_libraries(Glimpse PRIVATE fmt::fmt)
