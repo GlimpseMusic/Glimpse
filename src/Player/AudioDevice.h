@@ -9,17 +9,17 @@ namespace gmp
     class AudioDevice final
     {
         sl::Context& _context;
-        uint32_t _sample_rate;
+        uint32_t _sampleRate;
         SDL_AudioStream* _device{};
 
     public:
-        explicit AudioDevice(sl::Context& context, uint32_t sample_rate);
+        explicit AudioDevice(sl::Context& context, uint32_t sampleRate);
         ~AudioDevice();
 
-        // start the audio device playback
-        void start();
+        // Start the audio device playback
+        void Start();
 
-        // stop the audio device playback
-        void stop();
+        // Stop the audio device playback
+        void Stop();
     };
 }
