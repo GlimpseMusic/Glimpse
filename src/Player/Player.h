@@ -6,11 +6,13 @@
 
 namespace sl = Slant;
 
+// gmp, short for Glimpse Music Player
+// todo i don't like gmp. reminds me of GIMP.
 namespace gmp
 {
     struct PlayerConfig
     {
-        uint32_t SampleRate;
+        uint32_t sample_rate;
     };
 
     class Player final
