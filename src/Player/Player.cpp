@@ -14,12 +14,15 @@ namespace gmp
         sls::AudioStream& stream = *player->_stream;
         auto& workBuffer = player->_workBuffer;
         auto& buffers = player->_buffers;
-        sl::AudioSource& streamSource = *player->_streamSource;
+        sl::AudioSource& source = *player->_streamSource;
         size_t* currentBuffer = &player->_currentBuffer;
 
-        stream.GetBuffer(workBuffer.data(), workBuffer.size());
-        buffers[*currentBuffer]->Update(workBuffer.data(), workBuffer.size());
-        streamSource.SubmitBuffer(buffers[*currentBuffer].get());
+        size_t gotBytes = stream.GetBuffer(workBuffer.data(), workBuffer.size());
+        if (gotBytes == 0)
+            source.SetLooping(false); // once there's no more data, disable looping so the source can fully stop.
+
+        buffers[*currentBuffer]->Update(workBuffer.data(), gotBytes);
+        source.SubmitBuffer(buffers[*currentBuffer].get());
         *currentBuffer = (*currentBuffer + 1) % buffers.size();
     }
 
@@ -45,7 +48,8 @@ namespace gmp
         switch (_streamSource->State())
         {
             case Slant::SourceState::Stopped:
-                Unreachable();
+                //Unreachable();
+                return PlayState::Stopped;
             case Slant::SourceState::Paused:
                 return PlayState::Paused;
             case Slant::SourceState::Playing:
@@ -94,6 +98,7 @@ namespace gmp
         };
         _streamSource = _context->CreateSource(sourceDesc);
         _streamSource->SetBufferFinishedCallback(StreamCallback, this);
+        _streamSource->SetLooping(true); // enable looping to ensure the source keeps playing in case of slowdowns. not elegant but it works
 
         for (const auto& buffer : _buffers)
         {
