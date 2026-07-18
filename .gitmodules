@@ -1,0 +1,3 @@
+[submodule "external/Slant"]
+	path = external/Slant
+	url = https://github.com/aquagoose/Slant

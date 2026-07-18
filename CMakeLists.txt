@@ -4,3 +4,6 @@ project(Glimpse)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Glimpse main.cpp)
+
+add_subdirectory(external/Slant)
+target_link_libraries(Glimpse PRIVATE Slant++)
