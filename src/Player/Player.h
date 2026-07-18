@@ -7,7 +7,11 @@
 
 #include <cstdint>
 #include <vector>
+#include <queue>
 #include <string>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 // gmp, short for Glimpse Music Player
 // todo i don't like gmp. reminds me of GIMP.
@@ -49,10 +53,17 @@ namespace gmp
         std::unique_ptr<sls::AudioStream> _stream{};
         std::unique_ptr<sl::AudioSource> _streamSource{};
 
+        std::thread _bufferProcessThread;
+        std::mutex _lockMutex;
+        std::condition_variable _cv;
+        bool _shouldExit{};
+
+        static void BufferProcessThread(void* userData);
         static void StreamCallback(void* userData);
 
     public:
         explicit Player(const PlayerConfig& config);
+        ~Player();
 
         // Get the current playback state.
         PlayState State();

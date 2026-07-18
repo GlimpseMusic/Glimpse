@@ -1,29 +1,50 @@
 #include "Player.h"
 
 #include <Slant++/Stream/Flac.h>
+#include <Slant++/Stream/Mp3.h>
 
 #include <cassert>
 #include <filesystem>
 
 namespace gmp
 {
-    // todo threading !!!!!!!!!
+    void Player::BufferProcessThread(void* userData)
+    {
+        auto player = static_cast<Player*>(userData);
+
+        while (true)
+        {
+            std::unique_lock lock(player->_lockMutex);
+            player->_cv.wait(lock); // wait until the thread is notified to continue
+
+            if (player->_shouldExit)
+                return;
+
+            // todo i really hate this
+            sls::AudioStream& stream = *player->_stream;
+            auto& workBuffer = player->_workBuffer;
+            auto& buffers = player->_buffers;
+            sl::AudioSource& source = *player->_streamSource;
+            size_t* currentBuffer = &player->_currentBuffer;
+
+            size_t gotBytes = stream.GetBuffer(workBuffer.data(), workBuffer.size());
+            if (gotBytes == 0)
+            {
+                source.SetLooping(false); // once there's no more data, disable looping so the source can fully stop.
+                continue;
+            }
+
+            // update with the number of got bytes, in case it returns less than the work buffer size
+            buffers[*currentBuffer]->Update(workBuffer.data(), gotBytes);
+            source.SubmitBuffer(buffers[*currentBuffer].get());
+            *currentBuffer = (*currentBuffer + 1) % buffers.size();
+        }
+    }
+
     void Player::StreamCallback(void* userData)
     {
         auto player = static_cast<Player*>(userData);
-        sls::AudioStream& stream = *player->_stream;
-        auto& workBuffer = player->_workBuffer;
-        auto& buffers = player->_buffers;
-        sl::AudioSource& source = *player->_streamSource;
-        size_t* currentBuffer = &player->_currentBuffer;
-
-        size_t gotBytes = stream.GetBuffer(workBuffer.data(), workBuffer.size());
-        if (gotBytes == 0)
-            source.SetLooping(false); // once there's no more data, disable looping so the source can fully stop.
-
-        buffers[*currentBuffer]->Update(workBuffer.data(), gotBytes);
-        source.SubmitBuffer(buffers[*currentBuffer].get());
-        *currentBuffer = (*currentBuffer + 1) % buffers.size();
+        player->_cv.notify_all();
     }
 
     Player::Player(const PlayerConfig& config)
@@ -38,6 +59,18 @@ namespace gmp
         _buffers.reserve(numBuffers);
         for (size_t i = 0; i < numBuffers; i++)
             _buffers.push_back(_context->CreateBuffer(nullptr, 0));
+
+        _bufferProcessThread = std::thread(BufferProcessThread, this);
+    }
+
+    Player::~Player()
+    {
+        {
+            std::unique_lock lock(_lockMutex);
+            _shouldExit = true;
+        }
+        _cv.notify_all();
+        _bufferProcessThread.join(); // we must join the thread as not doing so causes crashes! yay?
     }
 
     PlayState Player::State()
@@ -107,8 +140,8 @@ namespace gmp
             _streamSource->SubmitBuffer(buffer.get());
         }
 
-        _streamSource->Play();
         _device->Start();
+        _streamSource->Play();
 
         return true;
     }
