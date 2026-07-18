@@ -1,3 +1,6 @@
 [submodule "external/Slant"]
 	path = external/Slant
 	url = https://github.com/aquagoose/Slant
+[submodule "external/SDL"]
+	path = external/SDL
+	url = https://github.com/libsdl-org/SDL

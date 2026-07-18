@@ -7,3 +7,6 @@ add_executable(Glimpse main.cpp)
 
 add_subdirectory(external/Slant)
 target_link_libraries(Glimpse PRIVATE Slant++)
+
+add_subdirectory(external/SDL)
+target_link_libraries(Glimpse PRIVATE SDL3::SDL3)
