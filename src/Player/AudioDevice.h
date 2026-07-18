@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common.h"
-#include <SDL3/SDL_audio.h>
+#include <SDL3/SDL.h>
 #include <cstdint>
 
 namespace gmp

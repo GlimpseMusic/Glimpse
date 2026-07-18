@@ -11,12 +11,17 @@ void AudioCallback(void *userdata, SDL_AudioStream *stream, int additional_amoun
 
 namespace gmp
 {
-    AudioDevice::AudioDevice(sl::Context& context, uint32_t sampleRate) : _context(context), _sampleRate(sampleRate) {}
+    AudioDevice::AudioDevice(sl::Context& context, uint32_t sampleRate) : _context(context), _sampleRate(sampleRate)
+    {
+        if (!SDL_Init(SDL_INIT_AUDIO))
+            throw std::runtime_error(fmt::format("Failed to initialize SDL: {}", SDL_GetError()));
+    }
 
     AudioDevice::~AudioDevice()
     {
         // stop will close the audio device, so we can just call that here
         Stop();
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
     }
 
     void AudioDevice::Start()

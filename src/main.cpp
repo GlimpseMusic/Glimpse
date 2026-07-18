@@ -1,3 +1,5 @@
+#include <thread>
+
 #include "Player/Player.h"
 
 int main()
@@ -8,6 +10,13 @@ int main()
     };
 
     auto player = std::make_unique<gmp::Player>(config);
+    player->QueueTrack("/home/aqua/Music/kf-battle-og.flac");
+    auto _ = player->PlayTrack(0);
+
+    while (player->State() != gmp::PlayState::Stopped)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 
     return 0;
 }
