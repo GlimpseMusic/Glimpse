@@ -10,8 +10,7 @@ int main(int argc, char* argv[])
     };
 
     auto player = std::make_unique<gmp::Player>(config);
-    player->QueueTrack(argv[1]);
-    auto _ = player->PlayTrack(0);
+    auto _ = player->PlayTrack(argv[1]);
 
     while (player->State() != gmp::PlayState::Stopped)
     {

@@ -105,6 +105,11 @@ namespace gmp
             }
             case QueueSlot::Next:
                 throw std::logic_error("Not yet implemented.");
+            case QueueSlot::Clear:
+                _queuedTracks.clear();
+                _queueOrder.clear();
+                _queuedTracks.push_back(path);
+                _queueOrder.push_back(0); // since we just cleared it the index will always be 0
         }
     }
 
@@ -144,5 +149,11 @@ namespace gmp
         _streamSource->Play();
 
         return true;
+    }
+
+    bool Player::PlayTrack(const std::string& path)
+    {
+        QueueTrack(path, QueueSlot::Clear);
+        return PlayTrack(0);
     }
 }

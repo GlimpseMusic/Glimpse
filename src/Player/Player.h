@@ -30,7 +30,10 @@ namespace gmp
         AtEnd,
 
         // Insert after the current track.
-        Next
+        Next,
+
+        // Clear the queue, then insert.
+        Clear
     };
 
     struct PlayerConfig
@@ -73,5 +76,8 @@ namespace gmp
 
         // Play a track at the given index.
         [[nodiscard]] bool PlayTrack(size_t queueIndex);
+
+        // Play a single track from the given path.
+        [[nodiscard]] bool PlayTrack(const std::string& path);
     };
 }
