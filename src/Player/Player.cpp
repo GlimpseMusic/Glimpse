@@ -1,7 +1,7 @@
 #include "Player.h"
 
 #include <Slant++/Stream/Flac.h>
-#include <Slant++/Stream/Mp3.h>
+#include <Slant++/Stream/Wav.h>
 
 #include <cassert>
 #include <filesystem>
@@ -151,7 +151,7 @@ namespace gmp
         if (_streamSource)
             _streamSource->Stop();
 
-        _stream = std::make_unique<sls::Flac>(trackPath);
+        _stream = std::make_unique<sls::Wav>(trackPath);
 
         sl::SourceDescription sourceDesc
         {
@@ -165,8 +165,16 @@ namespace gmp
 
         for (const auto& buffer : _buffers)
         {
-            _stream->GetBuffer(_workBuffer.data(), _workBuffer.size());
-            buffer->Update(_workBuffer.data(), _workBuffer.size());
+            size_t gotBytes = _stream->GetBuffer(_workBuffer.data(), _workBuffer.size());
+            // if a track is less than 1-2 seconds then it might not fill the initial buffers
+            // in that case, set looping to false and don't upload to the buffer.
+            if (gotBytes == 0)
+            {
+                _streamSource->SetLooping(false);
+                break;
+            }
+
+            buffer->Update(_workBuffer.data(), gotBytes);
             _streamSource->SubmitBuffer(buffer.get());
         }
 
