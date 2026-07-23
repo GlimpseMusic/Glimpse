@@ -2,6 +2,7 @@
 
 #include "Common.h"
 #include "AudioDevice.h"
+#include "Codecs/Codec.h"
 
 #include <Slant++/Stream/AudioStream.h>
 
@@ -45,6 +46,7 @@ namespace gmp
     {
         std::unique_ptr<sl::Context> _context;
         std::unique_ptr<AudioDevice> _device;
+        std::vector<std::unique_ptr<Codec>> _codecs;
 
         std::vector<std::string> _queuedTracks; // the queued tracks, in order of queue.
         std::vector<size_t> _queueOrder; // the queue/play order, used for shuffle without affecting the original queue.

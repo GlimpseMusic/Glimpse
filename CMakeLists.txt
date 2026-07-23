@@ -3,11 +3,9 @@ project(Glimpse)
 
 set(CMAKE_CXX_STANDARD 20)
 
-file(GLOB GLIMPSE_SRC CONFIGURE_DEPENDS
+file(GLOB_RECURSE GLIMPSE_SRC CONFIGURE_DEPENDS
         src/*.h
         src/*.cpp
-        src/Player/*.h
-        src/Player/*.cpp
 )
 
 add_executable(Glimpse ${GLIMPSE_SRC})
