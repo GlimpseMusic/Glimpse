@@ -2,7 +2,7 @@
 
 #include "../Common.h"
 
-#include <string>
+#include <filesystem>
 #include <memory>
 
 namespace gmp
@@ -12,7 +12,7 @@ namespace gmp
     public:
         virtual ~Codec() = default;
 
-        virtual std::unique_ptr<sls::AudioStream> CreateStream(const std::string& path) = 0;
-        virtual bool CheckFileSupport(const std::string& path) = 0;
+        virtual std::unique_ptr<sls::AudioStream> CreateStream(const std::filesystem::path& path) = 0;
+        virtual bool CheckFileSupport(const std::filesystem::path& path) = 0;
     };
 }

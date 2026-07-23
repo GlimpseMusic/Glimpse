@@ -1,7 +1,7 @@
 #include "Player.h"
 
-#include <Slant++/Stream/Flac.h>
-#include <Slant++/Stream/Wav.h>
+#include "Codecs/FLACCodec.h"
+#include "Codecs/MP3Codec.h"
 
 #include <cassert>
 #include <filesystem>
@@ -74,6 +74,9 @@ namespace gmp
     {
         _context = std::make_unique<sl::Context>(config.SampleRate);
         _device = std::make_unique<AudioDevice>(*_context, config.SampleRate);
+
+        _codecs.emplace_back(std::make_unique<FLACCodec>());
+        _codecs.emplace_back(std::make_unique<MP3Codec>());
 
         // 1 second long buffer. multiply by 2 for 2 channels, and since it is in bytes, multiply by 4 for 32-bit
         _workBuffer = std::vector<uint8_t>(config.SampleRate * 2 * 4);
@@ -148,10 +151,25 @@ namespace gmp
         if (!std::filesystem::exists(trackPath))
             return false;
 
+        std::unique_ptr<sls::AudioStream> stream{};
+        for (const auto& codec : _codecs)
+        {
+            if (codec->CheckFileSupport(trackPath))
+                stream = codec->CreateStream(trackPath);
+        }
+
+        // no suitable codec was found so the track cannot be played
+        if (!stream)
+            return false;
+
         if (_streamSource)
             _streamSource->Stop();
 
-        _stream = std::make_unique<sls::Wav>(trackPath);
+        // force the stream thread to finish processing stuff before replacing the stream its reading from
+        {
+            std::unique_lock lock(_lockMutex);
+            _stream = std::move(stream);
+        }
 
         sl::SourceDescription sourceDesc
         {
@@ -163,6 +181,7 @@ namespace gmp
         _streamSource->SetStateChangedCallback(SourceStateChangedCallback, this);
         _streamSource->SetLooping(true); // enable looping to ensure the source keeps playing in case of slowdowns. not elegant but it works
 
+        _currentBuffer = 0;
         for (const auto& buffer : _buffers)
         {
             size_t gotBytes = _stream->GetBuffer(_workBuffer.data(), _workBuffer.size());
