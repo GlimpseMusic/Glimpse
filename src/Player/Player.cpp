@@ -47,6 +47,29 @@ namespace gmp
         player->_cv.notify_all();
     }
 
+    void Player::SourceStateChangedCallback(sl::SourceState state, void* userData)
+    {
+        if (state != sl::SourceState::Stopped)
+            return;
+
+        auto player = static_cast<Player*>(userData);
+        player->NextTrack();
+    }
+
+    void Player::NextTrack()
+    {
+        // continuously increment the track index until PlayTrack returns true
+        // causes the player to skip over invalid tracks instead of displaying an error
+        do
+        {
+            _currentTrackIndex++;
+            if (_currentTrackIndex >= _queuedTracks.size())
+                // Stop();
+                return;
+        }
+        while (!PlayTrack(_currentTrackIndex));
+    }
+
     Player::Player(const PlayerConfig& config)
     {
         _context = std::make_unique<sl::Context>(config.SampleRate);
@@ -120,7 +143,8 @@ namespace gmp
         if (queueIndex >= _queuedTracks.size())
             return false;
 
-        auto trackPath = _queuedTracks[_queueOrder[queueIndex]];
+        _currentTrackIndex = queueIndex;
+        auto trackPath = _queuedTracks[_queueOrder[_currentTrackIndex]];
         if (!std::filesystem::exists(trackPath))
             return false;
 
@@ -136,6 +160,7 @@ namespace gmp
         };
         _streamSource = _context->CreateSource(sourceDesc);
         _streamSource->SetBufferFinishedCallback(StreamCallback, this);
+        _streamSource->SetStateChangedCallback(SourceStateChangedCallback, this);
         _streamSource->SetLooping(true); // enable looping to ensure the source keeps playing in case of slowdowns. not elegant but it works
 
         for (const auto& buffer : _buffers)

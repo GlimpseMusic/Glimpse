@@ -48,6 +48,7 @@ namespace gmp
 
         std::vector<std::string> _queuedTracks; // the queued tracks, in order of queue.
         std::vector<size_t> _queueOrder; // the queue/play order, used for shuffle without affecting the original queue.
+        size_t _currentTrackIndex{};
 
         std::vector<uint8_t> _workBuffer;
         std::vector<std::unique_ptr<sl::AudioBuffer>> _buffers;
@@ -63,6 +64,10 @@ namespace gmp
 
         static void BufferProcessThread(void* userData);
         static void StreamCallback(void* userData);
+
+        static void SourceStateChangedCallback(sl::SourceState state, void* userData);
+
+        void NextTrack();
 
     public:
         explicit Player(const PlayerConfig& config);
