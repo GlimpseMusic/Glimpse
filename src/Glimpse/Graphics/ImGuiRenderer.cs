@@ -129,7 +129,7 @@ public class ImGuiRenderer : IDisposable
                 int numVertices = (int) (cmdList.VtxBuffer.Size - drawCmd.VtxOffset);
                 int numIndices = (int) drawCmd.ElemCount;
 
-                SDL.Texture* texture = (SDL.Texture*) drawCmd.GetTexID();
+                SDL.Texture texture = new SDL.Texture((SDL.TextureRef*) drawCmd.GetTexID());
                 float* xy = (float*) (((byte*) vertexBuffer + drawCmd.VtxOffset) + 0);
                 float* uv = (float*) (((byte*) vertexBuffer + drawCmd.VtxOffset) + 8);
 
@@ -150,7 +150,7 @@ public class ImGuiRenderer : IDisposable
                 fixed (SDL.FColor* col = CollectionsMarshal.AsSpan(_colorConvertCache))
                 {
                     SDL.RenderGeometryRaw(_renderer, texture, xy, sizeof(ImDrawVert), col, sizeof(SDL.FColor), uv,
-                        sizeof(ImDrawVert), numVertices, indexBuffer + drawCmd.IdxOffset, numIndices, sizeof(ImDrawIdx));
+                        sizeof(ImDrawVert), numVertices, (nint) (indexBuffer + drawCmd.IdxOffset), numIndices, sizeof(ImDrawIdx));
                 }
             }
         }
@@ -192,13 +192,13 @@ public class ImGuiRenderer : IDisposable
         {
             case ImTextureStatus.WantCreate:
             {
-                SDL.Texture* texture = SDL.CreateTexture(_renderer, SDL.PixelFormat.Rgba32, SDL.TextureAccess.Static, textureData.Width, textureData.Height);
+                SDL.Texture texture = SDL.CreateTexture(_renderer, SDL.PixelFormat.Rgba32, SDL.TextureAccess.Static, textureData.Width, textureData.Height);
                 SDL.SetTextureBlendMode(texture, SDL.BlendMode.Blend);
                 SDL.SetTextureScaleMode(texture, SDL.ScaleMode.Linear);
 
-                SDL.UpdateTexture(texture, null, textureData.GetPixels(), textureData.GetPitch());
+                SDL.UpdateTexture(texture, null, (nint) textureData.GetPixels(), textureData.GetPitch());
 
-                textureData.TexID = texture;
+                textureData.TexID = texture.Handle;
                 textureData.Status = ImTextureStatus.Ok;
                 
                 break;
@@ -211,7 +211,7 @@ public class ImGuiRenderer : IDisposable
                 {
                     ImTextureRect r = updates[i];
                     SDL.Rect rect = new SDL.Rect(r.X, r.Y, r.W, r.H);
-                    SDL.UpdateTexture((SDL.Texture*) textureData.TexID, &rect, textureData.GetPixelsAt(r.X, r.Y), textureData.GetPitch());
+                    SDL.UpdateTexture(new SDL.Texture((SDL.TextureRef*) textureData.TexID), &rect, (nint) textureData.GetPixelsAt(r.X, r.Y), textureData.GetPitch());
                 }
 
                 textureData.Status = ImTextureStatus.Ok;
@@ -220,7 +220,7 @@ public class ImGuiRenderer : IDisposable
 
             case ImTextureStatus.WantDestroy:
             {
-                SDL.DestroyTexture((SDL.Texture*) textureData.TexID);
+                SDL.DestroyTexture(new SDL.Texture((SDL.TextureRef*) textureData.TexID));
                 textureData.TexID = ImTextureID.Null;
                 textureData.Status = ImTextureStatus.Destroyed;
                 break;

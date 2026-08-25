@@ -5,13 +5,13 @@ namespace Glimpse.Graphics;
 
 public unsafe class Image : IDisposable
 {
-    internal readonly SDL.Texture* Texture; // todo: piko: make this some kind of special-case handle type?
+    internal readonly SDL.Texture Texture;
 
-    public nint ID => (nint) Texture;
+    public nint ID => Texture.Handle;
 
-    public uint Width => (uint) Texture->W;
+    public uint Width => (uint) Texture.W;
 
-    public uint Height => (uint) Texture->H;
+    public uint Height => (uint) Texture.H;
 
     public ImTextureRef TexRef => new ImTextureRef(texId: ID);
     
@@ -24,7 +24,7 @@ public unsafe class Image : IDisposable
 
         uint pitch = width * 4; // 4 bytes per pixel
         fixed (byte* pData = data)
-            SDL.UpdateTexture(Texture, null, pData, (int) pitch);
+            SDL.UpdateTexture(Texture, null, (nint) pData, (int) pitch);
     }
 
     public void Dispose()
