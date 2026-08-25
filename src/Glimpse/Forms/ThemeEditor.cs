@@ -93,7 +93,7 @@ public class ThemeEditor : Popup
                 nint filterName = Marshal.StringToHGlobalAnsi("Glimpse Theme JSON");
                 nint filterPattern = Marshal.StringToHGlobalAnsi("json");
                 SDL.DialogFileFilter filter = new SDL.DialogFileFilter((sbyte*) filterName, (sbyte*) filterPattern);
-                SDL.ShowSaveFileDialog(_fileCallback, null, Glimpse.MainWindow.Handle, &filter, 1, location);
+                SDL.ShowSaveFileDialog(_fileCallback, 0, Glimpse.MainWindow.Handle, &filter, 1, location);
                 Marshal.FreeHGlobal(filterPattern);
                 Marshal.FreeHGlobal(filterName);
             }
@@ -124,7 +124,7 @@ public class ThemeEditor : Popup
         }
     }
 
-    private unsafe void FileCallback(void* userdata, sbyte** filelist, int filter)
+    private unsafe void FileCallback(nint userdata, sbyte** filelist, int filter)
     {
         if (filelist == null)
             throw new Exception($"Save file dialog failed: {SDL.GetError()}");

@@ -65,7 +65,7 @@ public class ManageLibraryWidget : IDisposable
                 if (string.IsNullOrWhiteSpace(defaultLocation))
                     defaultLocation = null;
 
-                SDL.ShowOpenFolderDialog(_folderCallback, null, _glimpse.MainWindow.Handle, defaultLocation, 1);
+                SDL.ShowOpenFolderDialog(_folderCallback, 0, _glimpse.MainWindow.Handle, defaultLocation, true);
             }
             ImGui.SetItemTooltipUnformatted(locale.GetString("Widget.ManageLibrary.AddFolders.Tooltip"));
             ImGui.SameLine();
@@ -118,7 +118,7 @@ public class ManageLibraryWidget : IDisposable
         _plus.Dispose();
     }
     
-    private unsafe void FolderCallback(void* userdata, sbyte** filelist, int filter)
+    private unsafe void FolderCallback(nint userdata, sbyte** filelist, int filter)
     {
         sbyte** fileList = (sbyte**) filelist;
         int index = 0;

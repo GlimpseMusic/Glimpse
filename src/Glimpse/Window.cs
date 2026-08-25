@@ -130,16 +130,16 @@ public abstract unsafe class Window : IDisposable
 
         uint windowProps = SDL.CreateProperties();
         SDL.SetStringProperty(windowProps, SDL.Prop.WindowCreateTitleString, _title);
-        SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateOpenglBoolean, 1);
-        SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateResizableBoolean, 1);
-        SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateHighPixelDensityBoolean, 1);
+        SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateOpenglBoolean, true);
+        SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateResizableBoolean, true);
+        SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateHighPixelDensityBoolean, true);
         // Apparently hiding the window and then showing it later once everything is ready breaks wayland. The scale
         // values it reports are entirely incorrect. I think this is an SDL bug, or perhaps wayland just being stupid.
         // Either way, can't hide the window now. Thanks wayland!
         bool isWayland = SDL.GetCurrentVideoDriver() == "wayland";
         // todo reload the scale value once the window is shown instead ?
         if (!isWayland)
-            SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateHiddenBoolean, 1);
+            SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateHiddenBoolean, true);
 
         // Attempt to set the window centered on the display the mouse cursor is on.
         // If that fails, just make the window centered. On platforms such as Wayland, this will do nothing.
@@ -147,9 +147,7 @@ public abstract unsafe class Window : IDisposable
         SDL.GetGlobalMouseState(&mouseX, &mouseY);
         SDL.Point mousePoint = new() { X = (int) mouseX, Y = (int) mouseY };
         uint display = SDL_GetDisplayForPoint(in mousePoint);
-        // todo: SDL.WindowPosCenteredDisplay is not implemented!
-        //uint displayPos = display == 0 ? SDL.WindowposCentered : SDL.WindowposCenteredDisplay((int) display);
-        uint displayPos = SDL.WindowposCentered;
+        uint displayPos = display == 0 ? SDL.WindowposCentered : SDL.WindowPosCenteredDisplay(display);
         
         // windows doesn't auto-scale windows when created so we must do that here
         // todo create the window first then resize using the window display scale?
@@ -182,10 +180,10 @@ public abstract unsafe class Window : IDisposable
                 byte[] pixels = new byte[icon.Width * icon.Height * sizeof(Rgba32)];
                 icon.CopyPixelDataTo(pixels);
 
-                SDL.Surface* surface;
+                SDL.Surface surface;
                 fixed (byte* pData = pixels)
                 {
-                    surface = SDL.CreateSurfaceFrom(icon.Width, icon.Height, SDL.PixelFormat.Abgr8888, pData,
+                    surface = SDL.CreateSurfaceFrom(icon.Width, icon.Height, SDL.PixelFormat.Abgr8888, (nint) pData,
                         icon.Width * 4);
                 }
 
@@ -227,7 +225,7 @@ public abstract unsafe class Window : IDisposable
         if (OperatingSystem.IsWindows())
         {
             uint props = SDL.GetWindowProperties(_window);
-            nint hwnd = (nint) SDL.GetPointerProperty(props, SDL.Prop.WindowWin32HwndPointer, null);
+            nint hwnd = SDL.GetPointerProperty(props, SDL.Prop.WindowWin32HwndPointer, 0);
             platform.InitializeMainWindow(hwnd);
         }
 

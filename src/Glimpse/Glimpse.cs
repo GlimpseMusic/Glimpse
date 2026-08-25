@@ -253,7 +253,7 @@ public class Glimpse : IGlimpse, IDisposable
         _eventFilter = WindowExposedEventWatch;
         
         AddWindow(window);
-        SDL.AddEventWatch(_eventFilter, null);
+        SDL.AddEventWatch(_eventFilter, 0);
         
         if (args.Length > 0)
         {
@@ -308,10 +308,10 @@ public class Glimpse : IGlimpse, IDisposable
             }
         }
         
-        SDL.RemoveEventWatch(_eventFilter, null);
+        SDL.RemoveEventWatch(_eventFilter, 0);
     }
 
-    private unsafe bool WindowExposedEventWatch(void* userdata, SDL.Event* @event)
+    private unsafe bool WindowExposedEventWatch(nint userdata, SDL.Event* @event)
     {
         int threadId = Environment.CurrentManagedThreadId;
         if (threadId != _mainThreadID)

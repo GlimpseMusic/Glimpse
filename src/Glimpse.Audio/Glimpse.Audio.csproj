@@ -13,7 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="piko.SDL3" Version="0.0.5" />
+      <PackageReference Include="piko.SDL3" Version="0.0.6" />
       <PackageReference Include="TagLibSharp" Version="2.3.0" />
     </ItemGroup>
 
