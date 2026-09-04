@@ -19,7 +19,7 @@ public partial class DiscordPresence : IPlugin
     
     private string _currentUrl;
 
-    public DiscordConfig Config;
+    private DiscordConfig _config;
     
     public DiscordRpcClient Client;
 
@@ -27,7 +27,13 @@ public partial class DiscordPresence : IPlugin
     
     public string Name => "Discord RPC";
 
-    public void DisplayGui(IImmediateGUI ui)
+    public IConfig Config
+    {
+        get => _config;
+        set => _config = (DiscordConfig) value!;
+    }
+
+    public void OnGUI(IImmediateGUI ui)
     {
         if (ImGui.BeginTable("ArtTable", 2, ImGuiTableFlags.ScrollY))
         {
@@ -36,7 +42,7 @@ public partial class DiscordPresence : IPlugin
             ImGui.TableSetupScrollFreeze(0, 1);
             ImGui.TableHeadersRow();
 
-            foreach ((string album, string albumArt) in Config.AlbumArt)
+            foreach ((string album, string albumArt) in _config.AlbumArt)
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
@@ -56,10 +62,10 @@ public partial class DiscordPresence : IPlugin
         
         Client = new DiscordRpcClient("1280266653950804111");
         
-        if (!_glimpse.ConfigManager.TryGetConfig("Discord", out Config))
+        if (!_glimpse.ConfigManager.TryGetConfig("Discord", out _config))
         {
-            Config = new DiscordConfig();
-            _glimpse.ConfigManager.WriteConfig("Discord", Config);
+            _config = new DiscordConfig();
+            _glimpse.ConfigManager.WriteConfig("Discord", _config);
         }
         
         Client.Initialize();
@@ -111,7 +117,7 @@ public partial class DiscordPresence : IPlugin
             albumName = RemoveDiscNumberRegex().Replace(albumName, "");
            _glimpse.Logger.Log($"Sanitized album name: {albumName}");
 
-            if (Config.AlbumArt.TryGetValue(albumName, out _currentUrl))
+            if (_config.AlbumArt.TryGetValue(albumName, out _currentUrl))
             {
                 Client.UpdateLargeAsset(_currentUrl);
                 return;
@@ -147,8 +153,8 @@ public partial class DiscordPresence : IPlugin
                     if (image is not null)
                     {
                         _currentUrl = image.Location?.ToString();
-                        Config.AlbumArt[albumName] = _currentUrl;
-                        _glimpse.ConfigManager.WriteConfig("Discord", Config);
+                        _config.AlbumArt[albumName] = _currentUrl;
+                        _glimpse.ConfigManager.WriteConfig("Discord", _config);
                         
                         Client.UpdateLargeAsset(_currentUrl);
                         break;
