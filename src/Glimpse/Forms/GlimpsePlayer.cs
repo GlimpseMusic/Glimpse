@@ -520,9 +520,9 @@ public class GlimpsePlayer : Window
 
                         //if (!_miniplayer)
                         {
-                            int volume = (int) (Glimpse.Player.Volume * 100);
+                            float volume = Glimpse.Player.Volume;
+                            string format;
 
-                            string format = "%d";
                             ImGuiSliderFlags sliderFlags = ImGuiSliderFlags.None;
                             if (_miniplayer)
                             {
@@ -539,13 +539,13 @@ public class GlimpsePlayer : Window
                                 ImGui.SameLine(0, 2);
                                 contentRegion = ImGui.GetContentRegionAvail();
                                 ImGui.SetNextItemWidth(contentRegion.X);
+                                format = ((int) (volume * 100)).ToString();
                             }
-                            
-                            if (ImGui.SliderInt("##Volume", ref volume, 0, 100, format, sliderFlags))
+
+                            if (ImGui.SliderFloat("##Volume", ref volume, 0, 1, format, sliderFlags))
                             {
-                                float fVol = (float) volume / 100;
-                                Glimpse.Player.Volume = fVol;
-                                Glimpse.Config.Audio.Volume = fVol;
+                                Glimpse.Player.Volume = volume;
+                                Glimpse.Config.Audio.Volume = volume;
                             }
 
                             if (_miniplayer)

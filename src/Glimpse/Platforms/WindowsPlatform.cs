@@ -104,11 +104,11 @@ public unsafe class WindowsPlatform : Platform
     public override void Dispose() { }
 
     [DllImport("shell32")]
-    public static extern nint ILCreateFromPathW(char* path);
+    private static extern nint ILCreateFromPathW(char* path);
 
     [DllImport("shell32")]
-    public static extern int SHOpenFolderAndSelectItems(nint pidlFolder, uint cidl, nint apidl, uint dwFlags);
+    private static extern int SHOpenFolderAndSelectItems(nint pidlFolder, uint cidl, nint apidl, uint dwFlags);
 
     [DllImport("shell32")]
-    public static extern void ILFree(nint list);
+    private static extern void ILFree(nint list);
 }
