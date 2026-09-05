@@ -1,12 +1,16 @@
-﻿#!/usr/bin/env dotnet
+#!/usr/bin/env -S dotnet --
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Runtime.InteropServices;
 
-string? outName = null;
+string outName = "Publish";
+string? version = null;
 string? runtime = null;
-bool noPack = false;
-bool noPlugins = false;
+bool pack = true;
+bool plugins = true;
+bool noPDB = false;
 bool aot = false;
 
 int argPos = 0;
@@ -28,28 +32,37 @@ while (ReadArg(args, ref argPos, out string? arg))
 
                 break;
             }
-            
+
             case "--no-pack":
-                noPack = true;
+                pack = false;
                 break;
             case "--no-plugins":
-                noPlugins = true;
+                plugins = false;
+                break;
+            case "--no-pdb":
+                noPDB = true;
                 break;
             case "--aot":
-                noPlugins = true;
+                plugins = false;
                 aot = true;
                 break;
+
+            default:
+            {
+                PrintError($"Unrecognized argument \"{arg}\".");
+                return;
+            }
         }
     }
     else
     {
-        outName = arg;
+        version = arg;
     }
 }
 
-if (outName == null)
+if (version == null)
 {
-    PrintError("No out name specified!");
+    PrintError("No version specified!");
     return;
 }
 
@@ -82,7 +95,125 @@ if (runtime is not ("win-x64" or "linux-x64" or "osx-arm64"))
     return;
 }
 
-Console.WriteLine(runtime);
+string publishDir = Path.Combine(Environment.CurrentDirectory, outName);
+if (Directory.Exists(publishDir))
+    Directory.Delete(publishDir, true);
+
+// ================ Publish Glimpse ================
+
+string glimpseSrcDir = Path.Combine(Environment.CurrentDirectory, "src", "Glimpse");
+//string glimpsecliSrcDir = Path.Combine(Environment.CurrentDirectory, "src", "glimpsecli");
+
+List<string> glimpsePublishArgs =
+[
+    "publish",
+    glimpseSrcDir,
+    "-c", "Release",
+    "-r", runtime,
+    "-o", publishDir,
+    $"-p:Version={version}",
+    "-p:GenerateDocumentationFile=false"
+];
+
+if (aot)
+    glimpsePublishArgs.Add("-p:PublishAot=true");
+if (noPDB)
+    glimpsePublishArgs.Add("-p:DebugType=none");
+
+if (!RunProcess("dotnet", glimpsePublishArgs))
+{
+    PrintError("Failed to build glimpse.", false);
+    return;
+}
+
+// =================================================
+
+// ==================== Plugins ====================
+if (plugins)
+{
+    string pluginsBaseDir = Path.Combine(Environment.CurrentDirectory, "Plugins");
+    string pluginsOutDir = Path.Combine(publishDir, "Plugins");
+    string packageScriptLocation = Path.Combine(Environment.CurrentDirectory, "tools", "sdk", "package-plugin.cs");
+
+    Directory.CreateDirectory(pluginsOutDir);
+
+    // the publish script assumes that the built-in plugins are NOT in subdirectories
+    foreach (string dir in Directory.GetDirectories(pluginsBaseDir))
+    {
+        bool hasPluginJson = false;
+        foreach (string file in Directory.GetFiles(dir))
+        {
+            if (Path.GetFileName(file) == "Plugin.json")
+            {
+                hasPluginJson = true;
+                break;
+            }
+        }
+
+        if (!hasPluginJson)
+            continue;
+
+        string pluginName = Path.GetFileName(dir);
+
+        if (!RunProcess("dotnet", packageScriptLocation, dir, "--no-pack"))
+        {
+            PrintError($"Failed to package plugin \"{pluginName}\".", false);
+            return;
+        }
+
+        Directory.Move(Path.Combine(Environment.CurrentDirectory, pluginName), Path.Combine(pluginsOutDir, pluginName));
+    }
+}
+// =================================================
+
+// ==================== Cleanup ====================
+
+string cwd = Environment.CurrentDirectory;
+Environment.CurrentDirectory = publishDir;
+
+File.Delete("Silk.NET.SDL.dll");
+
+if (runtime.StartsWith("win"))
+{
+    File.Delete("libmixr.so");
+    File.Delete("libmixr.dylib");
+    File.Delete("libempress.so");
+    File.Delete("SDL2.dll");
+}
+else if (runtime.StartsWith("linux"))
+{
+    File.Delete("mixr.dll");
+    File.Delete("libmixr.dylib");
+    File.Delete("libSDL2-2.0.so");
+}
+else if (runtime.StartsWith("osx"))
+{
+    File.Delete("mixr.dll");
+    File.Delete("libmixr.so");
+    File.Delete("libempress.so");
+    File.Delete("libSDL2-2.0.dylib");
+}
+
+Environment.CurrentDirectory = cwd;
+
+// =================================================
+
+// ===================== Pack ======================
+if (pack)
+{
+    if (runtime.StartsWith("win"))
+    {
+        using (WebClient client = new WebClient())
+            client.DownloadFile("https://aka.ms/vc14/vc_redist.x64.exe", Path.Combine(publishDir, "vc_redist.x64.exe"));
+
+        if (!RunProcess("makensis", $"-DVERSION={version}", $"-DPUBLISHDIR={publishDir}", "./packaging/windows/glimpse.nsi"))
+        {
+            PrintError("Failed to package NSIS file.", false);
+            return;
+        }
+    }
+}
+
 
 bool ReadArg(string[] args, ref int argPos, [NotNullWhen(true)] out string? arg)
 {
@@ -99,10 +230,14 @@ bool ReadArg(string[] args, ref int argPos, [NotNullWhen(true)] out string? arg)
 void PrintHelp()
 {
     Console.WriteLine("""
-                      USAGE: publish [OPTIONS] <OutName>
-                      Publish and package (unless specified) Glimpse to the OutName.
+                      USAGE: publish [OPTIONS] <version>
+                      Publish and package (unless specified) Glimpse with the given version number.
 
                       Options:
+                          --output <name>, -o <name>
+                              Set the output name.
+                              If not provided, the output name will be "Publish"
+                      
                           --runtime <runtime>, -r <runtime>
                               Set the .NET runtime identifier to build for.
                               If not provided, the RID for the current OS will be used.
@@ -113,14 +248,35 @@ void PrintHelp()
                           --no-plugins
                               Do not build or include plugins.
                               
+                          --no-pdb
+                              Do not export PDB files.
+                              
                           --aot
                               Compile using NativeAOT. This will disable plugin support.
                       """);
 }
 
-void PrintError(string error)
+void PrintError(string error, bool printHelp = true)
 {
-    PrintHelp();
-    Console.WriteLine();
+    if (printHelp)
+    {
+        PrintHelp();
+        Console.WriteLine();
+    }
+
     Console.WriteLine($"\e[31mERROR: {error}\e[0m");
+}
+
+bool RunProcess(string processName, params IEnumerable<string> args)
+{
+    Process process = new Process()
+    {
+        StartInfo = new ProcessStartInfo(processName, args)
+    };
+
+    if (!process.Start())
+        return false;
+
+    process.WaitForExit();
+    return process.ExitCode == 0;
 }

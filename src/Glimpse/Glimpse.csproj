@@ -10,6 +10,7 @@
         <ApplicationIcon Condition="$(Configuration) == 'Debug'">Icon-Dbg.ico</ApplicationIcon>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <VersionPrefix>$([System.DateTime]::Now.ToString("yyyy.MM.dd"))</VersionPrefix>
+        <SelfContained>true</SelfContained>
     </PropertyGroup>
     
     <PropertyGroup Condition="$(PublishAot) == true">
