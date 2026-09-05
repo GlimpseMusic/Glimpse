@@ -233,7 +233,27 @@ if (pack)
     }
     else if (runtime.StartsWith("linux"))
     {
-        string appImageDir = Path.Combine(Environment.CurrentDirectory, "packaging", "linux", "appimage");
+        string packagingDir = Path.Combine(Environment.CurrentDirectory, "packaging", "linux");
+
+        string tarballDir = Path.Combine(packagingDir, "tarball");
+        string binDir = Path.Combine(tarballDir, "bin");
+        
+        if (Directory.Exists(binDir))
+            Directory.Delete(binDir, true);
+
+        Directory.CreateDirectory(binDir);
+        foreach (string file in Directory.GetFiles(publishDir, "*", SearchOption.AllDirectories))
+        {
+            string dir = Path.GetRelativePath(publishDir, Path.GetDirectoryName(file));
+            Directory.CreateDirectory(Path.Combine(binDir, dir));
+            File.Copy(file, Path.Combine(binDir, dir, Path.GetFileName(file)));
+        }
+        
+        using MemoryStream zipStream = new MemoryStream();
+        ZipFile.CreateFromDirectory(tarballDir, zipStream);
+        Console.WriteLine(zipStream.Length);
+        
+        string appImageDir = Path.Combine(packagingDir, "appimage");
         string usrDir = Path.Combine(appImageDir, "usr");
         string binaryDir = Path.Combine(usrDir, "bin");
         string appImageDest = $"Glimpse-{version}-{runtime}.AppImage";
@@ -260,8 +280,13 @@ if (pack)
 
         File.Move(appImageDest, Path.Combine(publishDir, appImageDest));
         
+        using FileStream zipWriteStream = File.Create(Path.Combine(publishDir, $"{outName}.zip"));
+        zipStream.WriteTo(zipWriteStream);
+
         // cleanup garbage
-        Directory.Delete(Path.Combine(appImageDir, "usr"), true);
+        Directory.Delete(binDir, true);
+        
+        Directory.Delete(usrDir, true);
         File.Delete(Path.Combine(appImageDir, ".DirIcon"));
     }
 }
