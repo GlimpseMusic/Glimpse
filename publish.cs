@@ -237,7 +237,7 @@ if (pack)
 
         string tarballDir = Path.Combine(packagingDir, "tarball");
         string binDir = Path.Combine(tarballDir, "bin");
-        
+
         if (Directory.Exists(binDir))
             Directory.Delete(binDir, true);
 
@@ -248,11 +248,11 @@ if (pack)
             Directory.CreateDirectory(Path.Combine(binDir, dir));
             File.Copy(file, Path.Combine(binDir, dir, Path.GetFileName(file)));
         }
-        
+
         using MemoryStream zipStream = new MemoryStream();
         ZipFile.CreateFromDirectory(tarballDir, zipStream);
         Console.WriteLine(zipStream.Length);
-        
+
         string appImageDir = Path.Combine(packagingDir, "appimage");
         string usrDir = Path.Combine(appImageDir, "usr");
         string binaryDir = Path.Combine(usrDir, "bin");
@@ -279,15 +279,38 @@ if (pack)
         Directory.CreateDirectory(publishDir);
 
         File.Move(appImageDest, Path.Combine(publishDir, appImageDest));
-        
+
         using FileStream zipWriteStream = File.Create(Path.Combine(publishDir, $"{outName}.zip"));
         zipStream.WriteTo(zipWriteStream);
 
         // cleanup garbage
         Directory.Delete(binDir, true);
-        
+
         Directory.Delete(usrDir, true);
         File.Delete(Path.Combine(appImageDir, ".DirIcon"));
+    }
+    else if (runtime.StartsWith("osx"))
+    {
+        string macosDir = Path.Combine(Environment.CurrentDirectory, "packaging", "macos");
+        const string glimpseAppName = "Glimpse.app";
+
+        if (Directory.Exists(glimpseAppName))
+            Directory.Delete(glimpseAppName, true);
+
+        Directory.CreateDirectory(glimpseAppName);
+        Directory.CreateDirectory(Path.Combine(glimpseAppName, "Contents", "Resources"));
+
+        // replace the GLIMPSE_VERSION placeholder in Info.plist with the actual version
+        // then write to the correct location.
+        string plist = File.ReadAllText(Path.Combine(macosDir, "Info.plist"));
+        plist = plist.Replace("GLIMPSE_VERSION", version);
+        File.WriteAllText(Path.Combine(glimpseAppName, "Contents", "Info.plist"), plist);
+
+        File.Copy(Path.Combine(macosDir, "Glimpse.icns"), Path.Combine(glimpseAppName, "Contents", "Resources", "Glimpse.icns"));
+        Directory.Move(publishDir, Path.Combine(glimpseAppName, "Contents", "MacOS"));
+
+        Directory.CreateDirectory(publishDir);
+        Directory.Move(glimpseAppName, Path.Combine(publishDir, glimpseAppName));
     }
 }
 
