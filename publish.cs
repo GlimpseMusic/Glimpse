@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Compression;
 using System.Net;
 using System.Runtime.InteropServices;
 
@@ -111,7 +112,7 @@ List<string> glimpsePublishArgs =
     "-c", "Release",
     "-r", runtime,
     "-o", publishDir,
-    $"-p:Version={version}",
+    $"-p:Version=\"{version}\"",
     "-p:GenerateDocumentationFile=false"
 ];
 
@@ -155,7 +156,7 @@ if (plugins)
 
         string pluginName = Path.GetFileName(dir);
 
-        if (!RunProcess("dotnet", packageScriptLocation, dir, "--no-pack"))
+        if (!RunProcess("dotnet", packageScriptLocation, dir, "--no-pack", "--glimpse-version", version))
         {
             PrintError($"Failed to package plugin \"{pluginName}\".", false);
             return;
@@ -203,14 +204,65 @@ if (pack)
 {
     if (runtime.StartsWith("win"))
     {
+        string nsiDir = Path.Combine(Environment.CurrentDirectory, "packaging", "windows");
+        string installerName = $"InstallGlimpse-{version}.exe";
+
+        // zip it up before building the nsi so we don't bundle vc redist
+        using MemoryStream zipStream = new MemoryStream();
+        ZipFile.CreateFromDirectory(publishDir, zipStream);
+        Console.WriteLine(zipStream.Length);
+
+        // todo use httpclient
         using (WebClient client = new WebClient())
             client.DownloadFile("https://aka.ms/vc14/vc_redist.x64.exe", Path.Combine(publishDir, "vc_redist.x64.exe"));
 
-        if (!RunProcess("makensis", $"-DVERSION={version}", $"-DPUBLISHDIR={publishDir}", "./packaging/windows/glimpse.nsi"))
+        if (!RunProcess("makensis", $"-DVERSION={version}", $"-DPUBLISHDIR={publishDir}", Path.Combine(nsiDir, "glimpse.nsi")))
         {
             PrintError("Failed to package NSIS file.", false);
             return;
         }
+
+        // hack to clear the contents of the publish directory
+        Directory.Delete(publishDir, true);
+        Directory.CreateDirectory(publishDir);
+
+        using FileStream zipWriteStream = File.Create(Path.Combine(publishDir, $"{outName}.zip"));
+        zipStream.WriteTo(zipWriteStream);
+
+        File.Move(Path.Combine(nsiDir, installerName), Path.Combine(publishDir, installerName));
+    }
+    else if (runtime.StartsWith("linux"))
+    {
+        string appImageDir = Path.Combine(Environment.CurrentDirectory, "packaging", "linux", "appimage");
+        string usrDir = Path.Combine(appImageDir, "usr");
+        string binaryDir = Path.Combine(usrDir, "bin");
+        string appImageDest = $"Glimpse-{version}-{runtime}.AppImage";
+
+        // reset state
+        if (Directory.Exists(usrDir))
+            Directory.Delete(usrDir, true);
+        File.Delete(Path.Combine(appImageDir, ".DirIcon"));
+
+        Directory.CreateDirectory(binaryDir);
+
+        foreach (string file in Directory.GetFiles(publishDir, "*", SearchOption.AllDirectories))
+        {
+            string dir = Path.GetRelativePath(publishDir, Path.GetDirectoryName(file));
+            Directory.CreateDirectory(Path.Combine(binaryDir, dir));
+            File.Copy(file, Path.Combine(binaryDir, dir, Path.GetFileName(file)));
+        }
+
+        RunProcess("appimagetool-x86_64.AppImage", appImageDir, appImageDest);
+
+        // hack to clear the contents of the publish directory
+        Directory.Delete(publishDir, true);
+        Directory.CreateDirectory(publishDir);
+
+        File.Move(appImageDest, Path.Combine(publishDir, appImageDest));
+        
+        // cleanup garbage
+        Directory.Delete(Path.Combine(appImageDir, "usr"), true);
+        File.Delete(Path.Combine(appImageDir, ".DirIcon"));
     }
 }
 
