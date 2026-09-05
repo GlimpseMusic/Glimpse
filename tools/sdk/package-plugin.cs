@@ -170,6 +170,8 @@ foreach ((_, JsonNode? target) in targets.AsObject())
 SKIP_PACKAGING: ;
 
 JsonNode pluginJson = JsonNode.Parse(File.ReadAllText(pluginJsonFile))!;
+if (glimpseVersion != null)
+    pluginJson["Version"] = glimpseVersion;
 
 // i can't see this ever being false but the script allows for it so gotta handle it...
 if (filesToPackage.Count > 0)
