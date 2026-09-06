@@ -27,12 +27,25 @@ while (ReadArg(args, ref argPos, out string? arg))
     {
         switch (arg)
         {
+            case "--output" or "-o":
+            {
+                if (!ReadArg(args, ref argPos, out string? newOutName))
+                {
+                    PrintError("No output name specified!");
+                    return 1;
+                }
+
+                outName = newOutName;
+
+                break;
+            }
+
             case "--runtime" or "-r":
             {
                 if (!ReadArg(args, ref argPos, out string? newRuntime))
                 {
                     PrintError("No runtime identifier provided!");
-                    return;
+                    return 1;
                 }
 
                 runtime = newRuntime;
@@ -57,7 +70,7 @@ while (ReadArg(args, ref argPos, out string? arg))
             default:
             {
                 PrintError($"Unrecognized argument \"{arg}\".");
-                return;
+                return 1;
             }
         }
     }
@@ -70,7 +83,7 @@ while (ReadArg(args, ref argPos, out string? arg))
 if (version == null)
 {
     PrintError("No version specified!");
-    return;
+    return 1;
 }
 
 // auto determine the current runtime based on the OS and arch
@@ -93,7 +106,7 @@ if (runtime == null)
             break;
         default:
             PrintError($"Unsupported OS architecture \"{RuntimeInformation.OSArchitecture}\"");
-            return;
+            return 1;
     }
 }
 
@@ -101,7 +114,7 @@ if (runtime == null)
 if (runtime is not ("win-x64" or "linux-x64" or "osx-arm64"))
 {
     PrintError($"Runtime \"{runtime}\" is not supported!");
-    return;
+    return 1;
 }
 
 string publishDir = Path.Combine(Environment.CurrentDirectory, outName);
@@ -133,7 +146,7 @@ if (noPDB)
 if (!RunProcess("dotnet", glimpsePublishArgs))
 {
     PrintError("Failed to build glimpse.", false);
-    return;
+    return 1;
 }
 
 // =================================================
@@ -170,7 +183,7 @@ if (plugins)
         if (!RunProcess("dotnet", packageScriptLocation, dir, "--no-pack", "--glimpse-version", version))
         {
             PrintError($"Failed to package plugin \"{pluginName}\".", false);
-            return;
+            return 1;
         }
 
         // move the plugin into the "Plugins" directory
@@ -238,7 +251,7 @@ if (pack)
         if (!RunProcess("makensis", $"-DVERSION={version}", $"-DPUBLISHDIR={publishDir}", Path.Combine(nsiDir, "glimpse.nsi")))
         {
             PrintError("Failed to package NSIS file.", false);
-            return;
+            return 1;
         }
 
         // hack to clear the contents of the publish directory
@@ -287,7 +300,7 @@ if (pack)
         string appImageDir = Path.Combine(packagingDir, "appimage");
         string appImageUsrDir = Path.Combine(appImageDir, "usr");
         string appImageBinaryDir = Path.Combine(appImageUsrDir, "bin");
-        string appImageDest = $"Glimpse-{version}-{runtime}.AppImage";
+        string appImageDest = $"{outName}.AppImage";
 
         // reset state
         if (Directory.Exists(appImageUsrDir))
@@ -342,6 +355,8 @@ if (pack)
 }
 
 // =================================================
+
+return 0;
 
 bool ReadArg(string[] args, ref int argPos, [NotNullWhen(true)] out string? arg)
 {
