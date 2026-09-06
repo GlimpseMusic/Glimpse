@@ -1,5 +1,11 @@
 #!/usr/bin/env -S dotnet --
 
+// Glimpse Publish Script
+// Builds and packages Glimpse for distribution.
+// Primarily designed to Just Work™ for CI, however does have some dependencies depending on platform.
+// Windows requires `makensis`, Linux requires `appimagetool`.
+// These are only required for packaging, and not required if `--no-pack` is specified.
+
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
@@ -67,6 +73,7 @@ if (version == null)
     return;
 }
 
+// auto determine the current runtime based on the OS and arch
 if (runtime == null)
 {
     if (OperatingSystem.IsWindows())
@@ -90,6 +97,7 @@ if (runtime == null)
     }
 }
 
+// until glimpse supports arm win/linux and intel osx (will it ever support that?) then this check is required
 if (runtime is not ("win-x64" or "linux-x64" or "osx-arm64"))
 {
     PrintError($"Runtime \"{runtime}\" is not supported!");
@@ -121,6 +129,7 @@ if (aot)
 if (noPDB)
     glimpsePublishArgs.Add("-p:DebugType=none");
 
+// build glimpse itself
 if (!RunProcess("dotnet", glimpsePublishArgs))
 {
     PrintError("Failed to build glimpse.", false);
@@ -138,9 +147,10 @@ if (plugins)
 
     Directory.CreateDirectory(pluginsOutDir);
 
-    // the publish script assumes that the built-in plugins are NOT in subdirectories
+    // assumes that the built-in plugins are NOT in subdirectories
     foreach (string dir in Directory.GetDirectories(pluginsBaseDir))
     {
+        // check if this directory has a plugin json. if it doesn't, it's probably not a plugin
         bool hasPluginJson = false;
         foreach (string file in Directory.GetFiles(dir))
         {
@@ -156,12 +166,14 @@ if (plugins)
 
         string pluginName = Path.GetFileName(dir);
 
+        // run the packing script. i'd love to include this file directly but that's not supported in .net 10
         if (!RunProcess("dotnet", packageScriptLocation, dir, "--no-pack", "--glimpse-version", version))
         {
             PrintError($"Failed to package plugin \"{pluginName}\".", false);
             return;
         }
 
+        // move the plugin into the "Plugins" directory
         Directory.Move(Path.Combine(Environment.CurrentDirectory, pluginName), Path.Combine(pluginsOutDir, pluginName));
     }
 }
@@ -172,8 +184,14 @@ if (plugins)
 string cwd = Environment.CurrentDirectory;
 Environment.CurrentDirectory = publishDir;
 
+// MixrSharp bundles silk's SDL2. we don't need that and it just takes up space, so remove it.
 File.Delete("Silk.NET.SDL.dll");
 
+// depending on the runtime, delete files we don't need.
+// should this be in the project file as a target? probably!
+// do i know how to do that? no!
+// can i be bothered to learn? no!
+// can i just do it here instead? yes!
 if (runtime.StartsWith("win"))
 {
     File.Delete("libmixr.so");
@@ -213,6 +231,7 @@ if (pack)
         Console.WriteLine(zipStream.Length);
 
         // todo use httpclient
+        // download visual studio c++ runtime
         using (WebClient client = new WebClient())
             client.DownloadFile("https://aka.ms/vc14/vc_redist.x64.exe", Path.Combine(publishDir, "vc_redist.x64.exe"));
 
@@ -235,44 +254,51 @@ if (pack)
     {
         string packagingDir = Path.Combine(Environment.CurrentDirectory, "packaging", "linux");
 
+        // ========= Tarball =========
+
         string tarballDir = Path.Combine(packagingDir, "tarball");
-        string binDir = Path.Combine(tarballDir, "bin");
+        string tarballBinDir = Path.Combine(tarballDir, "bin");
 
-        if (Directory.Exists(binDir))
-            Directory.Delete(binDir, true);
+        if (Directory.Exists(tarballBinDir))
+            Directory.Delete(tarballBinDir, true);
 
-        Directory.CreateDirectory(binDir);
-        foreach (string file in Directory.GetFiles(publishDir, "*", SearchOption.AllDirectories))
+        // nondestructively copy all files in the publish directory to the specified directory
+        void CopyPublishFilesToDir(string dirName)
         {
-            string dir = Path.GetRelativePath(publishDir, Path.GetDirectoryName(file));
-            Directory.CreateDirectory(Path.Combine(binDir, dir));
-            File.Copy(file, Path.Combine(binDir, dir, Path.GetFileName(file)));
+            Directory.CreateDirectory(dirName);
+            foreach (string file in Directory.GetFiles(publishDir, "*", SearchOption.AllDirectories))
+            {
+                string dir = Path.GetRelativePath(publishDir, Path.GetDirectoryName(file));
+                Directory.CreateDirectory(Path.Combine(dirName, dir));
+                File.Copy(file, Path.Combine(dirName, dir, Path.GetFileName(file)));
+            }
         }
+
+        CopyPublishFilesToDir(tarballBinDir);
 
         using MemoryStream zipStream = new MemoryStream();
         ZipFile.CreateFromDirectory(tarballDir, zipStream);
         Console.WriteLine(zipStream.Length);
 
+        // ===========================
+
+        // ======== AppImage =========
+
         string appImageDir = Path.Combine(packagingDir, "appimage");
-        string usrDir = Path.Combine(appImageDir, "usr");
-        string binaryDir = Path.Combine(usrDir, "bin");
+        string appImageUsrDir = Path.Combine(appImageDir, "usr");
+        string appImageBinaryDir = Path.Combine(appImageUsrDir, "bin");
         string appImageDest = $"Glimpse-{version}-{runtime}.AppImage";
 
         // reset state
-        if (Directory.Exists(usrDir))
-            Directory.Delete(usrDir, true);
+        if (Directory.Exists(appImageUsrDir))
+            Directory.Delete(appImageUsrDir, true);
         File.Delete(Path.Combine(appImageDir, ".DirIcon"));
 
-        Directory.CreateDirectory(binaryDir);
-
-        foreach (string file in Directory.GetFiles(publishDir, "*", SearchOption.AllDirectories))
-        {
-            string dir = Path.GetRelativePath(publishDir, Path.GetDirectoryName(file));
-            Directory.CreateDirectory(Path.Combine(binaryDir, dir));
-            File.Copy(file, Path.Combine(binaryDir, dir, Path.GetFileName(file)));
-        }
+        CopyPublishFilesToDir(appImageBinaryDir);
 
         RunProcess("appimagetool-x86_64.AppImage", appImageDir, appImageDest);
+
+        // ===========================
 
         // hack to clear the contents of the publish directory
         Directory.Delete(publishDir, true);
@@ -284,9 +310,9 @@ if (pack)
         zipStream.WriteTo(zipWriteStream);
 
         // cleanup garbage
-        Directory.Delete(binDir, true);
+        Directory.Delete(tarballBinDir, true);
 
-        Directory.Delete(usrDir, true);
+        Directory.Delete(appImageUsrDir, true);
         File.Delete(Path.Combine(appImageDir, ".DirIcon"));
     }
     else if (runtime.StartsWith("osx"))
@@ -309,11 +335,13 @@ if (pack)
         File.Copy(Path.Combine(macosDir, "Glimpse.icns"), Path.Combine(glimpseAppName, "Contents", "Resources", "Glimpse.icns"));
         Directory.Move(publishDir, Path.Combine(glimpseAppName, "Contents", "MacOS"));
 
+        // since we've moved the publish directory, we need to create it again
         Directory.CreateDirectory(publishDir);
         Directory.Move(glimpseAppName, Path.Combine(publishDir, glimpseAppName));
     }
 }
 
+// =================================================
 
 bool ReadArg(string[] args, ref int argPos, [NotNullWhen(true)] out string? arg)
 {
