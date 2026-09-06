@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
           
       - name: "Install deps"
-        run: apt install nsis
+        run: sudo apt install -y nsis
 
       - name: "Download appimagetool"
         run: |
