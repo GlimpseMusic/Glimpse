@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Glimpse.API;
 using Glimpse.Configs;
 using Glimpse.Library;
@@ -29,8 +30,8 @@ public class ConfigManager : IConfigManager
         }
 
         string json = File.ReadAllText(fullPath);
-        
-        config = JsonSerializer.Deserialize<T>(json, GetDefaultSerializerOptions());
+
+        config = JsonSerializer.Deserialize<T>(json, GetDefaultSerializerOptions(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly()));
         
         _logger.Log("    ... loaded.");
 
@@ -41,10 +42,10 @@ public class ConfigManager : IConfigManager
     {
         string fullPath = Path.Combine(IConfigManager.BaseDir, $"{name}.json");
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-        File.WriteAllText(fullPath, JsonSerializer.Serialize(config, GetDefaultSerializerOptions()));
+        File.WriteAllText(fullPath, JsonSerializer.Serialize(config, GetDefaultSerializerOptions(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly())));
     }
 
-    public static JsonSerializerOptions GetDefaultSerializerOptions()
+    public static JsonSerializerOptions GetDefaultSerializerOptions(bool useReflection = false)
     {
         JsonSerializerOptions options = new JsonSerializerOptions()
         {
@@ -52,9 +53,16 @@ public class ConfigManager : IConfigManager
             WriteIndented = true,
             ReadCommentHandling = JsonCommentHandling.Skip
         };
-        
-        if (!JsonSerializer.IsReflectionEnabledByDefault)
+
+#if PUBLISH_AOT
+        options.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+#else
+        if (useReflection || JsonSerializer.IsReflectionEnabledByDefault)
+            options.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+        else
             options.TypeInfoResolver = ConfigSerializerContext.Default;
+#endif
+
 
         return options;
     }

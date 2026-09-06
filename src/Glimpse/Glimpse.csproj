@@ -11,12 +11,17 @@
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <VersionPrefix>$([System.DateTime]::Now.ToString("yyyy.MM.dd"))</VersionPrefix>
         <SelfContained>true</SelfContained>
+        <PublishTrimmed>true</PublishTrimmed>
     </PropertyGroup>
     
     <PropertyGroup Condition="$(PublishAot) == true">
         <PublishTrimmed>true</PublishTrimmed>
         <DefineConstants>$(DefineConstants);PUBLISH_AOT</DefineConstants>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <TrimmerRootDescriptor Include="TrimmerRootDescriptor.xml" />
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Hexa.NET.ImGui" Version="2.2.9" />
