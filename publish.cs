@@ -350,7 +350,10 @@ if (pack)
 
         // since we've moved the publish directory, we need to create it again
         Directory.CreateDirectory(publishDir);
-        Directory.Move(glimpseAppName, Path.Combine(publishDir, glimpseAppName));
+
+        ZipFile.CreateFromDirectory(glimpseAppName, Path.Combine(publishDir, $"{outName}.zip"),
+            CompressionLevel.Optimal, true);
+        Directory.Delete(glimpseAppName, true);
     }
 }
 
