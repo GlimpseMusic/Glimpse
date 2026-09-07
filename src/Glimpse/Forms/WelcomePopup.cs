@@ -152,9 +152,6 @@ public class WelcomePopup : Popup
                 ImportOldLibrary));
         }
         
-        if (_manageLibraryWidget.LibraryPaths.Count == 0)
-            _disableNext = "Add a folder to your library first!";
-        
         ImGui.TextUnformatted("Let's start by importing your music.");
         _manageLibraryWidget.Update(Glimpse.Locale);
     }
