@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Glimpse.API;
 using Glimpse.API.UI;
@@ -29,7 +30,7 @@ public class SettingsPopup : Popup
 
     public override void Open()
     {
-        _gui = new ImmediateGUI();
+        _gui = new ImmediateGUI(Glimpse);
 
         _currentConfig = Glimpse.Config;
         _currentConfig.Plugins.EnabledPlugins = new HashSet<string>(Glimpse.Config.Plugins.EnabledPlugins);
@@ -343,12 +344,19 @@ public class SettingsPopup : Popup
         _glimpseLogo?.Dispose();
     }
 
-    private class ImmediateGUI : IImmediateGUI
+    private unsafe class ImmediateGUI : IImmediateGUI
     {
+        private Glimpse _glimpse;
+        private SDL.DialogFileCallback _callback;
+        private Dictionary<int, FileDialogInstance> _fileDialogInstances;
+
         public float Scale;
 
-        public ImmediateGUI()
+        public ImmediateGUI(Glimpse glimpse)
         {
+            _glimpse = glimpse;
+            _callback = FileCallback;
+            _fileDialogInstances = [];
             Scale = 1;
         }
 
@@ -486,6 +494,102 @@ public class SettingsPopup : Popup
             if (tooltip != null)
                 ImGui.SetItemTooltipUnformatted(tooltip);
             return wasAdjusted;
+        }
+
+        public void ShowFileDialog(FileDialogType type, string? title, ReadOnlySpan<FileFilter> filters,
+            Action<string[]?, int> callback, bool allowMany = false, [CallerLineNumber] int id = 0,
+            [CallerMemberName] string caller = "")
+        {
+            int currentID = HashCode.Combine(caller, id);
+            // don't reshow the dialog if it is already open.
+            if (_fileDialogInstances.ContainsKey(currentID))
+                return;
+
+            uint props = SDL.CreateProperties();
+            SDL.SetPointerProperty(props, SDL.Prop.FileDialogWindowPointer, _glimpse.MainWindow.Handle.Handle);
+            SDL.SetNumberProperty(props, SDL.Prop.FileDialogNfiltersNumber, filters.Length);
+            SDL.SetBooleanProperty(props, SDL.Prop.FileDialogManyBoolean, allowMany);
+            if (title != null)
+                SDL.SetStringProperty(props, SDL.Prop.FileDialogTitleString, title);
+
+            SDL.DialogFileFilter* dialogFilters =
+                (SDL.DialogFileFilter*) NativeMemory.Alloc((nuint) (filters.Length * sizeof(SDL.DialogFileFilter)));
+            for (int i = 0; i < filters.Length; i++)
+            {
+                ref readonly FileFilter filter = ref filters[i];
+                dialogFilters[i].Name = (sbyte*) Marshal.StringToHGlobalAnsi(filter.Name);
+                dialogFilters[i].Pattern = (sbyte*) Marshal.StringToHGlobalAnsi(filter.Pattern);
+            }
+
+            SDL.SetPointerProperty(props, SDL.Prop.FileDialogFiltersPointer, (nint) dialogFilters);
+
+            SDL.FileDialogType dialogType = type switch
+            {
+                FileDialogType.SaveFile => SDL.FileDialogType.Savefile,
+                FileDialogType.OpenFile => SDL.FileDialogType.Openfile,
+                FileDialogType.OpenFolder => SDL.FileDialogType.Openfolder,
+                _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+            };
+
+            _fileDialogInstances.Add(currentID, new FileDialogInstance(filters.Length, dialogFilters, callback));
+            SDL.ShowFileDialogWithProperties(dialogType, _callback, currentID, props);
+
+            SDL.DestroyProperties(props);
+        }
+
+        private void FileCallback(IntPtr userdata, sbyte** filelist, int filter)
+        {
+            _fileDialogInstances.Remove((int) userdata, out FileDialogInstance instance);
+
+            try
+            {
+                if (filelist == null)
+                {
+                    _glimpse.Logger.Log($"An error occurred in the file dialog (instance {(int) userdata}): {SDL.GetError()}");
+                    return;
+                }
+
+                if (filelist[0] == null)
+                {
+                    instance.Callback(null, filter);
+                    return;
+                }
+
+                int index = 0;
+                List<string> files = [];
+                while (filelist[index] != null)
+                {
+                    string file = new string(filelist[index]);
+                    files.Add(file);
+                    index++;
+                }
+
+                instance.Callback(files.ToArray(), filter);
+            }
+            finally
+            {
+                for (int i = 0; i < instance.NumFilters; i++)
+                {
+                    Marshal.FreeHGlobal((nint) instance.Filters[i].Name);
+                    Marshal.FreeHGlobal((nint) instance.Filters[i].Pattern);
+                }
+
+                NativeMemory.Free(instance.Filters);
+            }
+        }
+
+        private struct FileDialogInstance
+        {
+            public int NumFilters;
+            public SDL.DialogFileFilter* Filters;
+            public Action<string[]?, int> Callback;
+
+            public FileDialogInstance(int numFilters, SDL.DialogFileFilter* filters, Action<string[]?, int> callback)
+            {
+                NumFilters = numFilters;
+                Filters = filters;
+                Callback = callback;
+            }
         }
     }
 }
