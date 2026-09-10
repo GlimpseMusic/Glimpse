@@ -520,9 +520,9 @@ public class GlimpsePlayer : Window
 
                         //if (!_miniplayer)
                         {
-                            int volume = (int) (Glimpse.Player.Volume * 100);
+                            float volume = Glimpse.Player.Volume;
+                            string format;
 
-                            string format = "%d";
                             ImGuiSliderFlags sliderFlags = ImGuiSliderFlags.None;
                             if (_miniplayer)
                             {
@@ -539,13 +539,13 @@ public class GlimpsePlayer : Window
                                 ImGui.SameLine(0, 2);
                                 contentRegion = ImGui.GetContentRegionAvail();
                                 ImGui.SetNextItemWidth(contentRegion.X);
+                                format = ((int) (volume * 100)).ToString();
                             }
-                            
-                            if (ImGui.SliderInt("##Volume", ref volume, 0, 100, format, sliderFlags))
+
+                            if (ImGui.SliderFloat("##Volume", ref volume, 0, 1, format, sliderFlags))
                             {
-                                float fVol = (float) volume / 100;
-                                Glimpse.Player.Volume = fVol;
-                                Glimpse.Config.Audio.Volume = fVol;
+                                Glimpse.Player.Volume = volume;
+                                Glimpse.Config.Audio.Volume = volume;
                             }
 
                             if (_miniplayer)
@@ -1047,31 +1047,34 @@ public class GlimpsePlayer : Window
                                         if (ImGui.MenuItem(locale.GetString("Player.Playlists.New")))
                                             AddPopup(new NewPlaylistPopup(name => CreatePlaylist(name, path)));
 
-                                        ImGui.Separator();
-
                                         if (_playlists is not Dictionary<string, Playlist> playlists)
                                         {
                                             playlists = Glimpse.Library.GetPlaylists().ToDictionary(playlist => playlist.Name);
                                             _playlists = playlists;
                                         }
 
-                                        foreach ((string name, Playlist playlist) in playlists)
+                                        if (playlists.Count > 0)
                                         {
-                                            bool isInPlaylist = playlist.Tracks.Contains(path);
+                                            ImGui.Separator();
 
-                                            if (ImGui.MenuItem($"{(isInPlaylist ? "\ue5ca " : "   ")}{name}"))
+                                            foreach ((string name, Playlist playlist) in playlists)
                                             {
-                                                if (isInPlaylist)
-                                                    playlist.Tracks.Remove(path);
-                                                else
-                                                    playlist.Tracks.Add(path);
+                                                bool isInPlaylist = playlist.Tracks.Contains(path);
 
-                                                Glimpse.Library.UpdatePlaylist(playlist);
+                                                if (ImGui.MenuItem($"{(isInPlaylist ? "\ue5ca " : "   ")}{name}"))
+                                                {
+                                                    if (isInPlaylist)
+                                                        playlist.Tracks.Remove(path);
+                                                    else
+                                                        playlist.Tracks.Add(path);
 
-                                                // refresh and show the change if the current view is the playlist the
-                                                // song was added to/removed from
-                                                if (_currentView == AlbumView.Playlists && _currentAlbum == name)
-                                                    ChangeAlbum(name);
+                                                    Glimpse.Library.UpdatePlaylist(playlist);
+
+                                                    // refresh and show the change if the current view is the playlist the
+                                                    // song was added to/removed from
+                                                    if (_currentView == AlbumView.Playlists && _currentAlbum == name)
+                                                        ChangeAlbum(name);
+                                                }
                                             }
                                         }
 

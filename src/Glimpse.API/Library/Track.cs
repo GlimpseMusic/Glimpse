@@ -16,6 +16,8 @@ public record Track
 
     public string? Genre;
 
+    public string? AlbumArtist;
+
     public byte Rating;
 
     public uint PlayCount;
@@ -33,6 +35,7 @@ public record Track
         Album = info.Album;
         Length = info.Length;
         Genre = info.Genre;
+        AlbumArtist = info.AlbumArtist;
         Rating = oldTrack?.Rating ?? 0;
         PlayCount = oldTrack?.PlayCount ?? 0;
         LastPlayed = oldTrack?.LastPlayed ?? null;

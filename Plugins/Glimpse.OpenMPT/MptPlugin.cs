@@ -10,37 +10,41 @@ public class MptPlugin : IPlugin
     private bool _initialized;
 
     private MptCodec _codec;
-    
-    public MptConfig Config;
 
     public bool IsInitialized => _initialized;
     
     public string Name => "OpenMPT Integration";
 
+    public IConfig? Config
+    {
+        get => _codec.Config;
+        set => _codec.Config = (MptConfig) value!;
+    }
+
     public void Initialize(IGlimpse glimpse)
     {
         _player = glimpse.Player;
         
-        if (!glimpse.ConfigManager.TryGetConfig("MPT", out Config))
+        if (!glimpse.ConfigManager.TryGetConfig("MPT", out MptConfig config))
         {
-            Config = new MptConfig();
-            glimpse.ConfigManager.WriteConfig("MPT", Config);
+            config = new MptConfig();
+            glimpse.ConfigManager.WriteConfig("MPT", config);
         }
 
-        _codec = new MptCodec(Config);
+        _codec = new MptCodec(config);
         _player.RegisterCodec(_codec);
 
         _initialized = true;
     }
 
-    public void DisplayGui(IImmediateGUI ui)
+    public void OnGUI(IImmediateGUI ui)
     {
-        ui.Checkbox("Emulate Amiga Resampler", ref Config.EmulateAmigaResampler);
-        ui.Checkbox("Fade Out at End", ref Config.FadeOutAtEnd);
+        ui.Checkbox("Emulate Amiga Resampler", ref _codec.Config.EmulateAmigaResampler);
+        ui.Checkbox("Fade Out at End", ref _codec.Config.FadeOutAtEnd);
 
-        int resamplerFilter = (int) Config.ResamplerFilter;
+        int resamplerFilter = (int) _codec.Config.ResamplerFilter;
         if (ui.Dropdown("Resampler Mode", ref resamplerFilter, "Default", "None", "Linear", "Cubic", "Sinc"))
-            Config.ResamplerFilter = (Filter) resamplerFilter;
+            _codec.Config.ResamplerFilter = (Filter) resamplerFilter;
     }
 
     public void Dispose()

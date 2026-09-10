@@ -8,6 +8,7 @@ namespace Glimpse;
 
 public static class Program
 {
+    [STAThread]
     public static unsafe void Main(string[] args)
     {
 #if !DEBUG

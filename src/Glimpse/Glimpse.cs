@@ -193,60 +193,8 @@ public class Glimpse : IGlimpse, IDisposable
         if (Directory.Exists(pluginsLocation))
         {
             Logger.Log($"Searching for plugins in {pluginsLocation}");
-            foreach (string file in Directory.GetFiles(pluginsLocation, "*.dll", SearchOption.AllDirectories))
-            {
-                try
-                {
-                    Logger.Log($"Loading assembly from {file}");
-                    _pluginsContext.LoadFromAssemblyPath(file);
-                }
-                catch (BadImageFormatException e)
-                {
-                    Logger.Log($"Failed to load DLL: {e}");
-                    // If this is thrown then it's likely a native DLL.
-                }
-            }
-
-            AssemblyName currentName = Assembly.GetAssembly(typeof(IPlugin))?.GetName();
-            
-            foreach (Assembly assembly in _pluginsContext.Assemblies)
-            {
-                foreach (AssemblyName name in assembly.GetReferencedAssemblies())
-                {
-                    if (name.Name == currentName.Name)
-                    {
-                        if (name.Version != currentName.Version)
-                            Logger.Log($"WARNING: Plugin {name.Name} requires different version of Glimpse (current version: {currentName.Version}, requires: {name.Version}). It may cause errors.");
-                        
-                        goto ASSEMBLY_GOOD;
-                    }
-                }
-                
-                continue;
-                
-                ASSEMBLY_GOOD: ;
-                
-                Logger.Log($"Plugin {assembly} loaded.");
-                
-                foreach (Type type in assembly.GetTypes().Where(type => type.IsAssignableTo(typeof(IPlugin))))
-                {
-                    Logger.Log($"Initializing plugin {type}");
-                    
-                    IPlugin? plugin = (IPlugin?) Activator.CreateInstance(type);
-                    if (plugin == null)
-                        continue;
-
-                    string assemblyName = assembly.GetName().Name;
-
-                    if (Config.Plugins.EnabledPlugins.Contains(assemblyName))
-                    {
-                        Logger.Log("    ... Initialize()");
-                        plugin.Initialize(this);
-                    }
-
-                    Plugins.Add(assemblyName, plugin);
-                }
-            }
+            foreach (string file in Directory.GetFiles(pluginsLocation, "*.json", SearchOption.AllDirectories))
+                LoadPlugin(file);
         }
 #endif
 

@@ -199,7 +199,7 @@ public class SettingsPopup : Popup
                                         {
                                             ImGui.Separator();
                                             if (Glimpse.Plugins[_currentPlugin].IsInitialized)
-                                                Glimpse.Plugins[_currentPlugin].DisplayGui(_gui);
+                                                Glimpse.Plugins[_currentPlugin].OnGUI(_gui);
                                         }
                                     }
 
