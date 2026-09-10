@@ -17,7 +17,7 @@ public class WelcomePopup : Popup
     
     private bool _hasOldLibrary;
     
-    private string? _disableNext;
+    private bool _disableNext;
     private readonly SDL.DialogFileCallback _folderDialog;
     
     private Image _glimpse;
@@ -36,7 +36,7 @@ public class WelcomePopup : Popup
 
     protected override unsafe void Update(float dt)
     {
-        _disableNext = null;
+        _disableNext = false;
 
         Vector2 windowSize = ImGui.GetIO().DisplaySize;
         Vector2 welcomeSize = ScaleVec(800, 500);
@@ -80,13 +80,29 @@ public class WelcomePopup : Popup
             ImGui.SameLine();
 
             bool disableNext = _disableNext != null;
-            ImGui.BeginDisabled(disableNext);
             if (ImGui.Button("Next", buttonSize))
             {
                 // TODO: This is very manual. Perhaps add a "next button" action or something?
-                if (_tabIndex == 1 && !Glimpse.Library.IsIndexing) // Prevent indexing while indexing already.
-                    Glimpse.Library.Index();
-                _tabIndex++;
+                if (_tabIndex == 1)
+                {
+                    // we don't reeeallly want people accidentally skipping past the import screen
+                    // however for those who do, this allows them to skip, while giving those who blindly click
+                    // a change to go back and add stuff.
+                    if (Glimpse.Library.LibraryPaths.Count == 0)
+                    {
+                        AddPopup(new MessageBoxPopup(MessageBoxPopup.Buttons.YesNo, "Skip Import?",
+                            "Are you sure you want to skip importing?\nYou haven't added anything to your library.", () => _tabIndex++));
+                    }
+                    else
+                    {
+                        if (!Glimpse.Library.IsIndexing) // Prevent indexing while indexing already.
+                            Glimpse.Library.Index();
+
+                        _tabIndex++;
+                    }
+                }
+                else
+                    _tabIndex++;
 
                 if (_tabIndex >= 3)
                 {
@@ -95,10 +111,6 @@ public class WelcomePopup : Popup
                     Close();
                 }
             }
-
-            if (disableNext)
-                ImGui.SetItemTooltipUnformatted(_disableNext);
-            ImGui.EndDisabled();
             
             ImGui.End();
         }
@@ -151,9 +163,9 @@ public class WelcomePopup : Popup
                 "An alpha (< 0.1.0) music library was found.\nWould you like to import it?\nThe original library will NOT be deleted!",
                 ImportOldLibrary));
         }
-        
+
         if (_manageLibraryWidget.LibraryPaths.Count == 0)
-            _disableNext = "Add a folder to your library first!";
+            _disableNext = true;
         
         ImGui.TextUnformatted("Let's start by importing your music.");
         _manageLibraryWidget.Update(Glimpse.Locale);
