@@ -35,6 +35,9 @@ public interface IImmediateGUI
     public bool Slider(string label, ref float number, float min, float max, string? tooltip = null,
         [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "");
 
+    public void Table(ReadOnlySpan<TableHeading> headings, Action<ITableContext> callback, int? numRows = null,
+        bool useRelativeWidths = false, [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "");
+
     /// <summary>
     /// Show a file dialog to open/save files and folders.
     /// </summary>

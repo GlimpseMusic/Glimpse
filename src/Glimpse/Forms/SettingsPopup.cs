@@ -344,7 +344,7 @@ public class SettingsPopup : Popup
         _glimpseLogo?.Dispose();
     }
 
-    private unsafe class ImmediateGUI : IImmediateGUI
+    private unsafe class ImmediateGUI : IImmediateGUI, ITableContext
     {
         private Glimpse _glimpse;
         private SDL.DialogFileCallback _callback;
@@ -496,6 +496,33 @@ public class SettingsPopup : Popup
             return wasAdjusted;
         }
 
+        public void Table(ReadOnlySpan<TableHeading> headings, Action<ITableContext> callback, int? numRows = 0,
+            bool useRelativeWidths = false, [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "")
+        {
+            int numColumns = headings.Length;
+
+            ImGui.PushID(HashCode.Combine(caller, id));
+
+            if (ImGui.BeginTable("", numColumns, ImGuiTableFlags.ScrollX | ImGuiTableFlags.ScrollY | ImGuiTableFlags.Resizable))
+            {
+                foreach (TableHeading heading in headings)
+                {
+                    ImGui.TableSetupColumn(heading.Title,
+                        useRelativeWidths ? ImGuiTableColumnFlags.WidthStretch : ImGuiTableColumnFlags.WidthFixed,
+                        heading.Width);
+                }
+
+                ImGui.TableSetupScrollFreeze(0, 1);
+                ImGui.TableHeadersRow();
+
+                callback(this);
+
+                ImGui.EndTable();
+            }
+
+            ImGui.PopID();
+        }
+
         public void ShowFileDialog(FileDialogType type, string? title, ReadOnlySpan<FileFilter> filters,
             Action<string[]?, int> callback, bool allowMany = false, [CallerLineNumber] int id = 0,
             [CallerMemberName] string caller = "")
@@ -590,6 +617,16 @@ public class SettingsPopup : Popup
                 Filters = filters;
                 Callback = callback;
             }
+        }
+
+        void ITableContext.NewColumn()
+        {
+            ImGui.TableNextColumn();
+        }
+
+        void ITableContext.NewRow()
+        {
+            ImGui.TableNextRow();
         }
     }
 }

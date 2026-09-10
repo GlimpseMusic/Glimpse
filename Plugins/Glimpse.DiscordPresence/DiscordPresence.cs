@@ -35,24 +35,17 @@ public partial class DiscordPresence : IPlugin
 
     public void OnGUI(IImmediateGUI ui)
     {
-        if (ImGui.BeginTable("ArtTable", 2, ImGuiTableFlags.ScrollY))
+        ui.Table(["Album", "AlbumArt"], ctx =>
         {
-            ImGui.TableSetupColumn("Album", ImGuiTableColumnFlags.WidthStretch, 0.2f);
-            ImGui.TableSetupColumn("Album Art", ImGuiTableColumnFlags.WidthStretch, 0.8f);
-            ImGui.TableSetupScrollFreeze(0, 1);
-            ImGui.TableHeadersRow();
-
             foreach ((string album, string albumArt) in _config.AlbumArt)
             {
-                ImGui.TableNextRow();
-                ImGui.TableNextColumn();
-                ImGui.TextUnformatted(album);
-                ImGui.TableNextColumn();
-                ImGui.TextUnformatted(albumArt);
+                ctx.NewRow();
+                ctx.NewColumn();
+                ui.Text(album);
+                ctx.NewColumn();
+                ui.Text(albumArt);
             }
-            
-            ImGui.EndTable();
-        }
+        });
     }
 
     public void Initialize(IGlimpse glimpse)
