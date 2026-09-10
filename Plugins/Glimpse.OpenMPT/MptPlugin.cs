@@ -39,11 +39,11 @@ public class MptPlugin : IPlugin
 
     public void OnGUI(IImmediateGUI ui)
     {
-        ui.Checkbox("Emulate Amiga Resampler", ref _codec.Config.EmulateAmigaResampler);
-        ui.Checkbox("Fade Out at End", ref _codec.Config.FadeOutAtEnd);
+        ui.Checkbox("Emulate Amiga Resampler", ref _codec.Config.EmulateAmigaResampler, tooltip: "If enabled, the amiga resampler will be used for .mod files.\nOtherwise, the current Resampler Mode will be used.");
+        //ui.Checkbox("Fade Out at End", ref _codec.Config.FadeOutAtEnd); todo this doesn't actually work
 
         int resamplerFilter = (int) _codec.Config.ResamplerFilter;
-        if (ui.Dropdown("Resampler Mode", ref resamplerFilter, "Default", "None", "Linear", "Cubic", "Sinc"))
+        if (ui.Dropdown("Resampler Mode", ref resamplerFilter, ["Default", "None", "Linear", "Cubic", "Sinc"], tooltip: "Change the resampling quality."))
             _codec.Config.ResamplerFilter = (Filter) resamplerFilter;
     }
 

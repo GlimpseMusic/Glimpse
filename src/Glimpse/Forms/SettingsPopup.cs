@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Glimpse.API;
 using Glimpse.API.UI;
@@ -366,31 +367,58 @@ public class SettingsPopup : Popup
             ImGui.TextUnformatted(text);
         }
 
-        public void Text(string text, uint size)
+        public void Text(string text, uint fontSize)
         {
-            ImGui.PushFont(ImFontPtr.Null, size * Scale);
+            ImGui.PushFont(ImFontPtr.Null, fontSize * Scale);
             ImGui.TextUnformatted(text);
             ImGui.PopFont();
         }
 
-        public bool Button(string text)
+        public bool Button(string text, string? tooltip = null, [CallerLineNumber] int id = 0,
+            [CallerMemberName] string caller = "")
         {
-            return ImGui.Button(text);
+            ImGui.PushID(HashCode.Combine(caller, id));
+            bool pressed = ImGui.Button(text);
+            ImGui.PopID();
+
+            if (tooltip != null)
+                ImGui.SetItemTooltipUnformatted(tooltip);
+
+            return pressed;
         }
 
-        public bool Button(string text, Size size)
+        public bool Button(string text, Size size, string? tooltip = null, [CallerLineNumber] int id = 0,
+            [CallerMemberName] string caller = "")
         {
-            return ImGui.Button(text, new Vector2(size.Width * Scale, size.Height * Scale));
+            ImGui.PushID(HashCode.Combine(caller, id));
+            bool pressed = ImGui.Button(text, new Vector2(size.Width * Scale, size.Height * Scale));
+            ImGui.PopID();
+
+            if (tooltip != null)
+                ImGui.SetItemTooltipUnformatted(tooltip);
+
+            return pressed;
         }
 
-        public bool Checkbox(string text, ref bool ticked)
+        public bool Checkbox(string text, ref bool ticked, string? tooltip = null, [CallerLineNumber] int id = 0,
+            [CallerMemberName] string caller = "")
         {
-            return ImGui.Checkbox(text, ref ticked);
+            ImGui.PushID(HashCode.Combine(caller, id));
+            bool pressed = ImGui.Checkbox(text, ref ticked);
+            ImGui.PopID();
+
+            if (tooltip != null)
+                ImGui.SetItemTooltipUnformatted(tooltip);
+
+            return pressed;
         }
 
-        public bool Dropdown(string label, ref int value, params ReadOnlySpan<string> items)
+        public bool Dropdown(string label, ref int value, ReadOnlySpan<string> items, string? tooltip = null,
+            [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "")
         {
             bool hasItemBeenSelected = false;
+
+            ImGui.PushID(HashCode.Combine(caller, id));
 
             if (ImGui.BeginCombo(label, items[value]))
             {
@@ -406,7 +434,58 @@ public class SettingsPopup : Popup
                 ImGui.EndCombo();
             }
 
+            ImGui.PopID();
+
+            if (tooltip != null)
+                ImGui.SetItemTooltipUnformatted(tooltip);
+
             return hasItemBeenSelected;
+        }
+
+        public bool Input(string? hint, ref string text, string? label = null, string? tooltip = null,
+            bool returnTrueOnlyOnEnter = true, [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "")
+        {
+            ImGui.PushID(HashCode.Combine(caller, id));
+
+            bool wasEdited;
+            nuint bufferSize = (nuint) (text.Length > 800 ? 5000 : 1000);
+            ImGuiInputTextFlags flags = returnTrueOnlyOnEnter ? ImGuiInputTextFlags.EnterReturnsTrue : 0;
+
+            if (hint == null)
+                wasEdited = ImGui.InputText(label ?? "", ref text, bufferSize, flags);
+            else
+                wasEdited = ImGui.InputTextWithHint(label ?? "", hint, ref text, bufferSize, flags);
+
+            ImGui.PopID();
+
+            if (tooltip != null)
+                ImGui.SetItemTooltipUnformatted(tooltip);
+
+            return wasEdited;
+        }
+
+        public bool Slider(string label, ref int number, int min, int max, string? tooltip = null,
+            [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "")
+        {
+            ImGui.PushID(HashCode.Combine(caller, id));
+            bool wasAdjusted = ImGui.SliderInt(label, ref number, min, max);
+            ImGui.PopID();
+
+            if (tooltip != null)
+                ImGui.SetItemTooltipUnformatted(tooltip);
+            return wasAdjusted;
+        }
+
+        public bool Slider(string label, ref float number, float min, float max, string? tooltip = null,
+            [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "")
+        {
+            ImGui.PushID(HashCode.Combine(caller, id));
+            bool wasAdjusted = ImGui.SliderFloat(label, ref number, min, max);
+            ImGui.PopID();
+
+            if (tooltip != null)
+                ImGui.SetItemTooltipUnformatted(tooltip);
+            return wasAdjusted;
         }
     }
 }
