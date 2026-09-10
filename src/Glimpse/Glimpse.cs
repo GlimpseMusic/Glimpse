@@ -56,7 +56,7 @@ public class Glimpse : IGlimpse, IDisposable
 
     public MusicLibrary Library;
     
-    public Dictionary<string, IPlugin>? Plugins;
+    public Dictionary<string, Plugin> Plugins;
 
     public Window MainWindow => _windows[0];
 
@@ -516,10 +516,10 @@ public class Glimpse : IGlimpse, IDisposable
         if (Plugins != null)
         {
             Logger.Log("Disposing all plugins.");
-            foreach ((string name, IPlugin plugin) in Plugins)
+            foreach ((string name, Plugin plugin) in Plugins)
             {
                 Logger.Log($"Disposing plugin {name}");
-                plugin.Dispose();
+                plugin.Instance.Dispose();
             }
         }
         
@@ -710,6 +710,8 @@ public class Glimpse : IGlimpse, IDisposable
 
         string id = pluginJson["ID"].ToString();
         string name = pluginJson["Name"].ToString();
+        string author = pluginJson["Author"].ToString();
+        string? description = pluginJson["Description"]?.ToString();
         string entryPoint = pluginJson["EntryPoint"].ToString();
         JsonArray? dependencies = pluginJson["Dependencies"]?.AsArray();
         
@@ -730,7 +732,7 @@ public class Glimpse : IGlimpse, IDisposable
         
         Type pluginType = assembly.GetTypes().First(type => type.IsAssignableTo(typeof(IPlugin)));
         IPlugin plugin = (IPlugin) Activator.CreateInstance(pluginType)!; // can ignore the nullable as plugins should not be nullable
-        Plugins!.Add(id, plugin);
+        Plugins.Add(id, new Plugin(id, name, author, description, plugin));
         
         if (Config.Plugins.EnabledPlugins.Contains(id))
             plugin.Initialize(this);

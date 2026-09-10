@@ -24,8 +24,6 @@ public partial class DiscordPresence : IPlugin
     public DiscordRpcClient Client;
 
     public bool IsInitialized => _initialized;
-    
-    public string Name => "Discord RPC";
 
     public IConfig Config
     {

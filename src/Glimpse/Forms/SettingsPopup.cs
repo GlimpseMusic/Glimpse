@@ -163,50 +163,83 @@ public class SettingsPopup : Popup
 #if !PUBLISH_AOT
                     if (ImGui.BeginTabItem(currentLocale.GetString("Popup.Settings.Tab.Plugins")))
                     {
-                        if (Glimpse.Plugins == null || Glimpse.Plugins.Count == 0)
+                        if (Glimpse.Plugins.Count == 0)
                         {
                             ImGui.TextUnformatted(currentLocale.GetString("Popup.Settings.Tab.Plugins.NoneAvailable"));
                         }
                         else
                         {
-                            foreach ((string name, IPlugin plugin) in Glimpse.Plugins)
+                            // hack to stop the table from being VERY SLIGHTLY oversized and adding scroll bars
+                            // why does it do this? i have no idea! and i can't be bothered to work out why
+                            ImGui.BeginChild("Plugins", ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoScrollbar);
                             {
-                                ImGui.BeginChild("PluginsList", new Vector2(150, 0));
+                                // table hack to add an adjustable separator without using the dock builder
+                                ImGui.BeginTable("PluginsTable", 2, ImGuiTableFlags.Resizable);
                                 {
-                                    if (ImGui.Selectable(plugin.Name, name == _currentPlugin))
-                                        _currentPlugin = name;
+                                    ImGui.TableSetupColumn("Plugins", ImGuiTableColumnFlags.WidthStretch, 0.3f);
+                                    ImGui.TableSetupColumn("PluginSettings", ImGuiTableColumnFlags.WidthStretch, 0.7f);
 
-                                    ImGui.EndChild();
-                                }
+                                    ImGui.TableNextRow();
+                                    ImGui.TableNextColumn();
 
-                                ImGui.SameLine();
-
-                                ImGui.BeginChild("PluginSettings");
-                                {
-                                    if (name == _currentPlugin)
+                                    foreach ((string id, Plugin plugin) in Glimpse.Plugins)
                                     {
-                                        bool enabled = _currentConfig.Plugins.EnabledPlugins.Contains(_currentPlugin);
-                                        if (ImGui.Checkbox(currentLocale.GetString("Checkbox.Enabled"), ref enabled))
+                                        ImGui.BeginChild("PluginsList");
                                         {
-                                            if (enabled)
-                                                _currentConfig.Plugins.EnabledPlugins.Add(_currentPlugin);
-                                            else
-                                                _currentConfig.Plugins.EnabledPlugins.Remove(_currentPlugin);
+                                            bool enabled = _currentConfig.Plugins.EnabledPlugins.Contains(id);
+
+                                            if (ImGui.Selectable($"{(enabled ? "\uE5CA" : "")}{plugin.Name}", id == _currentPlugin))
+                                                _currentPlugin = id;
+
+                                            ImGui.EndChild();
                                         }
-                                        
-                                        // TODO: Hack - ideally would display the GUI for all plugins even if disabled
-                                        //       Need some sort of API to ensure the plugins always know the config is
-                                        //       valid before displaying the GUI?
-                                        if (enabled)
+
+                                        ImGui.SameLine();
+
+                                        ImGui.TableNextColumn();
+
+                                        ImGui.BeginChild("PluginSettings");
                                         {
-                                            ImGui.Separator();
-                                            if (Glimpse.Plugins[_currentPlugin].IsInitialized)
-                                                Glimpse.Plugins[_currentPlugin].OnGUI(_gui);
+                                            if (id == _currentPlugin)
+                                            {
+                                                bool enabled =
+                                                    _currentConfig.Plugins.EnabledPlugins.Contains(_currentPlugin);
+                                                if (ImGui.Checkbox(currentLocale.GetString("Checkbox.Enabled"),
+                                                        ref enabled))
+                                                {
+                                                    if (enabled)
+                                                        _currentConfig.Plugins.EnabledPlugins.Add(_currentPlugin);
+                                                    else
+                                                        _currentConfig.Plugins.EnabledPlugins.Remove(_currentPlugin);
+                                                }
+
+                                                ImGui.PushFont(ImFontPtr.Null, 32 * Scale);
+                                                ImGui.TextUnformatted(plugin.Name);
+                                                ImGui.PopFont();
+                                                ImGui.TextUnformatted($"By {plugin.Author}");
+
+                                                if (plugin.Description != null)
+                                                    ImGui.TextWrapped(plugin.Description);
+
+                                                // TODO: Hack - ideally would display the GUI for all plugins even if disabled
+                                                //       Need some sort of API to ensure the plugins always know the config is
+                                                //       valid before displaying the GUI?
+                                                if (enabled)
+                                                {
+                                                    ImGui.SeparatorText("Settings");
+                                                    if (Glimpse.Plugins[_currentPlugin].Instance.IsInitialized)
+                                                        Glimpse.Plugins[_currentPlugin].Instance.OnGUI(_gui);
+                                                }
+                                            }
+
+                                            ImGui.EndChild();
                                         }
                                     }
 
-                                    ImGui.EndChild();
+                                    ImGui.EndTable();
                                 }
+
+                                ImGui.EndChild();
                             }
                         }
 
@@ -322,19 +355,19 @@ public class SettingsPopup : Popup
         if (Glimpse.Plugins == null)
             return;
         
-        foreach ((string name, IPlugin plugin) in Glimpse.Plugins)
+        foreach ((string id, Plugin plugin) in Glimpse.Plugins)
         {
             // Plugin has been disabled
-            if (oldConfig.Plugins.EnabledPlugins.Contains(name) && !_currentConfig.Plugins.EnabledPlugins.Contains(name))
+            if (oldConfig.Plugins.EnabledPlugins.Contains(id) && !_currentConfig.Plugins.EnabledPlugins.Contains(id))
             {
-                logger.Log($"Disabling plugin {name}");
-                plugin.Dispose();
+                logger.Log($"Disabling plugin {id}");
+                plugin.Instance.Dispose();
             }
             // Plugin has been enabled
-            else if (_currentConfig.Plugins.EnabledPlugins.Contains(name) && !oldConfig.Plugins.EnabledPlugins.Contains(name))
+            else if (_currentConfig.Plugins.EnabledPlugins.Contains(id) && !oldConfig.Plugins.EnabledPlugins.Contains(id))
             {
-                logger.Log($"Enabling plugin {name}");
-                plugin.Initialize(Glimpse);
+                logger.Log($"Enabling plugin {id}");
+                plugin.Instance.Initialize(Glimpse);
             }
         }
     }
