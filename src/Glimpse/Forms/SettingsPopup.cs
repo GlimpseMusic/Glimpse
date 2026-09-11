@@ -87,48 +87,66 @@ public class SettingsPopup : Popup
                     
                     if (ImGui.BeginTabItem(currentLocale.GetString("Popup.Settings.Tab.Appearance")))
                     {
-                        ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Theme"));
-
-                        _themeWidget.Update(ref _currentConfig);
-
-                        if (ImGui.Button(currentLocale.GetString("Popup.Settings.Tab.Appearance.OpenThemeEditor")))
+                        ImGui.BeginChild("AppearanceTab");
                         {
-                            Close();
-                            Glimpse.MainWindow.AddPopup(new ThemeEditor());
+                            ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Theme"));
+
+                            _themeWidget.Update(ref _currentConfig);
+
+                            if (ImGui.Button(currentLocale.GetString("Popup.Settings.Tab.Appearance.OpenThemeEditor")))
+                            {
+                                Close();
+                                Glimpse.MainWindow.AddPopup(new ThemeEditor());
+                            }
+
+                            ImGui.SeparatorText(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation"));
+
+                            _transportDown ??= Renderer.CreateImage("asset://Images.TransportDown.png");
+                            _transportUp ??= Renderer.CreateImage("asset://Images.TransportUp.png");
+
+                            string up = currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Up");
+                            string down =
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Down");
+
+                            if (ImGui.SelectButton("TransportDown", _transportDown,
+                                    ScaleVec(_transportDown.Width * 0.25f, _transportDown.Height * 0.25f),
+                                    !_currentConfig.Appearance.SwapTransportControls))
+                            {
+                                _currentConfig.Appearance.SwapTransportControls = false;
+                            }
+
+                            ImGui.SetItemTooltipUnformatted(down);
+
+                            ImGui.SameLine();
+
+                            if (ImGui.SelectButton("TransportUp", _transportUp,
+                                    ScaleVec(_transportUp.Width * 0.25f, _transportUp.Height * 0.25f),
+                                    _currentConfig.Appearance.SwapTransportControls))
+                            {
+                                _currentConfig.Appearance.SwapTransportControls = true;
+                            }
+
+                            ImGui.SetItemTooltipUnformatted(up);
+
+                            ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Misc"));
+
+                            ImGui.Checkbox(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare"),
+                                ref _currentConfig.Appearance.ConfineAlbumArtToSquare);
+                            ImGui.SetItemTooltipUnformatted(
+                                currentLocale.GetString(
+                                    "Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare.Tooltip"));
+
+                            ImGui.Checkbox(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.SaveWindowStateOnExit"),
+                                ref _currentConfig.Appearance.SaveWindowStateOnExit);
+                            ImGui.SetItemTooltipUnformatted(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.SaveWindowStateOnExit.Tooltip"));
+
+                            ImGui.EndChild();
                         }
 
-                        ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation"));
-
-                        _transportDown ??= Renderer.CreateImage("asset://Images.TransportDown.png");
-                        _transportUp ??= Renderer.CreateImage("asset://Images.TransportUp.png");
-                        
-                        string up = currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Up");
-                        string down = currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Down");
-                        
-                        if (ImGui.SelectButton("TransportDown", _transportDown,
-                            ScaleVec(_transportDown.Width * 0.25f, _transportDown.Height * 0.25f),
-                            !_currentConfig.Appearance.SwapTransportControls))
-                        {
-                            _currentConfig.Appearance.SwapTransportControls = false;
-                        }
-                        ImGui.SetItemTooltipUnformatted(down);
-
-                        ImGui.SameLine();
-                        
-                        if (ImGui.SelectButton("TransportUp", _transportUp,
-                                ScaleVec(_transportUp.Width * 0.25f, _transportUp.Height * 0.25f),
-                                _currentConfig.Appearance.SwapTransportControls))
-                        {
-                            _currentConfig.Appearance.SwapTransportControls = true;
-                        }
-                        ImGui.SetItemTooltipUnformatted(up);
-                        
-                        ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Misc"));
-
-                        ImGui.Checkbox(currentLocale.GetString("Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare"),
-                            ref _currentConfig.Appearance.ConfineAlbumArtToSquare);
-                        ImGui.SetItemTooltipUnformatted(currentLocale.GetString("Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare.Tooltip"));
-                        
                         ImGui.EndTabItem();
                     }
 

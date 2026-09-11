@@ -76,6 +76,8 @@
         "Popup.Settings.Tab.Appearance.Misc": "Misc",
         "Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare": "Confine album art to a square",
         "Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare.Tooltip": "Album art will always be displayed within a square.\nIf unchecked, the transport bar will adjust to the\nalbum art (within reasonable limits).",
+        "Popup.Settings.Tab.Appearance.SaveWindowStateOnExit": "Save window state on exit",
+        "Popup.Settings.Tab.Appearance.SaveWindowStateOnExit.Tooltip": "The window size, position, etc, will be saved when Glimpse is closed.",
         "Popup.Settings.Tab.Player": "Player",
         "Popup.Settings.Tab.Player.PlaybackHeading": "Playback",
         "Popup.Settings.Tab.Player.Volume": "Volume",

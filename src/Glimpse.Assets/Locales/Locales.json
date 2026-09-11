@@ -8,10 +8,6 @@
     "de-de": {
       "DisplayName": "Deutsch",
       "Path": "de-de.json"
-    },
-    "null": {
-      "DisplayName": "null",
-      "Path": "null.json"
     }
   }
 }

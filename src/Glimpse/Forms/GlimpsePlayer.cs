@@ -85,6 +85,13 @@ public class GlimpsePlayer : Window
 
     protected override unsafe void Initialize()
     {
+        if (Glimpse.ConfigManager.TryGetConfig(StateConfig.ConfigName, out StateConfig state))
+        {
+            Position = state.Position;
+            Size = state.Size;
+            Maximized = state.Maximized;
+        }
+
         _playButton = Renderer.CreateImage("asset://Icons.PlayButton.png");
         _pauseButton = Renderer.CreateImage("asset://Icons.PauseButton.png");
         _skipButton = Renderer.CreateImage("asset://Icons.SkipButton.png");
@@ -1377,7 +1384,19 @@ public class GlimpsePlayer : Window
         _shuffleButton.Dispose();
         _repeatButton.Dispose();
         _repeatOneButton.Dispose();
-        
+
+        if (Glimpse.Config.Appearance.SaveWindowStateOnExit)
+        {
+            StateConfig state = new()
+            {
+                Position = Position,
+                Size = Size,
+                Maximized = Maximized
+            };
+
+            Glimpse.ConfigManager.WriteConfig(StateConfig.ConfigName, state);
+        }
+
         base.Dispose();
     }
 
