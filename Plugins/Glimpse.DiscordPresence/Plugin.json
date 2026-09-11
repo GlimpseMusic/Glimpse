@@ -1,7 +1,6 @@
 {
   "ID": "Glimpse.DiscordPresence",
   "Name": "Discord Presence",
-  "Version": "GLIMPSE_VERSION",
   "Author": "Glimpse Team",
   "Description": "Integrates Glimpse with Discord, allowing your currently playing songs to show in your status."
 }
