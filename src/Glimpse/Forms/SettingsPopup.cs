@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Glimpse.API;
 using Glimpse.API.UI;
@@ -29,7 +30,7 @@ public class SettingsPopup : Popup
 
     public override void Open()
     {
-        _gui = new ImmediateGUI();
+        _gui = new ImmediateGUI(Glimpse);
 
         _currentConfig = Glimpse.Config;
         _currentConfig.Plugins.EnabledPlugins = new HashSet<string>(Glimpse.Config.Plugins.EnabledPlugins);
@@ -86,48 +87,66 @@ public class SettingsPopup : Popup
                     
                     if (ImGui.BeginTabItem(currentLocale.GetString("Popup.Settings.Tab.Appearance")))
                     {
-                        ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Theme"));
-
-                        _themeWidget.Update(ref _currentConfig);
-
-                        if (ImGui.Button(currentLocale.GetString("Popup.Settings.Tab.Appearance.OpenThemeEditor")))
+                        ImGui.BeginChild("AppearanceTab");
                         {
-                            Close();
-                            Glimpse.MainWindow.AddPopup(new ThemeEditor());
+                            ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Theme"));
+
+                            _themeWidget.Update(ref _currentConfig);
+
+                            if (ImGui.Button(currentLocale.GetString("Popup.Settings.Tab.Appearance.OpenThemeEditor")))
+                            {
+                                Close();
+                                Glimpse.MainWindow.AddPopup(new ThemeEditor());
+                            }
+
+                            ImGui.SeparatorText(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation"));
+
+                            _transportDown ??= Renderer.CreateImage("asset://Images.TransportDown.png");
+                            _transportUp ??= Renderer.CreateImage("asset://Images.TransportUp.png");
+
+                            string up = currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Up");
+                            string down =
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Down");
+
+                            if (ImGui.SelectButton("TransportDown", _transportDown,
+                                    ScaleVec(_transportDown.Width * 0.25f, _transportDown.Height * 0.25f),
+                                    !_currentConfig.Appearance.SwapTransportControls))
+                            {
+                                _currentConfig.Appearance.SwapTransportControls = false;
+                            }
+
+                            ImGui.SetItemTooltipUnformatted(down);
+
+                            ImGui.SameLine();
+
+                            if (ImGui.SelectButton("TransportUp", _transportUp,
+                                    ScaleVec(_transportUp.Width * 0.25f, _transportUp.Height * 0.25f),
+                                    _currentConfig.Appearance.SwapTransportControls))
+                            {
+                                _currentConfig.Appearance.SwapTransportControls = true;
+                            }
+
+                            ImGui.SetItemTooltipUnformatted(up);
+
+                            ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Misc"));
+
+                            ImGui.Checkbox(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare"),
+                                ref _currentConfig.Appearance.ConfineAlbumArtToSquare);
+                            ImGui.SetItemTooltipUnformatted(
+                                currentLocale.GetString(
+                                    "Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare.Tooltip"));
+
+                            ImGui.Checkbox(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.SaveWindowStateOnExit"),
+                                ref _currentConfig.Appearance.SaveWindowStateOnExit);
+                            ImGui.SetItemTooltipUnformatted(
+                                currentLocale.GetString("Popup.Settings.Tab.Appearance.SaveWindowStateOnExit.Tooltip"));
+
+                            ImGui.EndChild();
                         }
 
-                        ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation"));
-
-                        _transportDown ??= Renderer.CreateImage("asset://Images.TransportDown.png");
-                        _transportUp ??= Renderer.CreateImage("asset://Images.TransportUp.png");
-                        
-                        string up = currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Up");
-                        string down = currentLocale.GetString("Popup.Settings.Tab.Appearance.TransportLocation.Down");
-                        
-                        if (ImGui.SelectButton("TransportDown", _transportDown,
-                            ScaleVec(_transportDown.Width * 0.25f, _transportDown.Height * 0.25f),
-                            !_currentConfig.Appearance.SwapTransportControls))
-                        {
-                            _currentConfig.Appearance.SwapTransportControls = false;
-                        }
-                        ImGui.SetItemTooltipUnformatted(down);
-
-                        ImGui.SameLine();
-                        
-                        if (ImGui.SelectButton("TransportUp", _transportUp,
-                                ScaleVec(_transportUp.Width * 0.25f, _transportUp.Height * 0.25f),
-                                _currentConfig.Appearance.SwapTransportControls))
-                        {
-                            _currentConfig.Appearance.SwapTransportControls = true;
-                        }
-                        ImGui.SetItemTooltipUnformatted(up);
-                        
-                        ImGui.SeparatorText(currentLocale.GetString("Popup.Settings.Tab.Appearance.Misc"));
-
-                        ImGui.Checkbox(currentLocale.GetString("Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare"),
-                            ref _currentConfig.Appearance.ConfineAlbumArtToSquare);
-                        ImGui.SetItemTooltipUnformatted(currentLocale.GetString("Popup.Settings.Tab.Appearance.ConfineAlbumArtToSquare.Tooltip"));
-                        
                         ImGui.EndTabItem();
                     }
 
@@ -162,50 +181,83 @@ public class SettingsPopup : Popup
 #if !PUBLISH_AOT
                     if (ImGui.BeginTabItem(currentLocale.GetString("Popup.Settings.Tab.Plugins")))
                     {
-                        if (Glimpse.Plugins == null || Glimpse.Plugins.Count == 0)
+                        if (Glimpse.Plugins.Count == 0)
                         {
                             ImGui.TextUnformatted(currentLocale.GetString("Popup.Settings.Tab.Plugins.NoneAvailable"));
                         }
                         else
                         {
-                            foreach ((string name, IPlugin plugin) in Glimpse.Plugins)
+                            // hack to stop the table from being VERY SLIGHTLY oversized and adding scroll bars
+                            // why does it do this? i have no idea! and i can't be bothered to work out why
+                            ImGui.BeginChild("Plugins", ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoScrollbar);
                             {
-                                ImGui.BeginChild("PluginsList", new Vector2(150, 0));
+                                // table hack to add an adjustable separator without using the dock builder
+                                ImGui.BeginTable("PluginsTable", 2, ImGuiTableFlags.Resizable);
                                 {
-                                    if (ImGui.Selectable(plugin.Name, name == _currentPlugin))
-                                        _currentPlugin = name;
+                                    ImGui.TableSetupColumn("Plugins", ImGuiTableColumnFlags.WidthStretch, 0.3f);
+                                    ImGui.TableSetupColumn("PluginSettings", ImGuiTableColumnFlags.WidthStretch, 0.7f);
 
-                                    ImGui.EndChild();
-                                }
+                                    ImGui.TableNextRow();
+                                    ImGui.TableNextColumn();
 
-                                ImGui.SameLine();
-
-                                ImGui.BeginChild("PluginSettings");
-                                {
-                                    if (name == _currentPlugin)
+                                    foreach ((string id, Plugin plugin) in Glimpse.Plugins)
                                     {
-                                        bool enabled = _currentConfig.Plugins.EnabledPlugins.Contains(_currentPlugin);
-                                        if (ImGui.Checkbox(currentLocale.GetString("Checkbox.Enabled"), ref enabled))
+                                        ImGui.BeginChild("PluginsList");
                                         {
-                                            if (enabled)
-                                                _currentConfig.Plugins.EnabledPlugins.Add(_currentPlugin);
-                                            else
-                                                _currentConfig.Plugins.EnabledPlugins.Remove(_currentPlugin);
+                                            bool enabled = _currentConfig.Plugins.EnabledPlugins.Contains(id);
+
+                                            if (ImGui.Selectable($"{(enabled ? "\uE5CA" : "")}{plugin.Name}", id == _currentPlugin))
+                                                _currentPlugin = id;
+
+                                            ImGui.EndChild();
                                         }
-                                        
-                                        // TODO: Hack - ideally would display the GUI for all plugins even if disabled
-                                        //       Need some sort of API to ensure the plugins always know the config is
-                                        //       valid before displaying the GUI?
-                                        if (enabled)
+
+                                        ImGui.SameLine();
+
+                                        ImGui.TableNextColumn();
+
+                                        ImGui.BeginChild("PluginSettings");
                                         {
-                                            ImGui.Separator();
-                                            if (Glimpse.Plugins[_currentPlugin].IsInitialized)
-                                                Glimpse.Plugins[_currentPlugin].OnGUI(_gui);
+                                            if (id == _currentPlugin)
+                                            {
+                                                bool enabled =
+                                                    _currentConfig.Plugins.EnabledPlugins.Contains(_currentPlugin);
+                                                if (ImGui.Checkbox(currentLocale.GetString("Checkbox.Enabled"),
+                                                        ref enabled))
+                                                {
+                                                    if (enabled)
+                                                        _currentConfig.Plugins.EnabledPlugins.Add(_currentPlugin);
+                                                    else
+                                                        _currentConfig.Plugins.EnabledPlugins.Remove(_currentPlugin);
+                                                }
+
+                                                ImGui.PushFont(ImFontPtr.Null, 32 * Scale);
+                                                ImGui.TextUnformatted(plugin.Name);
+                                                ImGui.PopFont();
+                                                ImGui.TextUnformatted($"By {plugin.Author}");
+
+                                                if (plugin.Description != null)
+                                                    ImGui.TextWrapped(plugin.Description);
+
+                                                // TODO: Hack - ideally would display the GUI for all plugins even if disabled
+                                                //       Need some sort of API to ensure the plugins always know the config is
+                                                //       valid before displaying the GUI?
+                                                if (enabled)
+                                                {
+                                                    ImGui.SeparatorText("Settings");
+                                                    if (Glimpse.Plugins[_currentPlugin].Instance.IsInitialized)
+                                                        Glimpse.Plugins[_currentPlugin].Instance.OnGUI(_gui);
+                                                }
+                                            }
+
+                                            ImGui.EndChild();
                                         }
                                     }
 
-                                    ImGui.EndChild();
+                                    ImGui.EndTable();
                                 }
+
+                                ImGui.EndChild();
                             }
                         }
 
@@ -321,19 +373,19 @@ public class SettingsPopup : Popup
         if (Glimpse.Plugins == null)
             return;
         
-        foreach ((string name, IPlugin plugin) in Glimpse.Plugins)
+        foreach ((string id, Plugin plugin) in Glimpse.Plugins)
         {
             // Plugin has been disabled
-            if (oldConfig.Plugins.EnabledPlugins.Contains(name) && !_currentConfig.Plugins.EnabledPlugins.Contains(name))
+            if (oldConfig.Plugins.EnabledPlugins.Contains(id) && !_currentConfig.Plugins.EnabledPlugins.Contains(id))
             {
-                logger.Log($"Disabling plugin {name}");
-                plugin.Dispose();
+                logger.Log($"Disabling plugin {id}");
+                plugin.Instance.Dispose();
             }
             // Plugin has been enabled
-            else if (_currentConfig.Plugins.EnabledPlugins.Contains(name) && !oldConfig.Plugins.EnabledPlugins.Contains(name))
+            else if (_currentConfig.Plugins.EnabledPlugins.Contains(id) && !oldConfig.Plugins.EnabledPlugins.Contains(id))
             {
-                logger.Log($"Enabling plugin {name}");
-                plugin.Initialize(Glimpse);
+                logger.Log($"Enabling plugin {id}");
+                plugin.Instance.Initialize(Glimpse);
             }
         }
     }
@@ -343,12 +395,19 @@ public class SettingsPopup : Popup
         _glimpseLogo?.Dispose();
     }
 
-    private class ImmediateGUI : IImmediateGUI
+    private unsafe class ImmediateGUI : IImmediateGUI, ITableContext
     {
+        private Glimpse _glimpse;
+        private SDL.DialogFileCallback _callback;
+        private Dictionary<int, FileDialogInstance> _fileDialogInstances;
+
         public float Scale;
 
-        public ImmediateGUI()
+        public ImmediateGUI(Glimpse glimpse)
         {
+            _glimpse = glimpse;
+            _callback = FileCallback;
+            _fileDialogInstances = [];
             Scale = 1;
         }
 
@@ -486,6 +545,139 @@ public class SettingsPopup : Popup
             if (tooltip != null)
                 ImGui.SetItemTooltipUnformatted(tooltip);
             return wasAdjusted;
+        }
+
+        public void Table(ReadOnlySpan<TableHeading> headings, Action<ITableContext> callback, int? numRows = 0,
+            bool useRelativeWidths = false, [CallerLineNumber] int id = 0, [CallerMemberName] string caller = "")
+        {
+            int numColumns = headings.Length;
+
+            ImGui.PushID(HashCode.Combine(caller, id));
+
+            if (ImGui.BeginTable("", numColumns, ImGuiTableFlags.ScrollX | ImGuiTableFlags.ScrollY | ImGuiTableFlags.Resizable))
+            {
+                foreach (TableHeading heading in headings)
+                {
+                    ImGui.TableSetupColumn(heading.Title,
+                        useRelativeWidths ? ImGuiTableColumnFlags.WidthStretch : ImGuiTableColumnFlags.WidthFixed,
+                        heading.Width);
+                }
+
+                ImGui.TableSetupScrollFreeze(0, 1);
+                ImGui.TableHeadersRow();
+
+                callback(this);
+
+                ImGui.EndTable();
+            }
+
+            ImGui.PopID();
+        }
+
+        public void ShowFileDialog(FileDialogType type, string? title, ReadOnlySpan<FileFilter> filters,
+            Action<string[]?, int> callback, bool allowMany = false, [CallerLineNumber] int id = 0,
+            [CallerMemberName] string caller = "")
+        {
+            int currentID = HashCode.Combine(caller, id);
+            // don't reshow the dialog if it is already open.
+            if (_fileDialogInstances.ContainsKey(currentID))
+                return;
+
+            uint props = SDL.CreateProperties();
+            SDL.SetPointerProperty(props, SDL.Prop.FileDialogWindowPointer, _glimpse.MainWindow.Handle.Handle);
+            SDL.SetNumberProperty(props, SDL.Prop.FileDialogNfiltersNumber, filters.Length);
+            SDL.SetBooleanProperty(props, SDL.Prop.FileDialogManyBoolean, allowMany);
+            if (title != null)
+                SDL.SetStringProperty(props, SDL.Prop.FileDialogTitleString, title);
+
+            SDL.DialogFileFilter* dialogFilters =
+                (SDL.DialogFileFilter*) NativeMemory.Alloc((nuint) (filters.Length * sizeof(SDL.DialogFileFilter)));
+            for (int i = 0; i < filters.Length; i++)
+            {
+                ref readonly FileFilter filter = ref filters[i];
+                dialogFilters[i].Name = (sbyte*) Marshal.StringToHGlobalAnsi(filter.Name);
+                dialogFilters[i].Pattern = (sbyte*) Marshal.StringToHGlobalAnsi(filter.Pattern);
+            }
+
+            SDL.SetPointerProperty(props, SDL.Prop.FileDialogFiltersPointer, (nint) dialogFilters);
+
+            SDL.FileDialogType dialogType = type switch
+            {
+                FileDialogType.SaveFile => SDL.FileDialogType.Savefile,
+                FileDialogType.OpenFile => SDL.FileDialogType.Openfile,
+                FileDialogType.OpenFolder => SDL.FileDialogType.Openfolder,
+                _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+            };
+
+            _fileDialogInstances.Add(currentID, new FileDialogInstance(filters.Length, dialogFilters, callback));
+            SDL.ShowFileDialogWithProperties(dialogType, _callback, currentID, props);
+
+            SDL.DestroyProperties(props);
+        }
+
+        private void FileCallback(IntPtr userdata, sbyte** filelist, int filter)
+        {
+            _fileDialogInstances.Remove((int) userdata, out FileDialogInstance instance);
+
+            try
+            {
+                if (filelist == null)
+                {
+                    _glimpse.Logger.Log($"An error occurred in the file dialog (instance {(int) userdata}): {SDL.GetError()}");
+                    return;
+                }
+
+                if (filelist[0] == null)
+                {
+                    instance.Callback(null, filter);
+                    return;
+                }
+
+                int index = 0;
+                List<string> files = [];
+                while (filelist[index] != null)
+                {
+                    string file = new string(filelist[index]);
+                    files.Add(file);
+                    index++;
+                }
+
+                instance.Callback(files.ToArray(), filter);
+            }
+            finally
+            {
+                for (int i = 0; i < instance.NumFilters; i++)
+                {
+                    Marshal.FreeHGlobal((nint) instance.Filters[i].Name);
+                    Marshal.FreeHGlobal((nint) instance.Filters[i].Pattern);
+                }
+
+                NativeMemory.Free(instance.Filters);
+            }
+        }
+
+        private struct FileDialogInstance
+        {
+            public int NumFilters;
+            public SDL.DialogFileFilter* Filters;
+            public Action<string[]?, int> Callback;
+
+            public FileDialogInstance(int numFilters, SDL.DialogFileFilter* filters, Action<string[]?, int> callback)
+            {
+                NumFilters = numFilters;
+                Filters = filters;
+                Callback = callback;
+            }
+        }
+
+        void ITableContext.NewColumn()
+        {
+            ImGui.TableNextColumn();
+        }
+
+        void ITableContext.NewRow()
+        {
+            ImGui.TableNextRow();
         }
     }
 }

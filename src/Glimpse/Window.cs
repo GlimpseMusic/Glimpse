@@ -10,6 +10,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using Image = SixLabors.ImageSharp.Image;
 using Renderer = Glimpse.Graphics.Renderer;
 using Size = System.Drawing.Size;
+using Point = System.Drawing.Point;
 
 namespace Glimpse;
 
@@ -52,6 +53,27 @@ public abstract unsafe class Window : IDisposable
         }
     }
 
+    public Point Position
+    {
+        get
+        {
+            if (!_isCreated)
+                return field;
+
+            int x, y;
+            SDL.GetWindowPosition(_window, &x, &y);
+
+            return new Point(x, y);
+        }
+        set
+        {
+            if (!_isCreated)
+                field = value;
+            else
+                SDL.SetWindowPosition(_window, value.X, value.Y);
+        }
+    }
+
     public Size Size
     {
         get
@@ -59,8 +81,7 @@ public abstract unsafe class Window : IDisposable
             if (!_isCreated)
                 return _size;
 
-            int w, h;
-            SDL.GetWindowSize(_window, &w, &h);
+            SDL.GetWindowSize(_window, out int w, out int h);
 
             return new Size(w, h);
         }
@@ -69,7 +90,10 @@ public abstract unsafe class Window : IDisposable
             if (!_isCreated)
                 _size = value;
             else
+            {
                 SDL.SetWindowSize(_window, value.Width, value.Height);
+                Renderer.Resize(new Size((int) (value.Width * _scale), (int) (value.Height * _scale)));
+            }
         }
     }
 
@@ -80,10 +104,30 @@ public abstract unsafe class Window : IDisposable
             if (!_isCreated)
                 return _size;
 
-            int w, h;
-            SDL.GetWindowSizeInPixels(_window, &w, &h);
+            SDL.GetWindowSizeInPixels(_window, out int w, out int h);
 
             return new Size(w, h);
+        }
+    }
+
+    public bool Maximized
+    {
+        get
+        {
+            if (!_isCreated)
+                return field;
+
+            return (SDL.GetWindowFlags(_window) & SDL.WindowFlags.Maximized) != 0;
+        }
+        set
+        {
+            if (!_isCreated)
+                field = value;
+
+            if (field)
+                SDL.MaximizeWindow(_window);
+            else
+                SDL.RestoreWindow(_window);
         }
     }
 
@@ -132,6 +176,7 @@ public abstract unsafe class Window : IDisposable
 
         uint windowProps = SDL.CreateProperties();
         SDL.SetStringProperty(windowProps, SDL.Prop.WindowCreateTitleString, _title);
+        SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateMaximizedBoolean, Maximized);
         SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateOpenglBoolean, true);
         SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateResizableBoolean, true);
         SDL.SetBooleanProperty(windowProps, SDL.Prop.WindowCreateHighPixelDensityBoolean, true);

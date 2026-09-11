@@ -13,11 +13,6 @@ public interface IPlugin : IDisposable
     public bool IsInitialized { get; }
 
     /// <summary>
-    /// The plugin's friendly name.
-    /// </summary>
-    public string Name { get; }
-
-    /// <summary>
     /// Gets/sets the config associated with this plugin.
     /// This value may be accessed and updated by Glimpse.
     /// Return null if the plugin does not contain a config.

@@ -12,8 +12,6 @@ public class MptPlugin : IPlugin
     private MptCodec _codec;
 
     public bool IsInitialized => _initialized;
-    
-    public string Name => "OpenMPT Integration";
 
     public IConfig? Config
     {
